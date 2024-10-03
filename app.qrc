@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/">
+        <file>lib/mulhouse.osm</file>
+    </qresource>
+</RCC>
