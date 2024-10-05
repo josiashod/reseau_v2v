@@ -1,0 +1,7 @@
+#include "noded.h"
+
+NodeD::NodeD(unsigned int id, QPointF point, QString name): Node{id, point}, d_name{name}
+{}
+
+NodeD::NodeD(Node n, QString name): Node{n}, d_name{name}
+{}

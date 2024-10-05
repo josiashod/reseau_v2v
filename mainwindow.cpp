@@ -3,10 +3,12 @@
 #include <QApplication>
 #include <QLayout>
 #include <QWidget>
+#include <QLabel>
 
 #include <QFile>
 #include <QXmlStreamReader>
 #include <QDebug>
+#include "node.h"
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -30,15 +32,8 @@ void MainWindow::creerInterface()
     setCentralWidget(mainWidget);
 
     d_map = new MapViewer{this};
-    mainHlayout->addWidget(d_map);
-
-    QFile file(":/lib/mulhouse.osm");
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        qWarning() << "Cannot open file:" << file.errorString();
-        return ;
-    }
-
-    file.close();
+    mainHlayout->addWidget(d_map, 1);
+    mainHlayout->addWidget(new QLabel{"test"});
 }
 
 MainWindow::~MainWindow()
