@@ -5,3 +5,6 @@ NodeD::NodeD(unsigned int id, QPointF point, QString name): Node{id, point}, d_n
 
 NodeD::NodeD(Node n, QString name): Node{n}, d_name{name}
 {}
+
+QString NodeD::name() const
+{ return d_name; }
