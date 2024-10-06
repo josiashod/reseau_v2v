@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QGraphicsView>
+#include <QGraphicsScene>
 #include <QResizeEvent>
 //#include <QPainter>
 #include <QPoint>
@@ -14,7 +15,8 @@
 #include "way.h"
 #include "building.h"
 #include "water.h"
-#include "parc.h"
+#include "park.h"
+#include "dbmanager.h"
 
 
 class MapViewer : public QGraphicsView
@@ -36,23 +38,31 @@ public slots :
     void map_update();
 
 private:
+    // database handler
+    DBManager d_db;
     // lon, lat coord
     std::pair<double, double> d_maxCoord, d_minCoord;
     std::map<unsigned int, Node> d_nodes;
-    std::map<unsigned int, NodeD> d_descriptiveNodes;
+    std::map<QString, NodeD> d_descriptifNodes;
     std::map<unsigned int, Water> d_waters;
-    std::map<unsigned int, Parc> d_parcs;
+    std::map<unsigned int, Park> d_parks;
 
     std::map<unsigned int, Way> d_roads;
     std::map<unsigned int, Building> d_buildings;
 
+    double d_scale_factor = 1.15;
+
     // Permet d'afficher les différentes scenes
-    bool d_showParc         = false;
+    bool d_showPark         = false;
     bool d_showWater        = false;
     bool d_showBuilding     = false;
     bool d_showWay          = false;
-    bool d_showDescription  = false;
+    bool d_showDescription  = true;
 
+    /**
+     * @brief d_view la vue graphique pour la map
+     */
+//    QGraphicsView* d_view;
     /**
      * @brief d_scene scene de la map
      */
@@ -85,6 +95,9 @@ private:
     void creerInterface();
     void resizeEvent(QResizeEvent *event) override;
 
+    // zoom et deplacement sur la carte
+    void wheelEvent(QWheelEvent *event) override;
+
     /**
      * @brief Dessiner la couche de description
      */
@@ -103,7 +116,7 @@ private:
     /**
      * Dessiner la couche des bâtiments
      */
-    void drawParcLayer();
+    void drawParkLayer();
 
     /**
      * Dessiner la couche des mailles
@@ -125,13 +138,23 @@ private:
      */
     std::pair<double, double> lambert93(double, double);
     /**
+     * @brief pairLatLonToXY Convertit les coordonnées géographiques (latitude et longitude)
+     *        en coordonnées X, Y pour un affichage sur une fenêtre.
+     * @param pair {lon lat}
+     * @return un QPointF
+     */
+    QPointF pairLatLonToXY(std::pair<double, double>&);
+    /**
      * @brief latLonToXY Convertit les coordonnées géographiques (latitude et longitude)
      *        en coordonnées X, Y pour un affichage sur une fenêtre.
      * @param lat: La latitude du point à convertir.
      * @param lon: La longitude du point à convertir.
      * @return un QPointF
      */
-    QPointF latLonToXY(double lat, double lon);
+    QPointF latLonToXY(double lon, double lat);
+
+    void initBounds();
+    void initNodeDs();
 };
 
 #endif // MAPVIEWER_H

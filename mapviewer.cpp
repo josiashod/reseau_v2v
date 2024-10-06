@@ -1,13 +1,17 @@
 #include "mapviewer.h"
 #include <QGraphicsRectItem>
+#include <QVBoxLayout>
+
 
 
 // CRÉATION DE L'INTERFACE
 
 MapViewer::MapViewer(QWidget *parent)
-    : QGraphicsView{parent}
+    : QGraphicsView{parent}, d_db{}, d_nodes{}, d_descriptifNodes{}, d_waters{},
+      d_parks{}, d_roads{}, d_buildings{}
 {
     creerInterface();
+    initBounds();
 }
 
 MapViewer::~MapViewer()
@@ -16,20 +20,100 @@ MapViewer::~MapViewer()
 
 void MapViewer::creerInterface()
 {
+//    QVBoxLayout *layout = new QVBoxLayout(this);
+//    layout->setContentsMargins(0, 0, 0, 0);
+//    setLayout(layout);
+
+//    d_view = new QGraphicsView{this};
     setMouseTracking(true);
     setRenderHint(QPainter::Antialiasing);
-    d_scene = new QGraphicsScene(this);
+    setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    setDragMode(QGraphicsView::ScrollHandDrag);
 
+    d_scene = new QGraphicsScene(this);
+    d_scene->setBackgroundBrush(QColor(240, 240, 240)); // Gris clair
     setScene(d_scene);
-    d_scene->setBackgroundBrush(QColor(240, 0, 240)); // Gris clair
+    show();
+
+    d_descriptionLayer = new QGraphicsItemGroup();
+    d_descriptionLayer->setVisible(d_showDescription);
+    d_scene->addItem(d_descriptionLayer);
+
+//    layout->addWidget(d_view);
+}
+
+void MapViewer::drawDescriptionLayer()
+{
+    for (auto it = d_descriptifNodes.begin(); it != d_descriptifNodes.end(); ++it)
+    {
+        // Créer un nouvel élément texte
+        QGraphicsTextItem *textItem = new QGraphicsTextItem(it->second.name());
+        textItem->setPos(it->second);
+        QFont font = textItem->font();
+        font.setPointSize(2 / d_scale_factor);  // Ajuster la taille de la police
+        textItem->setFont(font);
+
+        d_descriptionLayer->addToGroup(textItem);
+    }
 }
 
 void MapViewer::resizeEvent(QResizeEvent *event)
 {
     // Mettre à jour la taille de la scène lors du redimensionnement de la vue
     QGraphicsView::resizeEvent(event);
-    setSceneRect(0, 0, event->size().width(), event->size().height());
+//    d_scene->setSceneRect(0, 0, event->size().width() * 2, event->size().height() * 2);
+    fitInView(d_scene->sceneRect(), Qt::KeepAspectRatio);
+
+    initNodeDs();
+    drawDescriptionLayer();
 }
+
+void MapViewer::wheelEvent(QWheelEvent *event)
+{
+    // Zoomer avec la molette de la souris
+    const double scaleFactor = 1.1;  // Facteur de zoom
+
+    if (event->angleDelta().y() > 0) {
+        // Zoom avant
+        d_scale_factor *= scaleFactor;
+        scale(scaleFactor, scaleFactor);
+    } else {
+        // Zoom arrière
+        d_scale_factor *= (1.0 / scaleFactor);
+        scale(1.0 / scaleFactor, 1.0 / scaleFactor);
+    }
+
+//    // Appliquer le nouveau facteur d'échelle aux éléments si nécessaire
+//    for (QGraphicsItem* item : d_descriptionLayer->childItems() ) {
+//        // Appliquer l'échelle uniquement aux éléments spécifiques, comme les textes ou les ellipses
+//        item->setScale(d_scale_factor);
+//    }
+}
+
+//void MapViewer::mousePressEvent(QMouseEvent *event)
+//{
+//    // Vérifiez si le bouton gauche de la souris est pressé
+//    if (event->button() == Qt::LeftButton) {
+//        setDragMode(QGraphicsView::ScrollHandDrag);
+//        QGraphicsView::mousePressEvent(event);
+//    } else {
+//        QGraphicsView::mousePressEvent(event);
+//    }
+//}
+
+//void MapViewer::mouseReleaseEvent(QMouseEvent *event)
+//{
+//    setDragMode(QGraphicsView::NoDrag);
+//    QGraphicsView::mouseReleaseEvent(event);
+//}
+
+//void MapViewer::mouseMoveEvent(QMouseEvent *event)
+//{
+//    setDragMode(QGraphicsView::NoDrag);
+//    QGraphicsView::mouseReleaseEvent(event);
+//}
+
 
 std::pair<double, double> MapViewer::lambert93(double longitude, double latitude)
 {
@@ -68,7 +152,12 @@ std::pair<double, double> MapViewer::lambert93(double longitude, double latitude
     return {result.xyzt.x, result.xyzt.y}; // Retourner les coordonnées Lambert93
 }
 
-QPointF MapViewer::latLonToXY(double lat, double lon)
+QPointF MapViewer::pairLatLonToXY(std::pair<double, double>& coord)
+{
+    return latLonToXY(coord.first, coord.second);
+}
+
+QPointF MapViewer::latLonToXY(double lon, double lat)
 {
     double width = this->width(), height = this->height();
 
@@ -77,6 +166,58 @@ QPointF MapViewer::latLonToXY(double lat, double lon)
 
     return {x, y};
 }
+
+void MapViewer::initBounds()
+{
+    QSqlQuery query;
+    double minLat = 0.0, maxLat = 0.0, minLon = 0.0, maxLon = 0.0;
+    bool success = false;
+
+    success = query.exec(d_db.getBounds());
+
+    if(success)
+    {
+        if(query.next())
+        {
+            minLat = query.value(0).toString().toFloat();
+            maxLat = query.value(1).toString().toFloat();
+            minLon = query.value(2).toString().toFloat();
+            maxLon = query.value(3).toString().toFloat();
+        }
+    }
+
+    d_maxCoord = lambert93(maxLon, maxLat);
+    d_minCoord = lambert93(minLon, minLat);
+}
+
+void MapViewer::initNodeDs()
+{
+    QSqlQuery query;
+    bool success = false;
+
+    success = query.exec(d_db.getNodeDs());
+    //    success = query.exec();
+    if(success)
+    {
+        while(query.next())
+        {
+            std::pair<double, double> coord;
+            unsigned int id;
+            double lat = 0.0, lon = 0.0;
+            QString name = "";
+
+            id = query.value(0).toString().toUInt();
+            lat = query.value(1).toString().toDouble();
+            lon = query.value(2).toString().toDouble();
+
+            coord = lambert93(lon, lat);
+            name = query.value(6).toString();
+            NodeD n{id, pairLatLonToXY(coord), name};
+            d_descriptifNodes.emplace(name, n);
+        }
+    }
+}
+
 
 //void MapViewer::paintEvent(QPaintEvent *)
 //{

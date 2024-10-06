@@ -16,7 +16,7 @@ SOURCES += \
     mainwindow.cpp \
     mapitem.cpp \
     building.cpp \
-    parc.cpp \
+    park.cpp \
     water.cpp \
     way.cpp \
     mapviewer.cpp \
@@ -29,7 +29,7 @@ HEADERS += \
     mainwindow.h \
     mapitem.h \
     building.h \
-    parc.h \
+    park.h \
     water.h \
     way.h \
     mapviewer.h \

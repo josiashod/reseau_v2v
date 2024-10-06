@@ -24,10 +24,12 @@ void MainWindow::creerInterface()
     QRect  screenGeometry = screen->geometry();
     int height = screenGeometry.height();
     int width = screenGeometry.width();
-    setMinimumSize(width - (width * 0.40), height - (height * 0.20));
+    //setMinimumSize(width - (width * 0.40), height - (height * 0.20));
+    setFixedSize(width , height);
 
     auto mainWidget {new QWidget{this}};
     auto *mainHlayout = new QHBoxLayout();
+    mainHlayout->setContentsMargins(0, 0, 0, 0);
     mainWidget->setLayout(mainHlayout);
     setCentralWidget(mainWidget);
 
