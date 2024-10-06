@@ -2,14 +2,7 @@
 #define DBMANAGER_H
 
 #include <QSqlDatabase>
-
-#include "mapitem.h"
-#include "node.h"
-#include "noded.h"
-#include "way.h"
-#include "building.h"
-#include "water.h"
-#include "parc.h"
+#include <QSqlQuery>
 
 class DBManager
 {
@@ -18,10 +11,48 @@ public:
     QSqlDatabase getDbManager() const;
 
     /**
-     * @brief getBounds: retourne le coordonnes max et min
+     * @brief getBounds: retourne la requete pour avoir les coordonnes max et min
      * @return {{MaxLon, MaxLat}, {MinLon, MinLat}}
      */
-    std::pair<std::pair<double, double>, std::pair<double, double>> getBounds() const;
+    QString getBounds() const;
+
+    /**
+     * @brief getNodes: retourne la requete pour recuperer les noeuds
+     * @return la requete
+     */
+    QString getNodes() const;
+    /**
+     * @brief getNodeDs: retourne la requete pour recuperer les noeud descriptifs
+     * @return la requete
+     */
+    QString getNodeDs() const;
+    /**
+     * @brief getRoads: retourne la requete pour recuperer routes
+     * @return la requete
+     */
+    QString getRoads() const;
+    /**
+     * @brief getWaters: retourne la requete pour recuperer les eaux
+     * @return la requete
+     */
+    QString getWaters() const;
+    /**
+     * @brief getBuildings: retourne la requete pour recuperer les immeubles
+     * @return la requete
+     */
+    QString getBuildings() const;
+    /**
+     * @brief getParks: retourne la requete pour recuperer les espaces verts
+     * @return la requete
+     */
+    QString getParks() const;
+    /**
+     * @brief getWayNodes: recuperer les noeuds d'un ways
+     * @param id du noeuds
+     * @return
+     */
+    QString getWayNodes(unsigned int) const;
+
 protected:
     QSqlDatabase d_db;
 };
