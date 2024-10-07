@@ -32,6 +32,11 @@ public:
      * @return nullptr si aucun noeud trouvé sinon retourn un pointeur sur noeud
      */
     Node* findNodeById(unsigned int id);
+    /**
+     * @brief findWayById retourne la voie en fonction de l'id
+     * @param id
+     * @return
+     */
     Way* findWayById(unsigned int id);
 
 public slots :
@@ -49,6 +54,7 @@ private:
 
     std::map<unsigned int, Way> d_roads;
     std::map<unsigned int, Building> d_buildings;
+//    QVector<QPolygonF> d_meshs;
 
     double d_scale_factor = 1.15;
 
@@ -58,6 +64,7 @@ private:
     bool d_showBuilding     = false;
     bool d_showWay          = false;
     bool d_showDescription  = true;
+//    bool d_showMesh  = true;
 
     /**
      * @brief d_view la vue graphique pour la map
@@ -87,10 +94,10 @@ private:
      * @brief d_wayLayer couche d'affichage des routes
      */
     QGraphicsItemGroup* d_wayLayer;
-    /**
-     * @brief d_meshLayer couche d'affichage des mailles
-     */
-    QGraphicsItemGroup* d_meshLayer;
+//    /**
+//     * @brief d_meshLayer couche d'affichage des mailles
+//     */
+//    QGraphicsItemGroup* d_meshLayer;
 
     void creerInterface();
     void resizeEvent(QResizeEvent *event) override;
@@ -118,10 +125,10 @@ private:
      */
     void drawParkLayer();
 
-    /**
-     * Dessiner la couche des mailles
-     */
-    void drawMeshLayer();
+//    /**
+//     * Dessiner la couche des mailles
+//     */
+//    void drawMeshLayer();
 
     /**
      * Dessiner la couche d'eau
@@ -155,6 +162,8 @@ private:
 
     void initBounds();
     void initNodeDs();
+    void initNodes();
+//    void initMeshs();
 };
 
 #endif // MAPVIEWER_H

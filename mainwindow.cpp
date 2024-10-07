@@ -4,12 +4,7 @@
 #include <QLayout>
 #include <QWidget>
 #include <QLabel>
-
-#include <QFile>
-#include <QXmlStreamReader>
-#include <QDebug>
-#include "node.h"
-
+#include <QMenuBar>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -26,6 +21,10 @@ void MainWindow::creerInterface()
     int width = screenGeometry.width();
     //setMinimumSize(width - (width * 0.40), height - (height * 0.20));
     setFixedSize(width , height);
+
+    menuBar()->addMenu("Vue");
+    menuBar()->addMenu("Log");
+
 
     auto mainWidget {new QWidget{this}};
     auto *mainHlayout = new QHBoxLayout();

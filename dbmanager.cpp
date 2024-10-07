@@ -3,6 +3,9 @@
 #include <QSqlRecord>
 #include <QFile>
 #include <QFileInfo>
+#include <QStandardPaths>
+#include <QDir>
+
 #include "mapviewer.h"
 
 const QString _NODES_TABLE_ = "nodes";
@@ -12,8 +15,31 @@ const QString _TAGS_TABLE_ = "tags";
 
 DBManager::DBManager()
 {
+    // Obtenez le chemin vers un répertoire accessible en lecture et écriture (par exemple un répertoire temporaire)
+    QString directory = QDir::homePath();
+
+    directory += "/" + QStandardPaths::displayName(QStandardPaths::DocumentsLocation) + "/";
+
+    // Créez le répertoire si nécessaire
+    QDir dir(directory);
+
+    if (!dir.exists()) {
+        dir.mkpath(".");
+    }
+
+    // Chemin complet où la base de données sera copiée
+    QString dbPath = directory + "mulhouse_network/geo.db";
+
+
+    // Si la base de données n'existe pas déjà à cet emplacement, copiez-la depuis les ressources
+    if (!QFile::exists(dbPath)) {
+        qDebug() << "Error: Unable to find database file: " << dbPath;
+        return;
+    }
+
     d_db = QSqlDatabase::addDatabase("QSQLITE");
-    d_db.setDatabaseName("/home/josh/projects/QtProjects/mulhouse_network/lib/geo.db");
+//    d_db.setDatabaseName("/home/josh/projects/QtProjects/mulhouse_network/lib/geo.db");
+    d_db.setDatabaseName(dbPath);
 
    if (!d_db.open())
    {
