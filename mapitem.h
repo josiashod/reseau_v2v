@@ -16,7 +16,7 @@ public:
      * @brief addNode: ajoute un noeud à la liste des noeuds du mapItem
      * @param n: le noeud en question
      */
-    void addNode(const unsigned int i, Node* n);
+    void addNode(Node* n);
     /**
      * @brief addTag: ajoute un tag a
      * @param key
@@ -35,18 +35,6 @@ public:
      * @return QString la valeur du tag
      */
     QString tag(QString tag) const;
-    /**
-     * @brief getNodeIndex: retourne l'index du noeud dans la liste de noeud du mapItem
-     * @param id: l'id du noeud a trouvé
-     * @return -1 s'il n'est pas trouvé sinon retourne l'index
-     */
-    unsigned int getNodeIndex(const unsigned int *id);
-    /**
-     * @brief getNode: retourne le noeud
-     * @param id: l'id du noeud a trouvé
-     * @return
-     */
-    Node& getNode(unsigned int index) const;
     /**
      * @brief nodeSize: retourne le nombre de node du mapItem
      * @return la taille des nodes
