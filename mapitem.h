@@ -16,13 +16,13 @@ public:
      * @brief addNode: ajoute un noeud à la liste des noeuds du mapItem
      * @param n: le noeud en question
      */
-    void addNode(Node* n);
+    void addNode(const unsigned int i, Node* n);
     /**
-     * @brief aggTag: ajoute un tag a
+     * @brief addTag: ajoute un tag a
      * @param key
      * @param value
      */
-    void aggTag(QString& key);
+    void addTag(const QString& key, const QString &value);
     /**
      * @brief tagExist: vérifie si le tag donné existe dans la liste des tags
      * @param tag: le nom du tag à trouver
