@@ -3,7 +3,6 @@
 #include <QVBoxLayout>
 
 
-
 // CRÉATION DE L'INTERFACE
 
 MapViewer::MapViewer(QWidget *parent)
@@ -11,6 +10,7 @@ MapViewer::MapViewer(QWidget *parent)
       d_parks{}, d_roads{}, d_buildings{}
 {
     creerInterface();
+//    initMeshs();
     initBounds();
 }
 
@@ -40,6 +40,10 @@ void MapViewer::creerInterface()
     d_descriptionLayer->setVisible(d_showDescription);
     d_scene->addItem(d_descriptionLayer);
 
+//    d_meshLayer = new QGraphicsItemGroup();
+//    d_meshLayer->setVisible(d_showMesh);
+//    d_scene->addItem(d_meshLayer);
+
 //    layout->addWidget(d_view);
 }
 
@@ -58,6 +62,18 @@ void MapViewer::drawDescriptionLayer()
     }
 }
 
+//void MapViewer::drawMeshLayer()
+//{
+//    for (QPolygonF& hexagon : d_meshs)
+//    {
+//        // Créer un nouvel élément texte
+//        QGraphicsPolygonItem *polygon = new QGraphicsPolygonItem();
+//        polygon->setPolygon(hexagon);
+
+//        d_meshLayer->addToGroup(polygon);
+//    }
+//}
+
 void MapViewer::resizeEvent(QResizeEvent *event)
 {
     // Mettre à jour la taille de la scène lors du redimensionnement de la vue
@@ -66,7 +82,12 @@ void MapViewer::resizeEvent(QResizeEvent *event)
     fitInView(d_scene->sceneRect(), Qt::KeepAspectRatio);
 
     initNodeDs();
+    initNodeDs();
     drawDescriptionLayer();
+//    drawMeshLayer();
+
+    // Configurer la vue (taille et centrage)
+    setAlignment(Qt::AlignCenter);
 }
 
 void MapViewer::wheelEvent(QWheelEvent *event)
@@ -80,8 +101,11 @@ void MapViewer::wheelEvent(QWheelEvent *event)
         scale(scaleFactor, scaleFactor);
     } else {
         // Zoom arrière
-        d_scale_factor *= (1.0 / scaleFactor);
-        scale(1.0 / scaleFactor, 1.0 / scaleFactor);
+        if(d_scale_factor > 1.0)
+        {
+            d_scale_factor *= (1.0 / scaleFactor);
+            scale(1.0 / scaleFactor, 1.0 / scaleFactor);
+        }
     }
 
 //    // Appliquer le nouveau facteur d'échelle aux éléments si nécessaire
@@ -217,6 +241,61 @@ void MapViewer::initNodeDs()
         }
     }
 }
+
+void MapViewer::initNodes()
+{
+    QSqlQuery query;
+    bool success = false;
+
+    success = query.exec(d_db.getNodes());
+    //    success = query.exec();
+    if(success)
+    {
+        while(query.next())
+        {
+            std::pair<double, double> coord;
+            unsigned int id;
+            double lat = 0.0, lon = 0.0;
+            QString name = "";
+
+            id = query.value(0).toString().toUInt();
+            lat = query.value(1).toString().toDouble();
+            lon = query.value(2).toString().toDouble();
+
+            coord = lambert93(lon, lat);
+            Node n{id, pairLatLonToXY(coord)};
+            d_nodes.emplace(id, n);
+        }
+    }
+}
+
+//void MapViewer::initMeshs()
+//{
+//    qreal hexRadius = 8.0;  // Adjust size as needed
+//    int rows = height();
+//    int cols = width();
+
+//    for (int i = 0; i < rows; ++i) {
+//        for (int j = 0; j < cols; ++j) {
+//            qreal x = j * 1.5 * hexRadius;
+//            qreal y = i * sqrt(3) * hexRadius;
+
+//            if (j % 2 == 1) {
+//                y += sqrt(3) / 2 * hexRadius;
+//            }
+//            QPolygonF polygon;
+
+//            // Initialize the polygon in the constructor
+//            for (int i = 0; i < 6; ++i) {
+//                qreal angle = 2 * M_PI * i / 6.0;
+//                x = x + hexRadius * cos(angle);
+//                y = y + hexRadius * sin(angle);
+//                polygon << QPointF(x, y);
+//            }
+//            d_meshs.push_back(polygon);
+//        }
+//    }
+//}
 
 
 //void MapViewer::paintEvent(QPaintEvent *)
