@@ -6,7 +6,14 @@
 class Water : public MapItem
 {
 public:
-    Water(unsigned int id);
+    Water(long long id);
+
+    /**
+     * @brief draw: dessine la route avec un scale_factor donné
+     * @param group le group ou doit etre l'instance
+     * @param scale_factor: le scale factor
+     */
+    void draw(QGraphicsItemGroup* group, double scale_factor) const override;
 };
 
 #endif // WATER_H

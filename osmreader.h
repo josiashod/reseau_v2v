@@ -16,7 +16,7 @@ private:
 //    void readRelation(QXmlStreamReader& xml);
     void readWay(QXmlStreamReader& xml);
 
-    DBManager d_db;
+//    DBManager d_db;
 };
 
 #endif // OSMREADER_H

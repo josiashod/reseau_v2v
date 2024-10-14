@@ -3,7 +3,7 @@
 #include <QSqlQuery>
 #include <vector>
 
-OsmReader::OsmReader(): d_db{}
+OsmReader::OsmReader()
 {}
 
 void OsmReader::readOSMFile(const QString& filePath) {
@@ -13,7 +13,7 @@ void OsmReader::readOSMFile(const QString& filePath) {
         return;
     }
 
-    auto db = d_db.getDbManager();
+//    auto db = *d_db.getInstance();
     QXmlStreamReader xml(&file);
 
     while (!xml.atEnd() && !xml.hasError()) {

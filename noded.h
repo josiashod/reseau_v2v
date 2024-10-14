@@ -6,7 +6,7 @@
 class NodeD : public Node
 {
 public:
-    NodeD(unsigned int, QPointF, QString);
+    NodeD(long long, QPointF, QString);
     NodeD(Node, QString);
 
     /**

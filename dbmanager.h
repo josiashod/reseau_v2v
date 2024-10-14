@@ -3,58 +3,74 @@
 
 #include <QSqlDatabase>
 #include <QSqlQuery>
+#include <QSqlError>
+#include <QThread>
+#include <QHash>
 
 class DBManager
 {
 public:
-    DBManager();
-    QSqlDatabase getDbManager() const;
-
+    ~DBManager();
+    /**
+     * @brief getInstance retourne l'instance unique d'utilisation de la bd
+     * @return
+     */
+    static DBManager* getInstance();
+    /**
+     * @brief getDatabase retourne la base de donnée du thread en cours
+     * @return
+     */
+    QSqlDatabase getDatabase();
+    /**
+     * @brief destroyInstance Suppression de l'instance
+     */
+    static void destroyInstance();
     /**
      * @brief getBounds: retourne la requete pour avoir les coordonnes max et min
      * @return {{MaxLon, MaxLat}, {MinLon, MinLat}}
      */
-    QString getBounds() const;
+    QSqlQuery getBounds(QSqlDatabase db) const;
 
     /**
      * @brief getNodes: retourne la requete pour recuperer les noeuds
      * @return la requete
      */
-    QString getNodes() const;
+    QSqlQuery getNodes(QSqlDatabase db) const;
     /**
      * @brief getNodeDs: retourne la requete pour recuperer les noeud descriptifs
      * @return la requete
      */
-    QString getNodeDs() const;
+    QSqlQuery getNodeDs(QSqlDatabase db) const;
     /**
      * @brief getRoads: retourne la requete pour recuperer routes
      * @return la requete
      */
-    QString getRoads() const;
+    QSqlQuery getRoads(QSqlDatabase db) const;
     /**
      * @brief getWaters: retourne la requete pour recuperer les eaux
      * @return la requete
      */
-    QString getWaters() const;
+    QSqlQuery getWaters(QSqlDatabase db) const;
     /**
      * @brief getBuildings: retourne la requete pour recuperer les immeubles
      * @return la requete
      */
-    QString getBuildings() const;
+    QSqlQuery getBuildings(QSqlDatabase db) const;
     /**
      * @brief getParks: retourne la requete pour recuperer les espaces verts
      * @return la requete
      */
-    QString getParks() const;
+    QSqlQuery getParks(QSqlDatabase db) const;
     /**
      * @brief getWayNodes: recuperer les noeuds d'un ways
      * @param id du noeuds
      * @return
      */
-    QString getWayNodes(unsigned int) const;
+    QSqlQuery getWayNodes(QSqlDatabase db, long long id) const;
 
-protected:
-    QSqlDatabase d_db;
+private:
+    DBManager();
+    static DBManager* d_instance;
 };
 
 #endif // DBMANAGER_H

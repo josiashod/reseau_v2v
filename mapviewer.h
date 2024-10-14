@@ -31,38 +31,54 @@ public:
      * @param id: id du noeud à retourner
      * @return nullptr si aucun noeud trouvé sinon retourn un pointeur sur noeud
      */
-    Node* findNodeById(unsigned int id);
+    Node* findNodeById(long long id);
     /**
      * @brief findWayById retourne la voie en fonction de l'id
      * @param id
      * @return
      */
-    Way* findWayById(unsigned int id);
+    Way* findWayById(long long id);
 
 public slots :
     void map_update();
+    /**
+     * Dessiner la couche des bâtiments
+     */
+    void drawBuildingLayer(const QVector<Building>& buildings);
+    /**
+     * Dessiner la couche un batiment
+     */
+    void drawBuilding(Building& b);
+    void drawWaterLayer(const QVector<Water>& waters);
+    void drawParkLayer(const QVector<Park>& parks);
+
+signals :
+    void buildingIsReady(Building& building);
+    void buildingsDataReady(const QVector<Building>& buildings);
+    void parksDataReady(const QVector<Park>& parks);
+    void watersDataReady(const QVector<Water>& waters);
 
 private:
     // database handler
-    DBManager d_db;
+//    DBManager d_db;
     // lon, lat coord
     std::pair<double, double> d_maxCoord, d_minCoord;
-    std::map<unsigned int, Node> d_nodes;
+//    std::map<long long, Node> d_nodes;
     std::map<QString, NodeD> d_descriptifNodes;
-    std::map<unsigned int, Water> d_waters;
-    std::map<unsigned int, Park> d_parks;
+    std::map<long long, Water> d_waters;
+    std::map<long long, Park> d_parks;
 
-    std::map<unsigned int, Way> d_roads;
-    std::map<unsigned int, Building> d_buildings;
+    std::map<long long, Way> d_roads;
+//    std::map<long long, Building> d_buildings;
 //    QVector<QPolygonF> d_meshs;
 
     double d_scale_factor = 1.15;
 
     // Permet d'afficher les différentes scenes
-    bool d_showPark         = false;
-    bool d_showWater        = false;
-    bool d_showBuilding     = false;
-    bool d_showWay          = false;
+    bool d_showPark         = true;
+    bool d_showWater        = true;
+    bool d_showBuilding     = true;
+    bool d_showWay          = true;
     bool d_showDescription  = true;
 //    bool d_showMesh  = true;
 
@@ -85,7 +101,7 @@ private:
     /**
      * @brief d_parcLayer couche d'affichage des espaces verts
      */
-    QGraphicsItemGroup* d_parcLayer;
+    QGraphicsItemGroup* d_parkLayer;
     /**
      * @brief d_buildingLayer couche d'affichage des batiments
      */
@@ -113,17 +129,12 @@ private:
     /**
      * @brief Dessiner la couche de
      */
-    void drawRoadLayer();
+    void drawRoadLayer();;
 
     /**
      * Dessiner la couche des bâtiments
      */
-    void drawBuildingLayer();
-
-    /**
-     * Dessiner la couche des bâtiments
-     */
-    void drawParkLayer();
+    /*void drawParkLayer()*/;
 
 //    /**
 //     * Dessiner la couche des mailles
@@ -162,7 +173,10 @@ private:
 
     void initBounds();
     void initNodeDs();
-    void initNodes();
+//    void initNodes();
+    void initBuildings();
+    void initParks();
+    void initWaters();
 //    void initMeshs();
 };
 

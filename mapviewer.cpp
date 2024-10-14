@@ -1,13 +1,14 @@
 #include "mapviewer.h"
 #include <QGraphicsRectItem>
 #include <QVBoxLayout>
+#include <QtConcurrent>
 
 
 // CRÉATION DE L'INTERFACE
 
 MapViewer::MapViewer(QWidget *parent)
-    : QGraphicsView{parent}, d_db{}, d_nodes{}, d_descriptifNodes{}, d_waters{},
-      d_parks{}, d_roads{}, d_buildings{}
+    : QGraphicsView{parent}, d_descriptifNodes{}, d_waters{},
+      d_parks{}, d_roads{}
 {
     creerInterface();
 //    initMeshs();
@@ -16,6 +17,7 @@ MapViewer::MapViewer(QWidget *parent)
 
 MapViewer::~MapViewer()
 {
+    DBManager::destroyInstance();
 }
 
 void MapViewer::creerInterface()
@@ -36,15 +38,32 @@ void MapViewer::creerInterface()
     setScene(d_scene);
     show();
 
+    d_waterLayer = new QGraphicsItemGroup();
+    d_waterLayer->setVisible(d_showWater);
+    d_scene->addItem(d_waterLayer);
+
+    d_parkLayer = new QGraphicsItemGroup();
+    d_parkLayer->setVisible(d_showPark);
+    d_scene->addItem(d_parkLayer);
+
+    d_buildingLayer = new QGraphicsItemGroup();
+    d_buildingLayer->setVisible(d_showBuilding);
+    d_scene->addItem(d_buildingLayer);
+
     d_descriptionLayer = new QGraphicsItemGroup();
     d_descriptionLayer->setVisible(d_showDescription);
     d_scene->addItem(d_descriptionLayer);
+
 
 //    d_meshLayer = new QGraphicsItemGroup();
 //    d_meshLayer->setVisible(d_showMesh);
 //    d_scene->addItem(d_meshLayer);
 
 //    layout->addWidget(d_view);
+
+    connect(this, &MapViewer::buildingsDataReady, this, &MapViewer::drawBuildingLayer);
+    connect(this, &MapViewer::parksDataReady, this, &MapViewer::drawParkLayer);
+//     connect(this, &MapViewer::watersDataReady, this, &MapViewer::drawWaterLayer);
 }
 
 void MapViewer::drawDescriptionLayer()
@@ -59,6 +78,43 @@ void MapViewer::drawDescriptionLayer()
         textItem->setFont(font);
 
         d_descriptionLayer->addToGroup(textItem);
+    }
+}
+
+void MapViewer::drawBuildingLayer(const QVector<Building>& buildings)
+{
+//    for (auto it = d_buildings.begin(); it != d_buildings.end(); ++it)
+//    {
+//        it->second.draw(d_buildingLayer, d_scale_factor);
+//    }
+    for (const Building& b : buildings)
+    {
+        b.draw(d_buildingLayer, d_scale_factor); // Dessine dans le thread principal
+    }
+}
+
+void MapViewer::drawBuilding(Building& building)
+{
+//    for (auto it = d_buildings.begin(); it != d_buildings.end(); ++it)
+//    {
+//        it->second.draw(d_buildingLayer, d_scale_factor);
+//    }
+
+    building.draw(d_buildingLayer, d_scale_factor); // Dessine dans le thread principal
+}
+
+void MapViewer::drawWaterLayer(const QVector<Water>& waters)
+{
+    for (const Water& b : waters)
+    {
+        b.draw(d_waterLayer, d_scale_factor); // Dessine dans le thread principal
+    }
+}
+void MapViewer::drawParkLayer(const QVector<Park>& parks)
+{
+    for (const Park& b : parks)
+    {
+        b.draw(d_parkLayer, d_scale_factor); // Dessine dans le thread principal
     }
 }
 
@@ -82,8 +138,16 @@ void MapViewer::resizeEvent(QResizeEvent *event)
     fitInView(d_scene->sceneRect(), Qt::KeepAspectRatio);
 
     initNodeDs();
-    initNodeDs();
+    // Lancer la fonction longue en asynchrone
+//    QtConcurrent::run(this, &MapViewer::initBuildings);
+    QtConcurrent::run([this]() {
+        this->initBuildings();
+        this->initParks();
+        this->initWaters();
+        DBManager::destroyInstance();
+    });
     drawDescriptionLayer();
+//    drawBuildingLayer();
 //    drawMeshLayer();
 
     // Configurer la vue (taille et centrage)
@@ -193,11 +257,12 @@ QPointF MapViewer::latLonToXY(double lon, double lat)
 
 void MapViewer::initBounds()
 {
-    QSqlQuery query;
+    auto db = DBManager::getInstance();
+    QSqlQuery query = db->getBounds(db->getDatabase());
     double minLat = 0.0, maxLat = 0.0, minLon = 0.0, maxLon = 0.0;
     bool success = false;
 
-    success = query.exec(d_db.getBounds());
+    success = query.exec();
 
     if(success)
     {
@@ -216,21 +281,22 @@ void MapViewer::initBounds()
 
 void MapViewer::initNodeDs()
 {
-    QSqlQuery query;
+    auto db = DBManager::getInstance();
+    QSqlQuery query = db->getNodeDs(db->getDatabase());
     bool success = false;
 
-    success = query.exec(d_db.getNodeDs());
+    success = query.exec();
     //    success = query.exec();
     if(success)
     {
         while(query.next())
         {
             std::pair<double, double> coord;
-            unsigned int id;
+            long long id;
             double lat = 0.0, lon = 0.0;
             QString name = "";
 
-            id = query.value(0).toString().toUInt();
+            id = query.value(0).toString().toLongLong();
             lat = query.value(1).toString().toDouble();
             lon = query.value(2).toString().toDouble();
 
@@ -242,31 +308,188 @@ void MapViewer::initNodeDs()
     }
 }
 
-void MapViewer::initNodes()
+//Node* MapViewer::findNodeById(long long id)
+//{
+//    if(d_nodes.find(id) != d_nodes.end())
+//        return &d_nodes.at(id);
+//    else
+//        return nullptr;
+//}
+
+//void MapViewer::initNodes()
+//{
+//    QSqlQuery query;
+//    bool success = false;
+
+//    success = query.exec(d_db.getNodes());
+//    //    success = query.exec();
+//    if(success)
+//    {
+//        while(query.next())
+//        {
+//            std::pair<double, double> coord;
+//            long long id;
+//            double lat = 0.0, lon = 0.0;
+//            QString name = "";
+
+//            id = query.value(0).toString().toLongLong();
+//            lat = query.value(1).toString().toDouble();
+//            lon = query.value(2).toString().toDouble();
+
+//            coord = lambert93(lon, lat);
+//            Node n{id, pairLatLonToXY(coord)};
+//            d_nodes.emplace(id, n);
+
+//            qDebug() << "Nodes: " << id;
+//        }
+//    }
+//}
+
+void MapViewer::initBuildings()
 {
-    QSqlQuery query;
+    QVector<Building> buildings;
+    auto db = DBManager::getInstance();
+    auto query = db->getBuildings(db->getDatabase());
     bool success = false;
 
-    success = query.exec(d_db.getNodes());
-    //    success = query.exec();
+    success = query.exec();
+
     if(success)
     {
         while(query.next())
         {
-            std::pair<double, double> coord;
-            unsigned int id;
-            double lat = 0.0, lon = 0.0;
-            QString name = "";
+            long long id;
+            id = query.value(0).toString().toLongLong();
 
-            id = query.value(0).toString().toUInt();
-            lat = query.value(1).toString().toDouble();
-            lon = query.value(2).toString().toDouble();
+            Building b{id};
+//            d_buildings.emplace(id, b);
 
-            coord = lambert93(lon, lat);
-            Node n{id, pairLatLonToXY(coord)};
-            d_nodes.emplace(id, n);
+            auto q = db->getWayNodes(db->getDatabase(), id);
+            success = q.exec();
+            if(success)
+            {
+                while(q.next())
+                {
+                    std::pair<double, double> coord;
+                    long long id;
+                    double lat = 0.0, lon = 0.0;
+
+                    id = q.value(0).toString().toLongLong();
+                    lat = q.value(1).toString().toDouble();
+                    lon = q.value(2).toString().toDouble();
+
+                    coord = lambert93(lon, lat);
+                    Node n{id, pairLatLonToXY(coord)};
+                    b.addNode(n);
+                }
+            }
+//            emit buildingIsReady(b);
+            buildings.push_back(b);
+            qDebug() << "building: " << id << " ok.";
         }
+
+        emit buildingsDataReady(buildings);
     }
+    else
+        qDebug() << "erreur";
+}
+
+void MapViewer::initParks()
+{
+    QVector<Park> parks;
+    auto db = DBManager::getInstance();
+    auto query = db->getParks(db->getDatabase());
+    bool success = false;
+
+    success = query.exec();
+
+    if(success)
+    {
+        while(query.next())
+        {
+            long long id;
+            id = query.value(0).toString().toLongLong();
+
+            Park p{id};
+//            d_buildings.emplace(id, b);
+
+            auto q = db->getWayNodes(db->getDatabase(), id);
+            success = q.exec();
+            if(success)
+            {
+                while(q.next())
+                {
+                    std::pair<double, double> coord;
+                    long long id;
+                    double lat = 0.0, lon = 0.0;
+
+                    id = q.value(0).toString().toLongLong();
+                    lat = q.value(1).toString().toDouble();
+                    lon = q.value(2).toString().toDouble();
+
+                    coord = lambert93(lon, lat);
+                    Node n{id, pairLatLonToXY(coord)};
+                    p.addNode(n);
+                }
+            }
+//            emit buildingIsReady(b);
+            parks.push_back(p);
+            qDebug() << "park: " << id << " ok.";
+        }
+
+        emit parksDataReady(parks);
+    }
+    else
+        qDebug() << "erreur";
+}
+
+void MapViewer::initWaters()
+{
+    QVector<Water> parks;
+    auto db = DBManager::getInstance();
+    auto query = db->getWaters(db->getDatabase());
+    bool success = false;
+
+    success = query.exec();
+
+    if(success)
+    {
+        while(query.next())
+        {
+            long long id;
+            id = query.value(0).toString().toLongLong();
+
+            Water p{id};
+//            d_buildings.emplace(id, b);
+
+            auto q = db->getWayNodes(db->getDatabase(), id);
+            success = q.exec();
+            if(success)
+            {
+                while(q.next())
+                {
+                    std::pair<double, double> coord;
+                    long long id;
+                    double lat = 0.0, lon = 0.0;
+
+                    id = q.value(0).toString().toLongLong();
+                    lat = q.value(1).toString().toDouble();
+                    lon = q.value(2).toString().toDouble();
+
+                    coord = lambert93(lon, lat);
+                    Node n{id, pairLatLonToXY(coord)};
+                    p.addNode(n);
+                }
+            }
+//            emit buildingIsReady(b);
+            parks.push_back(p);
+            qDebug() << "water: " << id << " ok.";
+        }
+
+        emit watersDataReady(parks);
+    }
+    else
+        qDebug() << "erreur";
 }
 
 //void MapViewer::initMeshs()

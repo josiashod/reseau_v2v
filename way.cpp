@@ -1,4 +1,7 @@
 #include "way.h"
 
-Way::Way(unsigned int id): MapItem{id}
+Way::Way(long long id): MapItem{id}
+{}
+
+void Way::draw(QGraphicsItemGroup* group, double scale_factor) const
 {}

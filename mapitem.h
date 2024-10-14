@@ -4,19 +4,22 @@
 #include <QString>
 #include <vector>
 #include <map>
+#include <QGraphicsItemGroup>
+#include <QBrush>
+#include <QPen>
 #include "node.h"
 
 class MapItem
 {
 public:
 
-    MapItem(unsigned int);
+    MapItem(long long);
 
     /**
      * @brief addNode: ajoute un noeud à la liste des noeuds du mapItem
      * @param n: le noeud en question
      */
-    void addNode(Node* n);
+    void addNode(const Node& n);
     /**
      * @brief addTag: ajoute un tag a
      * @param key
@@ -36,18 +39,14 @@ public:
      */
     QString tag(QString tag) const;
     /**
-     * @brief nodeSize: retourne le nombre de node du mapItem
-     * @return la taille des nodes
+     * @brief draw: dessine la route avec un scale_factor donné
+     * @param group le group ou doit etre l'instance
+     * @param scale_factor: le scale factor
      */
-    unsigned int nodeSize() const;
-//    /**
-//     * @brief draw: dessine le mapItem en fonction un scale_factor donné
-//     * @param scale_factor: le scale factor
-//     */
-//    virtual void draw(double scale_factor) const = 0;
+    virtual void draw(QGraphicsItemGroup* group, double scale_factor) const = 0;
 protected:
-    unsigned int d_id;
-    std::vector<Node*> d_nodes;
+    long long d_id;
+    std::vector<Node> d_nodes;
     std::map<QString, QString> d_tags;
 };
 

@@ -7,12 +7,12 @@
 class Node: public QPointF
 {
 public:
-    Node(unsigned int, QPointF);
-    Node(Node&);
+    Node(long long, QPointF);
+    Node(const Node&);
 
-    unsigned int id() const;
+    long long id() const;
 protected:
-    unsigned int d_id;
+    long long d_id;
 };
 
 #endif // NODE_H
