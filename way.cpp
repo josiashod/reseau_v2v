@@ -96,7 +96,7 @@ void Way::draw(QGraphicsItemGroup* group, double scale_factor) const
             QGraphicsTextItem *textItem = new QGraphicsTextItem("B");
             textItem->setPos(n);
             QFont font = textItem->font();
-            font.setPointSize(10 * scale_factor);  // Ajuster la taille de la police
+            font.setPointSize(3 * scale_factor);  // Ajuster la taille de la police
             textItem->setFont(font);
 
             group->addToGroup(textItem);
