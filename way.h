@@ -25,7 +25,7 @@ public:
      * @brief nodeSize: retourne le nombre de node du mapItem
      * @return la taille des nodes
      */
-    long long nodeSize() const;
+    unsigned int nodeSize() const;
 
     /**
      * @brief draw: dessine la route avec un scale_factor donné

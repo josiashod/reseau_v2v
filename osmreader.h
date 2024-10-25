@@ -10,11 +10,11 @@ class OsmReader
 {
 public:
     OsmReader();
-    void readOSMFile(const QString& filePath);
+    static void readOSMFile(const QString& filePath);
 private:
-    void readNode(QXmlStreamReader& xml);
+    static void readNode(QXmlStreamReader& xml);
 //    void readRelation(QXmlStreamReader& xml);
-    void readWay(QXmlStreamReader& xml);
+    static void readWay(QXmlStreamReader& xml);
 
 //    DBManager d_db;
 };

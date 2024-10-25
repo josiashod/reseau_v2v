@@ -7,8 +7,7 @@
 // CRÉATION DE L'INTERFACE
 
 MapViewer::MapViewer(QWidget *parent)
-    : QGraphicsView{parent}, d_descriptifNodes{}, d_waters{},
-      d_parks{}, d_roads{}
+    : QGraphicsView{parent}, d_descriptifNodes{}
 {
     creerInterface();
 //    initMeshs();
@@ -28,15 +27,18 @@ void MapViewer::creerInterface()
 
 //    d_view = new QGraphicsView{this};
     setMouseTracking(true);
-    setRenderHint(QPainter::Antialiasing);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setDragMode(QGraphicsView::ScrollHandDrag);
 
     d_scene = new QGraphicsScene(this);
-    d_scene->setBackgroundBrush(QColor(240, 240, 240)); // Gris clair
+    d_scene->setBackgroundBrush(QColor("#F2EFE9")); // Gris clair
     setScene(d_scene);
     show();
+
+    d_wayLayer = new QGraphicsItemGroup();
+    d_wayLayer->setVisible(d_showWay);
+    d_scene->addItem(d_wayLayer);
 
     d_waterLayer = new QGraphicsItemGroup();
     d_waterLayer->setVisible(d_showWater);
@@ -63,7 +65,8 @@ void MapViewer::creerInterface()
 
     connect(this, &MapViewer::buildingsDataReady, this, &MapViewer::drawBuildingLayer);
     connect(this, &MapViewer::parksDataReady, this, &MapViewer::drawParkLayer);
-//     connect(this, &MapViewer::watersDataReady, this, &MapViewer::drawWaterLayer);
+    connect(this, &MapViewer::watersDataReady, this, &MapViewer::drawWaterLayer);
+    connect(this, &MapViewer::roadsDataReady, this, &MapViewer::drawRoadLayer);
 }
 
 void MapViewer::drawDescriptionLayer()
@@ -93,28 +96,25 @@ void MapViewer::drawBuildingLayer(const QVector<Building>& buildings)
     }
 }
 
-void MapViewer::drawBuilding(Building& building)
-{
-//    for (auto it = d_buildings.begin(); it != d_buildings.end(); ++it)
-//    {
-//        it->second.draw(d_buildingLayer, d_scale_factor);
-//    }
-
-    building.draw(d_buildingLayer, d_scale_factor); // Dessine dans le thread principal
-}
-
 void MapViewer::drawWaterLayer(const QVector<Water>& waters)
 {
-    for (const Water& b : waters)
+    for (const Water& w : waters)
     {
-        b.draw(d_waterLayer, d_scale_factor); // Dessine dans le thread principal
+        w.draw(d_waterLayer, d_scale_factor); // Dessine dans le thread principal
     }
 }
 void MapViewer::drawParkLayer(const QVector<Park>& parks)
 {
-    for (const Park& b : parks)
+    for (const Park& p : parks)
     {
-        b.draw(d_parkLayer, d_scale_factor); // Dessine dans le thread principal
+        p.draw(d_parkLayer, d_scale_factor); // Dessine dans le thread principal
+    }
+}
+void MapViewer::drawRoadLayer(const QVector<Way>& ways)
+{
+    for (const Way& w : ways)
+    {
+        w.draw(d_wayLayer, d_scale_factor); // Dessine dans le thread principal
     }
 }
 
@@ -134,16 +134,19 @@ void MapViewer::resizeEvent(QResizeEvent *event)
 {
     // Mettre à jour la taille de la scène lors du redimensionnement de la vue
     QGraphicsView::resizeEvent(event);
+
+    setRenderHint(QPainter::Antialiasing);
 //    d_scene->setSceneRect(0, 0, event->size().width() * 2, event->size().height() * 2);
     fitInView(d_scene->sceneRect(), Qt::KeepAspectRatio);
 
     initNodeDs();
     // Lancer la fonction longue en asynchrone
 //    QtConcurrent::run(this, &MapViewer::initBuildings);
-    QtConcurrent::run([this]() {
-        this->initBuildings();
-        this->initParks();
+    (void)QtConcurrent::run([this]() {
         this->initWaters();
+        this->initParks();
+        this->initRoads();
+        this->initBuildings();
         DBManager::destroyInstance();
     });
     drawDescriptionLayer();
@@ -264,19 +267,25 @@ void MapViewer::initBounds()
 
     success = query.exec();
 
-    if(success)
-    {
-        if(query.next())
-        {
-            minLat = query.value(0).toString().toFloat();
-            maxLat = query.value(1).toString().toFloat();
-            minLon = query.value(2).toString().toFloat();
-            maxLon = query.value(3).toString().toFloat();
-        }
+    if (success && query.next()) {
+        // je récupère les bornes de la table nodes
+        minLat = query.value("min_lat").toDouble();
+        maxLat = query.value("max_lat").toDouble();
+        minLon = query.value("min_lon").toDouble();
+        maxLon = query.value("max_lon").toDouble();
+
+        // Applique la transformation Lambert93 aux bornes
+        d_maxCoord = lambert93(maxLon, maxLat);
+        d_minCoord = lambert93(minLon, minLat);
+
+        // Vérification des bornes projetées
+        qDebug() << "Max Coord (Lambert93):" << d_maxCoord;
+        qDebug() << "Min Coord (Lambert93):" << d_minCoord;
+    } else {
+        qDebug() << "Erreur lors de l'exécution de la requête de bornes.";
     }
 
-    d_maxCoord = lambert93(maxLon, maxLat);
-    d_minCoord = lambert93(minLon, minLat);
+    query.clear();
 }
 
 void MapViewer::initNodeDs()
@@ -306,6 +315,7 @@ void MapViewer::initNodeDs()
             d_descriptifNodes.emplace(name, n);
         }
     }
+    query.clear();
 }
 
 //Node* MapViewer::findNodeById(long long id)
@@ -362,7 +372,6 @@ void MapViewer::initBuildings()
             id = query.value(0).toString().toLongLong();
 
             Building b{id};
-//            d_buildings.emplace(id, b);
 
             auto q = db->getWayNodes(db->getDatabase(), id);
             success = q.exec();
@@ -383,12 +392,12 @@ void MapViewer::initBuildings()
                     b.addNode(n);
                 }
             }
-//            emit buildingIsReady(b);
             buildings.push_back(b);
-            qDebug() << "building: " << id << " ok.";
+            qDebug() << "building: " << id;
         }
-
+        query.clear();
         emit buildingsDataReady(buildings);
+        qDebug() << "emit buildings";
     }
     else
         qDebug() << "erreur";
@@ -411,7 +420,6 @@ void MapViewer::initParks()
             id = query.value(0).toString().toLongLong();
 
             Park p{id};
-//            d_buildings.emplace(id, b);
 
             auto q = db->getWayNodes(db->getDatabase(), id);
             success = q.exec();
@@ -432,11 +440,10 @@ void MapViewer::initParks()
                     p.addNode(n);
                 }
             }
-//            emit buildingIsReady(b);
             parks.push_back(p);
-            qDebug() << "park: " << id << " ok.";
+            qDebug() << "park: " << id;
         }
-
+        query.clear();
         emit parksDataReady(parks);
     }
     else
@@ -445,7 +452,7 @@ void MapViewer::initParks()
 
 void MapViewer::initWaters()
 {
-    QVector<Water> parks;
+    QVector<Water> waters;
     auto db = DBManager::getInstance();
     auto query = db->getWaters(db->getDatabase());
     bool success = false;
@@ -459,8 +466,7 @@ void MapViewer::initWaters()
             long long id;
             id = query.value(0).toString().toLongLong();
 
-            Water p{id};
-//            d_buildings.emplace(id, b);
+            Water w{id};
 
             auto q = db->getWayNodes(db->getDatabase(), id);
             success = q.exec();
@@ -478,15 +484,65 @@ void MapViewer::initWaters()
 
                     coord = lambert93(lon, lat);
                     Node n{id, pairLatLonToXY(coord)};
-                    p.addNode(n);
+                    w.addNode(n);
                 }
             }
-//            emit buildingIsReady(b);
-            parks.push_back(p);
-            qDebug() << "water: " << id << " ok.";
+            waters.push_back(w);
+            qDebug() << "water: " << id;
         }
+        query.clear();
+        emit watersDataReady(waters);
+        qDebug() << "emits waters";
+    }
+    else
+        qDebug() << "erreur";
+}
 
-        emit watersDataReady(parks);
+void MapViewer::initRoads()
+{
+    QVector<Way> ways;
+    auto db = DBManager::getInstance();
+    auto query = db->getRoads(db->getDatabase());
+    bool success = false;
+
+    success = query.exec();
+
+    if(success)
+    {
+        while(query.next())
+        {
+            long long id;
+            id = query.value(0).toString().toLongLong();
+
+            Way w{id};
+
+            w.addTag(query.value(3).toString(), query.value(4).toString());
+
+            auto q = db->getWayNodes(db->getDatabase(), id);
+            success = q.exec();
+            if(success)
+            {
+                while(q.next())
+                {
+                    std::pair<double, double> coord;
+                    long long id;
+                    double lat = 0.0, lon = 0.0;
+
+                    id = q.value(0).toString().toLongLong();
+                    lat = q.value(1).toString().toDouble();
+                    lon = q.value(2).toString().toDouble();
+
+                    coord = lambert93(lon, lat);
+                    Node n{id, pairLatLonToXY(coord)};
+                    w.addNode(n);
+                }
+            }
+            ways.push_back(w);
+            qDebug() << "ways: " << id;
+        }
+        query.clear();
+        emit roadsDataReady(ways);
+        qDebug() << "emit ways";
     }
     else
         qDebug() << "erreur";
@@ -520,53 +576,6 @@ void MapViewer::initWaters()
 //    }
 //}
 
-
-//void MapViewer::paintEvent(QPaintEvent *)
-//{
-//    QPainter painter{this};
-//    dessinePolygone(painter);
-
-////    DBManager db{};
-////    QSqlQuery query;
-////    bool success = query.exec("SELECT * FROM nodes");
-////    if(success)
-////    {
-////        while(query.next())
-////        {
-////            long long id = query.value(0).toString().toLongLong();
-////            double lat = query.value(1).toString().toFloat();
-////            double lon = query.value(2).toString().toFloat();
-////            painter.drawEllipse(latLonToXY(lat, lon), 1, 1);
-////        }
-////    }
-//}
-
-//void MapViewer::dessinePolygone(QPainter &painter)
-//{
-//    static const QPointF points[4] = {
-//        QPointF(10.0, 80.0),
-//        QPointF(20.0, 10.0),
-//        QPointF(80.0, 30.0),
-//        QPointF(90.0, 70.0)
-//    };
-
-//    painter.drawPolygon(points, 4);
-//}
-
-//void MapViewer::dessinerHexagone(QPainter &painter, double cx, double cy, double r)
-//{
-//    painter.setPen(Qt::black);
-//    QPolygonF hexagon;
-
-//    for (int i = 0; i < 6; ++i) {
-//        double angle_rad = 2 * M_PI * i / 6.0;
-//        double x = cx + r * std::cos(angle_rad);
-//        double y = cy + r * std::sin(angle_rad);
-//        hexagon << QPointF(x, y);
-//    }
-
-//    painter.drawPolygon(hexagon);
-//}
 
 void MapViewer::map_update()
 {

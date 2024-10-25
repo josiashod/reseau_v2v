@@ -14,11 +14,11 @@ void Park::draw(QGraphicsItemGroup* group, double scale_factor) const
 
     auto park = new QGraphicsPolygonItem();
     park->setPolygon(polygon);
-    QBrush brush{QColor(141, 197, 108)};
-    QPen pen{QColor(0, 0, 0), 1}; // Noir, épaisseur 1 pixel
+    QBrush brush{QColor(205, 235, 176)};
+    QPen pen{QColor(172, 225, 120), 1}; // Noir, épaisseur 1 pixel
     park->setPen(pen);
     park->setBrush(brush);
-    qDebug() << "draw.";
+    qDebug() << "drawing park: " << d_id;
 
     group->addToGroup(park);
 }

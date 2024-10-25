@@ -21,11 +21,18 @@ DBManager::DBManager()
 
 DBManager::~DBManager()
 {
+    qDebug() << "is call";
     QString threadId = QString::number(reinterpret_cast<quintptr>(QThread::currentThreadId()));
     if (QSqlDatabase::contains(threadId)) {
+        qDebug() << threadId;
         QSqlDatabase db = QSqlDatabase::database(threadId);
-        db.close();
+        if (db.isOpen()) {
+            db.close(); // Close the database connection
+        }
+
+        qDebug() << db.isOpen();
         QSqlDatabase::removeDatabase(threadId);
+        QSqlDatabase::removeDatabase(db.connectionName());
     }
 
 //    if (d_db.isOpen())
@@ -69,7 +76,7 @@ QSqlDatabase DBManager::getDatabase()
     QString threadId = QString::number(reinterpret_cast<quintptr>(QThread::currentThreadId()));
     if (!QSqlDatabase::contains(threadId)) {
         QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE", threadId);
-    //    d_db.setDatabaseName("/home/josh/projects/QtProjects/mulhouse_network/lib/geo.db");
+
         db.setDatabaseName(dbPath);
 
        if (!db.open())
@@ -157,7 +164,7 @@ QSqlQuery DBManager::getBuildings(QSqlDatabase db) const
     QString queryStr = QString("SELECT * "
         "FROM %1 "
         "LEFT JOIN %2 as t ON t.element_id = %1.id "
-        "WHERE t.key = 'building' LIMIT 1").arg(_WAYS_TABLE_, _TAGS_TABLE_);
+        "WHERE t.key = 'building'").arg(_WAYS_TABLE_, _TAGS_TABLE_);
 
     QSqlQuery q(db);
     if (!q.prepare(queryStr)) {
@@ -173,8 +180,7 @@ QSqlQuery DBManager::getParks(QSqlDatabase db) const
         "FROM %1 "
         "LEFT JOIN %2 as t ON t.element_id = %1.id "
         "WHERE (t.key = 'leisure' AND t.value IN ('garden', 'nature_reserve', 'playground', 'nature_reserve')) "
-        "OR (t.key = 'landuse' AND t.value = 'grass') "
-        "OR (t.key = 'natural' AND t.value = 'wood') ").arg(_WAYS_TABLE_, _TAGS_TABLE_);
+        "OR (t.key = 'landuse' AND t.value = 'grass') ").arg(_WAYS_TABLE_, _TAGS_TABLE_);
     QSqlQuery q(db);
     if (!q.prepare(queryStr)) {
         qDebug() << "Error preparing query: " << q.lastError().text();

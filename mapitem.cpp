@@ -2,14 +2,12 @@
 #include "dbmanager.h"
 
 
-MapItem::MapItem(unsigned int id)
+MapItem::MapItem(long long id)
     : d_id{id}  
 {}
 
 void MapItem::addNode(const Node& n) {
-    if (n != nullptr) {
-        d_nodes.push_back(n);
-    }
+    d_nodes.push_back(n);
 }
 
 void MapItem::addTag(const QString& key, const QString& value) {

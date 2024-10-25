@@ -13,7 +13,6 @@ void OsmReader::readOSMFile(const QString& filePath) {
         return;
     }
 
-//    auto db = *d_db.getInstance();
     QXmlStreamReader xml(&file);
 
     while (!xml.atEnd() && !xml.hasError()) {
@@ -35,6 +34,8 @@ void OsmReader::readOSMFile(const QString& filePath) {
     }
 
     file.close();
+
+    DBManager::destroyInstance();
 }
 
 void OsmReader::readNode(QXmlStreamReader& xml) {
@@ -42,8 +43,8 @@ void OsmReader::readNode(QXmlStreamReader& xml) {
     double lon = xml.attributes().value("lon").toDouble();
     long long id = xml.attributes().value("id").toString().toLongLong();
 
-
-    QSqlQuery query;
+    auto db = DBManager::getInstance()->getDatabase();
+    QSqlQuery query(db);
     query.prepare("INSERT INTO nodes(id, lat, lon) VALUES(:id, :lat, :lon)");
     query.bindValue(":id", id);
     query.bindValue(":lat", lat);
@@ -54,7 +55,7 @@ void OsmReader::readNode(QXmlStreamReader& xml) {
        }
        else
        {
-            qDebug() << "add node error";
+            qDebug() << "add node error " << db.lastError().text();;
        }
 
     // Parcourir les nœuds du chemin
@@ -75,13 +76,17 @@ void OsmReader::readNode(QXmlStreamReader& xml) {
                }
         }
     }
+
+    query.finish();
+    query.clear();
 }
 
 void OsmReader::readWay(QXmlStreamReader& xml)
 {
     long long wayId = xml.attributes().value("id").toString().toLongLong();
     std::vector<long long> node_ids;
-    QSqlQuery query;
+    auto db = DBManager::getInstance()->getDatabase();
+    QSqlQuery query(db);
 
     // Parcourir les nœuds du chemin
     while (!(xml.tokenType() == QXmlStreamReader::EndElement && xml.name().toString() == "way"))
@@ -124,6 +129,9 @@ void OsmReader::readWay(QXmlStreamReader& xml)
                qDebug() << "add node way success";
            }
     }
+
+    query.finish();
+    query.clear();
 }
 
 //void OsmReader::readRelation(QXmlStreamReader& xml) {

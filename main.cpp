@@ -19,4 +19,6 @@ int main(int argc, char *argv[])
     w.show();
     return a.exec();
 
+//    OsmReader::readOSMFile("/home/josh/Téléchargements/mulhouse.osm");
+    return 0;
 }

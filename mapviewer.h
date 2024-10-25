@@ -45,18 +45,18 @@ public slots :
      * Dessiner la couche des bâtiments
      */
     void drawBuildingLayer(const QVector<Building>& buildings);
-    /**
-     * Dessiner la couche un batiment
-     */
-    void drawBuilding(Building& b);
     void drawWaterLayer(const QVector<Water>& waters);
     void drawParkLayer(const QVector<Park>& parks);
+    /**
+     * @brief Dessiner la couche de
+     */
+    void drawRoadLayer(const QVector<Way>& roads);
 
 signals :
-    void buildingIsReady(Building& building);
     void buildingsDataReady(const QVector<Building>& buildings);
     void parksDataReady(const QVector<Park>& parks);
     void watersDataReady(const QVector<Water>& waters);
+    void roadsDataReady(const QVector<Way>& roads);
 
 private:
     // database handler
@@ -65,10 +65,10 @@ private:
     std::pair<double, double> d_maxCoord, d_minCoord;
 //    std::map<long long, Node> d_nodes;
     std::map<QString, NodeD> d_descriptifNodes;
-    std::map<long long, Water> d_waters;
-    std::map<long long, Park> d_parks;
+//    std::map<long long, Water> d_waters;
+//    std::map<long long, Park> d_parks;
 
-    std::map<long long, Way> d_roads;
+    const QVector<Way> d_roads;
 //    std::map<long long, Building> d_buildings;
 //    QVector<QPolygonF> d_meshs;
 
@@ -126,14 +126,9 @@ private:
      */
     void drawDescriptionLayer();
 
-    /**
-     * @brief Dessiner la couche de
-     */
-    void drawRoadLayer();;
-
-    /**
-     * Dessiner la couche des bâtiments
-     */
+//    /**
+//     * Dessiner la couche des bâtiments
+//     */
     /*void drawParkLayer()*/;
 
 //    /**
@@ -141,10 +136,10 @@ private:
 //     */
 //    void drawMeshLayer();
 
-    /**
-     * Dessiner la couche d'eau
-     */
-    void drawWaterLayer();
+//    /**
+//     * Dessiner la couche d'eau
+//     */
+//    void drawWaterLayer();
 
 //    void paintEvent(QPaintEvent *) override;
 //    void dessinePolygone(QPainter &painter);
@@ -177,6 +172,7 @@ private:
     void initBuildings();
     void initParks();
     void initWaters();
+    void initRoads();
 //    void initMeshs();
 };
 
