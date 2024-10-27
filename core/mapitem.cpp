@@ -1,5 +1,4 @@
 #include "mapitem.h"
-#include "dbmanager.h"
 
 
 MapItem::MapItem(long long id)

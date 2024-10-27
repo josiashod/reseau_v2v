@@ -1,4 +1,4 @@
-#include "mainwindow.h"
+#include "ui/windows/mainwindow.h"
 #include <QCoreApplication>
 #include <QFile>
 #include <QXmlStreamReader>
@@ -9,7 +9,7 @@
 #include <QApplication>
 #include <QLocale>
 #include <QTranslator>
-#include "osmreader.h"
+#include "utils/osmreader.h"
 
 int main(int argc, char *argv[])
 {
@@ -19,6 +19,6 @@ int main(int argc, char *argv[])
     w.show();
     return a.exec();
 
-//    OsmReader::readOSMFile("/home/josh/Téléchargements/mulhouse.osm");
+//    OsmReader::readOSMFile("/home/josh/Téléchargements/osm/data1");
     return 0;
 }

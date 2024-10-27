@@ -77,7 +77,7 @@ void MapViewer::drawDescriptionLayer()
         QGraphicsTextItem *textItem = new QGraphicsTextItem(it->second.name());
         textItem->setPos(it->second);
         QFont font = textItem->font();
-        font.setPointSize(2 / d_scale_factor);  // Ajuster la taille de la police
+        font.setPointSize(4 / d_scale_factor);  // Ajuster la taille de la police
         textItem->setFont(font);
 
         d_descriptionLayer->addToGroup(textItem);
@@ -103,6 +103,7 @@ void MapViewer::drawWaterLayer(const QVector<Water>& waters)
         w.draw(d_waterLayer, d_scale_factor); // Dessine dans le thread principal
     }
 }
+
 void MapViewer::drawParkLayer(const QVector<Park>& parks)
 {
     for (const Park& p : parks)
@@ -110,6 +111,7 @@ void MapViewer::drawParkLayer(const QVector<Park>& parks)
         p.draw(d_parkLayer, d_scale_factor); // Dessine dans le thread principal
     }
 }
+
 void MapViewer::drawRoadLayer(const QVector<Way>& ways)
 {
     for (const Way& w : ways)
@@ -548,6 +550,36 @@ void MapViewer::initRoads()
         qDebug() << "erreur";
 }
 
+void MapViewer::setShowPark(bool show)
+{
+    d_showPark = show;
+    d_parkLayer->setVisible(d_showPark);
+}
+
+void MapViewer::setShowBuilding(bool show)
+{
+    d_showBuilding = show;
+    d_buildingLayer->setVisible(d_showBuilding);
+}
+
+void MapViewer::setShowRoad(bool show)
+{
+    d_showWay = show;
+    d_wayLayer->setVisible(d_showWay);
+}
+
+void MapViewer::setShowWater(bool show)
+{
+    d_showWater = show;
+    d_waterLayer->setVisible(show);
+}
+
+void MapViewer::setShowDescription(bool show)
+{
+    d_showDescription = show;
+    d_descriptionLayer->setVisible(d_showDescription);
+}
+
 //void MapViewer::initMeshs()
 //{
 //    qreal hexRadius = 8.0;  // Adjust size as needed
@@ -577,7 +609,7 @@ void MapViewer::initRoads()
 //}
 
 
-void MapViewer::map_update()
-{
-    //update();
-}
+//void MapViewer::map_update()
+//{
+//    //update();
+//}

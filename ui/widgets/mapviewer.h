@@ -10,13 +10,13 @@
 #include <map>
 #include <proj.h>
 
-#include "node.h"
-#include "noded.h"
-#include "way.h"
-#include "building.h"
-#include "water.h"
-#include "park.h"
-#include "dbmanager.h"
+#include "./../../core/node.h"
+#include "./../../core/noded.h"
+#include "./../../core/way.h"
+#include "./../../core/building.h"
+#include "./../../core/water.h"
+#include "./../../core/park.h"
+#include "./../../utils/dbmanager.h"
 
 
 class MapViewer : public QGraphicsView
@@ -26,21 +26,27 @@ public:
     explicit MapViewer(QWidget *parent = nullptr);
     ~MapViewer();
 
-    /**
-     * @brief findNodeById retourne le noeud correspondant à l'id donné
-     * @param id: id du noeud à retourner
-     * @return nullptr si aucun noeud trouvé sinon retourn un pointeur sur noeud
-     */
-    Node* findNodeById(long long id);
-    /**
-     * @brief findWayById retourne la voie en fonction de l'id
-     * @param id
-     * @return
-     */
-    Way* findWayById(long long id);
+//    /**
+//     * @brief findNodeById retourne le noeud correspondant à l'id donné
+//     * @param id: id du noeud à retourner
+//     * @return nullptr si aucun noeud trouvé sinon retourn un pointeur sur noeud
+//     */
+//    Node* findNodeById(long long id);
+//    /**
+//     * @brief findWayById retourne la voie en fonction de l'id
+//     * @param id
+//     * @return
+//     */
+//    Way* findWayById(long long id);
 
-public slots :
-    void map_update();
+    void setShowPark(bool);
+    void setShowBuilding(bool);
+    void setShowRoad(bool);
+    void setShowWater(bool);
+    void setShowDescription(bool);
+
+private slots :
+//    void map_update();
     /**
      * Dessiner la couche des bâtiments
      */

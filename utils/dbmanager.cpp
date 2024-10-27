@@ -6,8 +6,6 @@
 #include <QStandardPaths>
 #include <QDir>
 
-#include "mapviewer.h"
-
 const QString _NODES_TABLE_ = "nodes";
 const QString _WAYS_TABLE_ = "ways";
 const QString _WAY_NODE_TABLE_ = "way_node";
