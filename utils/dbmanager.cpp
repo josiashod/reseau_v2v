@@ -19,7 +19,6 @@ DBManager::DBManager()
 
 DBManager::~DBManager()
 {
-    qDebug() << "is call";
     QString threadId = QString::number(reinterpret_cast<quintptr>(QThread::currentThreadId()));
     if (QSqlDatabase::contains(threadId)) {
         qDebug() << threadId;
@@ -27,8 +26,6 @@ DBManager::~DBManager()
         if (db.isOpen()) {
             db.close(); // Close the database connection
         }
-
-        qDebug() << db.isOpen();
         QSqlDatabase::removeDatabase(threadId);
         QSqlDatabase::removeDatabase(db.connectionName());
     }

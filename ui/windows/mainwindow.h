@@ -2,7 +2,8 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include "../widgets/mapviewer.h"
+#include "../widgets/mapwidget.h"
+#include "../widgets/logwidget.h"
 
 class MainWindow : public QMainWindow
 {
@@ -18,15 +19,18 @@ private slots:
     void onShowHideWaters(bool);
     void onShowHideParks(bool);
     void onShowHideDescs(bool);
+    void onShowHideLogs(bool);
 
 private:
     void creerInterface();
-    MapViewer* d_map;
+    MapWidget* d_mapView;
+    LogWidget* d_logsView;
 
     bool d_showRoads = true;
     bool d_showWaters = true;
     bool d_showBuildings = true;
     bool d_showParks = true;
     bool d_showDescs = true;
+    bool d_showLogs = false;
 };
 #endif // MAINWINDOW_H

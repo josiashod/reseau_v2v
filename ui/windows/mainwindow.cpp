@@ -23,7 +23,7 @@ void MainWindow::creerInterface()
     setFixedSize(width , height);
 
     auto viewMenu = menuBar()->addMenu("Vue");
-    auto logMenu = menuBar()->addMenu("Log");
+//    auto logMenu = menuBar()->addMenu("Logs");
 
     QAction *showRoadAct = new QAction{"Afficher/Masquer les routes"};
     viewMenu->addAction(showRoadAct);
@@ -40,51 +40,69 @@ void MainWindow::creerInterface()
     QAction *showDescAct = new QAction{"Afficher/Masquer les description"};
     viewMenu->addAction(showDescAct);
 
+    QAction *showLogsAct = new QAction{"Afficher/Masquer les logs"};
+    viewMenu->addAction(showLogsAct);
+
     connect(showRoadAct, &QAction::triggered, this, &MainWindow::onShowHideRoads);
     connect(showBuildindAct, &QAction::triggered, this, &MainWindow::onShowHideBuildings);
     connect(showWaterAct, &QAction::triggered, this, &MainWindow::onShowHideWaters);
     connect(showParcAct, &QAction::triggered, this, &MainWindow::onShowHideParks);
     connect(showDescAct, &QAction::triggered, this, &MainWindow::onShowHideDescs);
+    connect(showLogsAct, &QAction::triggered, this, &MainWindow::onShowHideLogs);
 
     auto mainWidget {new QWidget{this}};
-    auto *mainHlayout = new QHBoxLayout();
-    mainHlayout->setContentsMargins(0, 0, 0, 0);
-    mainWidget->setLayout(mainHlayout);
+    auto *mainLayout = new QHBoxLayout();
+    mainLayout->setContentsMargins(0, 0, 0, 0);
+    mainWidget->setLayout(mainLayout);
     setCentralWidget(mainWidget);
 
-    d_map = new MapViewer{this};
-    mainHlayout->addWidget(d_map, 1);
-    mainHlayout->addWidget(new QLabel{"test"});
+    d_mapView = new MapWidget{this};
+    mainLayout->addWidget(d_mapView, 1);
+
+    d_logsView = new LogWidget{this};
+    d_logsView->hide();
+    mainLayout->addWidget(d_logsView);
+    mainLayout->setContentsMargins(0, 0, 0, 0);
 }
 
 void MainWindow::onShowHideBuildings(bool)
 {
     d_showBuildings = !d_showBuildings;
-    d_map->setShowBuilding(d_showBuildings);
+    d_mapView->setShowBuilding(d_showBuildings);
 }
 
 void MainWindow::onShowHideRoads(bool)
 {
     d_showRoads = !d_showRoads;
-    d_map->setShowRoad(d_showRoads);
+    d_mapView->setShowRoad(d_showRoads);
 }
 
 void MainWindow::onShowHideWaters(bool)
 {
     d_showWaters = !d_showWaters;
-    d_map->setShowWater(d_showWaters);
+    d_mapView->setShowWater(d_showWaters);
 }
 
 void MainWindow::onShowHideParks(bool)
 {
     d_showParks = !d_showParks;
-    d_map->setShowPark(d_showParks);
+    d_mapView->setShowPark(d_showParks);
 }
 
 void MainWindow::onShowHideDescs(bool)
 {
     d_showDescs = !d_showDescs;
-    d_map->setShowDescription(d_showDescs);
+    d_mapView->setShowDescription(d_showDescs);
+}
+
+void MainWindow::onShowHideLogs(bool)
+{
+    d_showLogs = !d_showLogs;
+
+    if(d_showLogs)
+        d_logsView->show();
+    else
+        d_logsView->hide();
 }
 
 MainWindow::~MainWindow()

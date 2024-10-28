@@ -1,12 +1,13 @@
-#include "mapviewer.h"
+#include "mapwidget.h"
 #include <QGraphicsRectItem>
 #include <QVBoxLayout>
 #include <QtConcurrent>
+#include "logwidget.h"
 
 
 // CRÉATION DE L'INTERFACE
 
-MapViewer::MapViewer(QWidget *parent)
+MapWidget::MapWidget(QWidget *parent)
     : QGraphicsView{parent}, d_descriptifNodes{}
 {
     creerInterface();
@@ -14,12 +15,12 @@ MapViewer::MapViewer(QWidget *parent)
     initBounds();
 }
 
-MapViewer::~MapViewer()
+MapWidget::~MapWidget()
 {
     DBManager::destroyInstance();
 }
 
-void MapViewer::creerInterface()
+void MapWidget::creerInterface()
 {
 //    QVBoxLayout *layout = new QVBoxLayout(this);
 //    layout->setContentsMargins(0, 0, 0, 0);
@@ -63,13 +64,13 @@ void MapViewer::creerInterface()
 
 //    layout->addWidget(d_view);
 
-    connect(this, &MapViewer::buildingsDataReady, this, &MapViewer::drawBuildingLayer);
-    connect(this, &MapViewer::parksDataReady, this, &MapViewer::drawParkLayer);
-    connect(this, &MapViewer::watersDataReady, this, &MapViewer::drawWaterLayer);
-    connect(this, &MapViewer::roadsDataReady, this, &MapViewer::drawRoadLayer);
+    connect(this, &MapWidget::buildingsDataReady, this, &MapWidget::drawBuildingLayer);
+    connect(this, &MapWidget::parksDataReady, this, &MapWidget::drawParkLayer);
+    connect(this, &MapWidget::watersDataReady, this, &MapWidget::drawWaterLayer);
+    connect(this, &MapWidget::roadsDataReady, this, &MapWidget::drawRoadLayer);
 }
 
-void MapViewer::drawDescriptionLayer()
+void MapWidget::drawDescriptionLayer()
 {
     for (auto it = d_descriptifNodes.begin(); it != d_descriptifNodes.end(); ++it)
     {
@@ -84,7 +85,7 @@ void MapViewer::drawDescriptionLayer()
     }
 }
 
-void MapViewer::drawBuildingLayer(const QVector<Building>& buildings)
+void MapWidget::drawBuildingLayer(const QVector<Building>& buildings)
 {
 //    for (auto it = d_buildings.begin(); it != d_buildings.end(); ++it)
 //    {
@@ -96,7 +97,7 @@ void MapViewer::drawBuildingLayer(const QVector<Building>& buildings)
     }
 }
 
-void MapViewer::drawWaterLayer(const QVector<Water>& waters)
+void MapWidget::drawWaterLayer(const QVector<Water>& waters)
 {
     for (const Water& w : waters)
     {
@@ -104,7 +105,7 @@ void MapViewer::drawWaterLayer(const QVector<Water>& waters)
     }
 }
 
-void MapViewer::drawParkLayer(const QVector<Park>& parks)
+void MapWidget::drawParkLayer(const QVector<Park>& parks)
 {
     for (const Park& p : parks)
     {
@@ -112,7 +113,7 @@ void MapViewer::drawParkLayer(const QVector<Park>& parks)
     }
 }
 
-void MapViewer::drawRoadLayer(const QVector<Way>& ways)
+void MapWidget::drawRoadLayer(const QVector<Way>& ways)
 {
     for (const Way& w : ways)
     {
@@ -120,7 +121,7 @@ void MapViewer::drawRoadLayer(const QVector<Way>& ways)
     }
 }
 
-//void MapViewer::drawMeshLayer()
+//void MapWidget::drawMeshLayer()
 //{
 //    for (QPolygonF& hexagon : d_meshs)
 //    {
@@ -132,34 +133,34 @@ void MapViewer::drawRoadLayer(const QVector<Way>& ways)
 //    }
 //}
 
-void MapViewer::resizeEvent(QResizeEvent *event)
+void MapWidget::resizeEvent(QResizeEvent *event)
 {
     // Mettre à jour la taille de la scène lors du redimensionnement de la vue
     QGraphicsView::resizeEvent(event);
 
-    setRenderHint(QPainter::Antialiasing);
-//    d_scene->setSceneRect(0, 0, event->size().width() * 2, event->size().height() * 2);
-    fitInView(d_scene->sceneRect(), Qt::KeepAspectRatio);
+    if(!d_elementsHasBeenLoaded)
+    {
+        setRenderHint(QPainter::Antialiasing);
+    //    d_scene->setSceneRect(0, 0, event->size().width() * 2, event->size().height() * 2);
+        fitInView(d_scene->sceneRect(), Qt::KeepAspectRatio);
+        initNodeDs();
+        // Lancer la fonction longue en asynchrone
+        (void)QtConcurrent::run([this]() {
+            this->initWaters();
+            this->initParks();
+            this->initRoads();
+    //        this->initBuildings();
+            DBManager::destroyInstance();
+        });
+        drawDescriptionLayer();
+        d_elementsHasBeenLoaded = true;
 
-    initNodeDs();
-    // Lancer la fonction longue en asynchrone
-//    QtConcurrent::run(this, &MapViewer::initBuildings);
-    (void)QtConcurrent::run([this]() {
-        this->initWaters();
-        this->initParks();
-        this->initRoads();
-        this->initBuildings();
-        DBManager::destroyInstance();
-    });
-    drawDescriptionLayer();
-//    drawBuildingLayer();
-//    drawMeshLayer();
-
-    // Configurer la vue (taille et centrage)
-    setAlignment(Qt::AlignCenter);
+        // Configurer la vue (taille et centrage)
+        setAlignment(Qt::AlignCenter);
+    }
 }
 
-void MapViewer::wheelEvent(QWheelEvent *event)
+void MapWidget::wheelEvent(QWheelEvent *event)
 {
     // Zoomer avec la molette de la souris
     const double scaleFactor = 1.1;  // Facteur de zoom
@@ -184,7 +185,7 @@ void MapViewer::wheelEvent(QWheelEvent *event)
 //    }
 }
 
-//void MapViewer::mousePressEvent(QMouseEvent *event)
+//void MapWidget::mousePressEvent(QMouseEvent *event)
 //{
 //    // Vérifiez si le bouton gauche de la souris est pressé
 //    if (event->button() == Qt::LeftButton) {
@@ -195,20 +196,20 @@ void MapViewer::wheelEvent(QWheelEvent *event)
 //    }
 //}
 
-//void MapViewer::mouseReleaseEvent(QMouseEvent *event)
+//void MapWidget::mouseReleaseEvent(QMouseEvent *event)
 //{
 //    setDragMode(QGraphicsView::NoDrag);
 //    QGraphicsView::mouseReleaseEvent(event);
 //}
 
-//void MapViewer::mouseMoveEvent(QMouseEvent *event)
+//void MapWidget::mouseMoveEvent(QMouseEvent *event)
 //{
 //    setDragMode(QGraphicsView::NoDrag);
 //    QGraphicsView::mouseReleaseEvent(event);
 //}
 
 
-std::pair<double, double> MapViewer::lambert93(double longitude, double latitude)
+std::pair<double, double> MapWidget::lambert93(double longitude, double latitude)
 {
     // Créer un contexte PROJ
     PJ_CONTEXT *ctx = proj_context_create();
@@ -245,12 +246,12 @@ std::pair<double, double> MapViewer::lambert93(double longitude, double latitude
     return {result.xyzt.x, result.xyzt.y}; // Retourner les coordonnées Lambert93
 }
 
-QPointF MapViewer::pairLatLonToXY(std::pair<double, double>& coord)
+QPointF MapWidget::pairLatLonToXY(std::pair<double, double>& coord)
 {
     return latLonToXY(coord.first, coord.second);
 }
 
-QPointF MapViewer::latLonToXY(double lon, double lat)
+QPointF MapWidget::latLonToXY(double lon, double lat)
 {
     double width = this->width(), height = this->height();
 
@@ -260,7 +261,7 @@ QPointF MapViewer::latLonToXY(double lon, double lat)
     return {x, y};
 }
 
-void MapViewer::initBounds()
+void MapWidget::initBounds()
 {
     auto db = DBManager::getInstance();
     QSqlQuery query = db->getBounds(db->getDatabase());
@@ -290,7 +291,7 @@ void MapViewer::initBounds()
     query.clear();
 }
 
-void MapViewer::initNodeDs()
+void MapWidget::initNodeDs()
 {
     auto db = DBManager::getInstance();
     QSqlQuery query = db->getNodeDs(db->getDatabase());
@@ -320,7 +321,7 @@ void MapViewer::initNodeDs()
     query.clear();
 }
 
-//Node* MapViewer::findNodeById(long long id)
+//Node* MapWidget::findNodeById(long long id)
 //{
 //    if(d_nodes.find(id) != d_nodes.end())
 //        return &d_nodes.at(id);
@@ -328,7 +329,7 @@ void MapViewer::initNodeDs()
 //        return nullptr;
 //}
 
-//void MapViewer::initNodes()
+//void MapWidget::initNodes()
 //{
 //    QSqlQuery query;
 //    bool success = false;
@@ -357,7 +358,7 @@ void MapViewer::initNodeDs()
 //    }
 //}
 
-void MapViewer::initBuildings()
+void MapWidget::initBuildings()
 {
     QVector<Building> buildings;
     auto db = DBManager::getInstance();
@@ -405,7 +406,7 @@ void MapViewer::initBuildings()
         qDebug() << "erreur";
 }
 
-void MapViewer::initParks()
+void MapWidget::initParks()
 {
     QVector<Park> parks;
     auto db = DBManager::getInstance();
@@ -452,7 +453,7 @@ void MapViewer::initParks()
         qDebug() << "erreur";
 }
 
-void MapViewer::initWaters()
+void MapWidget::initWaters()
 {
     QVector<Water> waters;
     auto db = DBManager::getInstance();
@@ -500,7 +501,7 @@ void MapViewer::initWaters()
         qDebug() << "erreur";
 }
 
-void MapViewer::initRoads()
+void MapWidget::initRoads()
 {
     QVector<Way> ways;
     auto db = DBManager::getInstance();
@@ -550,37 +551,37 @@ void MapViewer::initRoads()
         qDebug() << "erreur";
 }
 
-void MapViewer::setShowPark(bool show)
+void MapWidget::setShowPark(bool show)
 {
     d_showPark = show;
     d_parkLayer->setVisible(d_showPark);
 }
 
-void MapViewer::setShowBuilding(bool show)
+void MapWidget::setShowBuilding(bool show)
 {
     d_showBuilding = show;
     d_buildingLayer->setVisible(d_showBuilding);
 }
 
-void MapViewer::setShowRoad(bool show)
+void MapWidget::setShowRoad(bool show)
 {
     d_showWay = show;
     d_wayLayer->setVisible(d_showWay);
 }
 
-void MapViewer::setShowWater(bool show)
+void MapWidget::setShowWater(bool show)
 {
     d_showWater = show;
     d_waterLayer->setVisible(show);
 }
 
-void MapViewer::setShowDescription(bool show)
+void MapWidget::setShowDescription(bool show)
 {
     d_showDescription = show;
     d_descriptionLayer->setVisible(d_showDescription);
 }
 
-//void MapViewer::initMeshs()
+//void MapWidget::initMeshs()
 //{
 //    qreal hexRadius = 8.0;  // Adjust size as needed
 //    int rows = height();
@@ -609,7 +610,7 @@ void MapViewer::setShowDescription(bool show)
 //}
 
 
-//void MapViewer::map_update()
+//void MapWidget::map_update()
 //{
 //    //update();
 //}

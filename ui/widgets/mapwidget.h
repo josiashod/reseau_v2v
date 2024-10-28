@@ -1,5 +1,5 @@
-#ifndef MAPVIEWER_H
-#define MAPVIEWER_H
+#ifndef MAPWIDGET_H
+#define MAPWIDGET_H
 
 #include <QWidget>
 #include <QGraphicsView>
@@ -19,12 +19,12 @@
 #include "./../../utils/dbmanager.h"
 
 
-class MapViewer : public QGraphicsView
+class MapWidget : public QGraphicsView
 {
     Q_OBJECT
 public:
-    explicit MapViewer(QWidget *parent = nullptr);
-    ~MapViewer();
+    explicit MapWidget(QWidget *parent = nullptr);
+    ~MapWidget();
 
 //    /**
 //     * @brief findNodeById retourne le noeud correspondant à l'id donné
@@ -87,6 +87,9 @@ private:
     bool d_showWay          = true;
     bool d_showDescription  = true;
 //    bool d_showMesh  = true;
+
+    // permet de savoir si les elements de la carte on été chargés
+    bool d_elementsHasBeenLoaded = false;
 
     /**
      * @brief d_view la vue graphique pour la map
@@ -182,4 +185,4 @@ private:
 //    void initMeshs();
 };
 
-#endif // MAPVIEWER_H
+#endif // MAPWIDGET_H

@@ -19,7 +19,8 @@ SOURCES += \
     core/water.cpp \
     core/way.cpp \
     main.cpp \
-    ui/widgets/mapviewer.cpp \
+    ui/widgets/logwidget.cpp \
+    ui/widgets/mapwidget.cpp \
     ui/windows/mainwindow.cpp \
     utils/dbmanager.cpp \
     utils/osmreader.cpp \
@@ -32,7 +33,8 @@ HEADERS += \
     core/park.h \
     core/water.h \
     core/way.h \
-    ui/widgets/mapviewer.h \
+    ui/widgets/logwidget.h \
+    ui/widgets/mapwidget.h \
     ui/windows/mainwindow.h \
     utils/dbmanager.h \
     utils/osmreader.h
