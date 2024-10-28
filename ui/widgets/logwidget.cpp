@@ -2,7 +2,6 @@
 
 #include <QVBoxLayout>
 #include <QPushButton>
-#include <QGraphicsDropShadowEffect>
 #include <QTextEdit>
 
 LogWidget::LogWidget(QWidget *parent)
@@ -37,13 +36,6 @@ void LogWidget::createInterface()
     layout->addWidget(d_logtext, 1);
     layout->setContentsMargins(0, 0, 0, 0);
     setLayout(layout);
-
-    // Appliquer l'effet d'ombre
-//    QGraphicsDropShadowEffect *shadowEffect = new QGraphicsDropShadowEffect(this);
-//    shadowEffect->setBlurRadius(60);       // Rayon de flou pour l'ombre
-//    shadowEffect->setOffset(5, 5);         // Décalage de l'ombre
-//    shadowEffect->setColor(Qt::black);     // Couleur de l'ombre (ici noir)
-//    setGraphicsEffect(shadowEffect);       // Applique l'effet d'ombre au widget
 }
 
 bool LogWidget::addLog(const QString& text, int type)
