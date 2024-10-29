@@ -22,6 +22,4 @@ void Water::draw(QGraphicsItemGroup* group, double scale_factor) const
     water->setPen(pen);
 
     group->addToGroup(water);
-
-    qDebug() << "drawing water: " << d_id;
 }

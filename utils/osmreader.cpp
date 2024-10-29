@@ -65,7 +65,7 @@ void OsmReader::readNode(QXmlStreamReader& xml) {
         // Gérer les tags pour savoir si c'est une route ou un bâtiment
         if (xml.tokenType() == QXmlStreamReader::StartElement && xml.name().toString() == "tag")
         {
-            query.prepare("INSERT INTO tags(element_type, element_id, key, value) VALUES(:element_type, :element_id, :key, :value)");
+            query.prepare("INSERT INTO tags(element_type, element_id, t_key, t_value) VALUES(:element_type, :element_id, :key, :value)");
             query.bindValue(":element_type", "node");
             query.bindValue(":element_id", id);
             query.bindValue(":key", xml.attributes().value("k").toString());
@@ -74,6 +74,8 @@ void OsmReader::readNode(QXmlStreamReader& xml) {
                {
                    qDebug() << "add node tag";
                }
+            else
+                qDebug() << "Erreur";
         }
     }
 
@@ -100,7 +102,7 @@ void OsmReader::readWay(QXmlStreamReader& xml)
         // Gérer les tags pour savoir si c'est une route ou un bâtiment
         if (xml.tokenType() == QXmlStreamReader::StartElement && xml.name().toString() == "tag")
         {
-            query.prepare("INSERT INTO tags(element_type, element_id, key, value) VALUES(:element_type, :element_id, :key, :value)");
+            query.prepare("INSERT INTO tags(element_type, element_id, t_key, t_value) VALUES(:element_type, :element_id, :key, :value)");
             query.bindValue(":element_type", "way");
             query.bindValue(":element_id", wayId);
             query.bindValue(":key", xml.attributes().value("k").toString());

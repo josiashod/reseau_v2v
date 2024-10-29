@@ -3,17 +3,12 @@
 #include <QVBoxLayout>
 #include <QPushButton>
 #include <QTextEdit>
+#include <QScrollBar>
 
 LogWidget::LogWidget(QWidget *parent)
     : QWidget{parent}
 {
     createInterface();
-
-    for(int i = 0; i < 20; ++i)
-        addLog("text info " + QString::number(i), LogWidget::INFO);
-    addLog("text success", LogWidget::SUCCESS);
-    addLog("text danger", LogWidget::DANGER);
-    addLog("text warning", LogWidget::WARNING);
 }
 
 void LogWidget::createInterface()
@@ -41,25 +36,24 @@ void LogWidget::createInterface()
 bool LogWidget::addLog(const QString& text, int type)
 {
     QString color = "#FFFFFF";
-    QString label = "[INFO]";
 
 
     switch (type) {
     case LogWidget::SUCCESS:
         color = "#34d399";
-        label = "[SUCCESS]";
         break;
     case LogWidget::WARNING:
         color = "#fed7aa";
-        label = "[WARNING]";
         break;
     case LogWidget::DANGER:
         color = "#F87171";
-        label = "[DANGER]";
         break;
     }
 
-    QString log = "<span style='margin-bottom:20px; color: " + color + ";'>" + label + " " + text + "</span>";
+    QString log = "<span style='margin-bottom:20px; color: " + color + ";'>" + text + "</span>";
     d_logtext->append(log);
+
+    int pos = d_logtext->verticalScrollBar()->maximum();
+    d_logtext->verticalScrollBar()->setValue(pos);
     return true;
 }

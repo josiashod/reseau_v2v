@@ -46,7 +46,11 @@ public:
     void setShowDescription(bool);
 
 private slots :
-//    void map_update();
+    void isLoadingFinished();
+    /**
+     * @brief Dessiner la couche de description
+     */
+    void drawDescriptionLayer(const std::map<QString, NodeD>& nodes);
     /**
      * Dessiner la couche des bâtiments
      */
@@ -59,23 +63,19 @@ private slots :
     void drawRoadLayer(const QVector<Way>& roads);
 
 signals :
+    void isLoading(bool);
+    void isLoaded(bool);
+    void desciptionNodesDataReady(const std::map<QString, NodeD>& nodes);
     void buildingsDataReady(const QVector<Building>& buildings);
     void parksDataReady(const QVector<Park>& parks);
     void watersDataReady(const QVector<Water>& waters);
     void roadsDataReady(const QVector<Way>& roads);
 
 private:
-    // database handler
-//    DBManager d_db;
     // lon, lat coord
     std::pair<double, double> d_maxCoord, d_minCoord;
-//    std::map<long long, Node> d_nodes;
-    std::map<QString, NodeD> d_descriptifNodes;
-//    std::map<long long, Water> d_waters;
-//    std::map<long long, Park> d_parks;
 
     const QVector<Way> d_roads;
-//    std::map<long long, Building> d_buildings;
 //    QVector<QPolygonF> d_meshs;
 
     double d_scale_factor = 1.15;
@@ -130,15 +130,6 @@ private:
     // zoom et deplacement sur la carte
     void wheelEvent(QWheelEvent *event) override;
 
-    /**
-     * @brief Dessiner la couche de description
-     */
-    void drawDescriptionLayer();
-
-//    /**
-//     * Dessiner la couche des bâtiments
-//     */
-    /*void drawParkLayer()*/;
 
 //    /**
 //     * Dessiner la couche des mailles
@@ -146,19 +137,10 @@ private:
 //    void drawMeshLayer();
 
 //    /**
-//     * Dessiner la couche d'eau
+//     * @brief lambert93 Convertis les coordonnees WSG84 en lambert93
+//     * @return le couple {double lon, double lat}
 //     */
-//    void drawWaterLayer();
-
-//    void paintEvent(QPaintEvent *) override;
-//    void dessinePolygone(QPainter &painter);
-//    void dessinerHexagone(QPainter &painter, double cx, double cy, double r);
-
-    /**
-     * @brief lambert93 Convertis les coordonnees WSG84 en lambert93
-     * @return le couple {double lon, double lat}
-     */
-    std::pair<double, double> lambert93(double, double);
+//    std::pair<double, double> lambert93(double, double);
     /**
      * @brief pairLatLonToXY Convertit les coordonnées géographiques (latitude et longitude)
      *        en coordonnées X, Y pour un affichage sur une fenêtre.
@@ -177,7 +159,6 @@ private:
 
     void initBounds();
     void initNodeDs();
-//    void initNodes();
     void initBuildings();
     void initParks();
     void initWaters();

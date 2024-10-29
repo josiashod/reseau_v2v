@@ -27,7 +27,7 @@ public:
      *  LogWidget::DANGER
      * @return true si le text a été ajouté avec succés, false sinon
      */
-    bool addLog(const QString& text, int type);
+    bool addLog(const QString& text, int type = LogWidget::INFO);
 
 signals:
 

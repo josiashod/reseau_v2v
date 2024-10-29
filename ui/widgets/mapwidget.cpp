@@ -1,14 +1,16 @@
 #include "mapwidget.h"
-#include <QGraphicsRectItem>
+#include <QGraphicsItemAnimation>
 #include <QVBoxLayout>
 #include <QtConcurrent>
+#include <QFuture>
+#include <QFutureWatcher>
 #include "logwidget.h"
 
 
 // CRÉATION DE L'INTERFACE
 
 MapWidget::MapWidget(QWidget *parent)
-    : QGraphicsView{parent}, d_descriptifNodes{}
+    : QGraphicsView{parent}
 {
     creerInterface();
 //    initMeshs();
@@ -27,6 +29,7 @@ void MapWidget::creerInterface()
 //    setLayout(layout);
 
 //    d_view = new QGraphicsView{this};
+
     setMouseTracking(true);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -64,21 +67,22 @@ void MapWidget::creerInterface()
 
 //    layout->addWidget(d_view);
 
+    connect(this, &MapWidget::desciptionNodesDataReady, this, &MapWidget::drawDescriptionLayer);
     connect(this, &MapWidget::buildingsDataReady, this, &MapWidget::drawBuildingLayer);
     connect(this, &MapWidget::parksDataReady, this, &MapWidget::drawParkLayer);
     connect(this, &MapWidget::watersDataReady, this, &MapWidget::drawWaterLayer);
     connect(this, &MapWidget::roadsDataReady, this, &MapWidget::drawRoadLayer);
 }
 
-void MapWidget::drawDescriptionLayer()
+void MapWidget::drawDescriptionLayer(const std::map<QString, NodeD>& nodes)
 {
-    for (auto it = d_descriptifNodes.begin(); it != d_descriptifNodes.end(); ++it)
+    for (auto it = nodes.begin(); it != nodes.end(); ++it)
     {
         // Créer un nouvel élément texte
         QGraphicsTextItem *textItem = new QGraphicsTextItem(it->second.name());
         textItem->setPos(it->second);
         QFont font = textItem->font();
-        font.setPointSize(4 / d_scale_factor);  // Ajuster la taille de la police
+        font.setPointSize(8 / d_scale_factor);  // Ajuster la taille de la police
         textItem->setFont(font);
 
         d_descriptionLayer->addToGroup(textItem);
@@ -87,37 +91,57 @@ void MapWidget::drawDescriptionLayer()
 
 void MapWidget::drawBuildingLayer(const QVector<Building>& buildings)
 {
-//    for (auto it = d_buildings.begin(); it != d_buildings.end(); ++it)
-//    {
-//        it->second.draw(d_buildingLayer, d_scale_factor);
-//    }
+    QString log;
     for (const Building& b : buildings)
     {
         b.draw(d_buildingLayer, d_scale_factor); // Dessine dans le thread principal
+        log = QString("[INFO] Drawing building n°: %1.").arg(b.id());
+        // if(d_logger)
+        //     d_logger->addLog(log);
+        // else
+            qDebug() << log;
     }
 }
 
 void MapWidget::drawWaterLayer(const QVector<Water>& waters)
 {
+    QString log;
     for (const Water& w : waters)
     {
         w.draw(d_waterLayer, d_scale_factor); // Dessine dans le thread principal
+        log = QString("[INFO] Drawing water n°: %1.").arg(w.id());
+        // if(d_logger)
+        //     d_logger->addLog(log);
+        // else
+            qDebug() << log;
     }
 }
 
 void MapWidget::drawParkLayer(const QVector<Park>& parks)
 {
+    QString log;
     for (const Park& p : parks)
     {
         p.draw(d_parkLayer, d_scale_factor); // Dessine dans le thread principal
+        log = QString("[INFO] Drawing park n°: %1.").arg(p.id());
+        // if(d_logger)
+        //     d_logger->addLog(log);
+        // else
+            qDebug() << log;
     }
 }
 
 void MapWidget::drawRoadLayer(const QVector<Way>& ways)
 {
+    QString log;
     for (const Way& w : ways)
     {
         w.draw(d_wayLayer, d_scale_factor); // Dessine dans le thread principal
+        log = QString("[INFO] Drawing road n°: %1.").arg(w.id());
+        // if(d_logger)
+        //     d_logger->addLog(log);
+        // else
+            qDebug() << log;
     }
 }
 
@@ -140,24 +164,37 @@ void MapWidget::resizeEvent(QResizeEvent *event)
 
     if(!d_elementsHasBeenLoaded)
     {
+        emit isLoading(d_elementsHasBeenLoaded);
+
         setRenderHint(QPainter::Antialiasing);
+
     //    d_scene->setSceneRect(0, 0, event->size().width() * 2, event->size().height() * 2);
         fitInView(d_scene->sceneRect(), Qt::KeepAspectRatio);
-        initNodeDs();
         // Lancer la fonction longue en asynchrone
-        (void)QtConcurrent::run([this]() {
+        QFuture<void> future = QtConcurrent::run([this]() {
+            DBManager::getInstance();
+            this->initNodeDs();
             this->initWaters();
             this->initParks();
             this->initRoads();
-    //        this->initBuildings();
+            this->initBuildings();
             DBManager::destroyInstance();
         });
-        drawDescriptionLayer();
-        d_elementsHasBeenLoaded = true;
 
         // Configurer la vue (taille et centrage)
         setAlignment(Qt::AlignCenter);
+
+        auto watcher = new QFutureWatcher<void>(this);
+        connect(watcher, &QFutureWatcher<void>::finished, this, &MapWidget::isLoadingFinished);
+
+        // Associe le watcher au future
+        watcher->setFuture(future);
     }
+}
+void MapWidget::isLoadingFinished()
+{
+    d_elementsHasBeenLoaded = true;
+    emit isLoaded(d_elementsHasBeenLoaded);
 }
 
 void MapWidget::wheelEvent(QWheelEvent *event)
@@ -209,42 +246,42 @@ void MapWidget::wheelEvent(QWheelEvent *event)
 //}
 
 
-std::pair<double, double> MapWidget::lambert93(double longitude, double latitude)
-{
-    // Créer un contexte PROJ
-    PJ_CONTEXT *ctx = proj_context_create();
-    if (ctx == nullptr) {
-        throw std::runtime_error("Failed to create PROJ context.");
-    }
+//std::pair<double, double> MapWidget::lambert93(double longitude, double latitude)
+//{
+//    // Créer un contexte PROJ
+//    PJ_CONTEXT *ctx = proj_context_create();
+//    if (ctx == nullptr) {
+//        throw std::runtime_error("Failed to create PROJ context.");
+//    }
 
-    // Définir les systèmes de coordonnées avec des chaînes PROJ
-    const char* wgs84 = "+proj=longlat +datum=WGS84 +no_defs";
-    const char* lambert93 = "+proj=lcc +lat_1=49 +lat_2=44 +lat_0=46.5 +lon_0=3 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs";
+//    // Définir les systèmes de coordonnées avec des chaînes PROJ
+//    const char* wgs84 = "+proj=longlat +datum=WGS84 +no_defs";
+//    const char* lambert93 = "+proj=lcc +lat_1=49 +lat_2=44 +lat_0=46.5 +lon_0=3 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs";
 
-    // Créer la transformation CRS
-    PJ *P = proj_create_crs_to_crs(ctx, wgs84, lambert93, nullptr);
-    if (P == nullptr) {
-        proj_context_destroy(ctx);
-        throw std::runtime_error("Failed to create CRS transformation.");
-    }
+//    // Créer la transformation CRS
+//    PJ *P = proj_create_crs_to_crs(ctx, wgs84, lambert93, nullptr);
+//    if (P == nullptr) {
+//        proj_context_destroy(ctx);
+//        throw std::runtime_error("Failed to create CRS transformation.");
+//    }
 
-    // Convertir les coordonnées
-    PJ_COORD coord = proj_coord(longitude, latitude, 0, 0);
-    PJ_COORD result = proj_trans(P, PJ_FWD, coord);
+//    // Convertir les coordonnées
+//    PJ_COORD coord = proj_coord(longitude, latitude, 0, 0);
+//    PJ_COORD result = proj_trans(P, PJ_FWD, coord);
 
-    // Vérifier si la transformation a échoué
-    if (result.xyzt.x == HUGE_VAL || result.xyzt.y == HUGE_VAL) {
-        proj_destroy(P);
-        proj_context_destroy(ctx);
-        throw std::runtime_error("Transformation failed.");
-    }
+//    // Vérifier si la transformation a échoué
+//    if (result.xyzt.x == HUGE_VAL || result.xyzt.y == HUGE_VAL) {
+//        proj_destroy(P);
+//        proj_context_destroy(ctx);
+//        throw std::runtime_error("Transformation failed.");
+//    }
 
-    // Libérer les ressources
-    proj_destroy(P);
-    proj_context_destroy(ctx);
+//    // Libérer les ressources
+//    proj_destroy(P);
+//    proj_context_destroy(ctx);
 
-    return {result.xyzt.x, result.xyzt.y}; // Retourner les coordonnées Lambert93
-}
+//    return {result.xyzt.x, result.xyzt.y}; // Retourner les coordonnées Lambert93
+//}
 
 QPointF MapWidget::pairLatLonToXY(std::pair<double, double>& coord)
 {
@@ -267,6 +304,7 @@ void MapWidget::initBounds()
     QSqlQuery query = db->getBounds(db->getDatabase());
     double minLat = 0.0, maxLat = 0.0, minLon = 0.0, maxLon = 0.0;
     bool success = false;
+    QString log;
 
     success = query.exec();
 
@@ -278,16 +316,30 @@ void MapWidget::initBounds()
         maxLon = query.value("max_lon").toDouble();
 
         // Applique la transformation Lambert93 aux bornes
-        d_maxCoord = lambert93(maxLon, maxLat);
-        d_minCoord = lambert93(minLon, minLat);
+//        d_maxCoord = lambert93(maxLon, maxLat);
+//        d_minCoord = lambert93(minLon, minLat);
+        d_maxCoord = std::make_pair(maxLon, maxLat);
+        d_minCoord = std::make_pair(minLon, minLat);
 
         // Vérification des bornes projetées
-        qDebug() << "Max Coord (Lambert93):" << d_maxCoord;
-        qDebug() << "Min Coord (Lambert93):" << d_minCoord;
-    } else {
-        qDebug() << "Erreur lors de l'exécution de la requête de bornes.";
-    }
+        log = "[INFO] Max Coord (Lambert93): lon -> " + QString::number(maxLon, 'f', 5) + ", lat -> " + QString::number(maxLat, 'f', 5) + ".";
+        // if(d_logger)
+        //     d_logger->addLog(log);
+        // else
+            qDebug() << log;
+        log = "[INFO] Min Coord (Lambert93): lon -> " + QString::number(minLon, 'f', 5) + ", lat -> " + QString::number(minLat, 'f', 5) + ".";
+        // if(d_logger)
+        //     d_logger->addLog(log);
+        // else
+            qDebug() << log;
 
+    } else {
+        log = "[ERREUR] Impossible de récupérer les longitude et latitudes min/max.";
+        // if(d_logger)
+        //     d_logger->addLog(log, LogWidget::DANGER);
+        // else
+            qDebug() << log;
+    }
     query.clear();
 }
 
@@ -296,9 +348,11 @@ void MapWidget::initNodeDs()
     auto db = DBManager::getInstance();
     QSqlQuery query = db->getNodeDs(db->getDatabase());
     bool success = false;
+    QString log;
+    std::map<QString, NodeD> nodes{};
+
 
     success = query.exec();
-    //    success = query.exec();
     if(success)
     {
         while(query.next())
@@ -312,13 +366,25 @@ void MapWidget::initNodeDs()
             lat = query.value(1).toString().toDouble();
             lon = query.value(2).toString().toDouble();
 
-            coord = lambert93(lon, lat);
+            //            coord = lambert93(lon, lat);
+            coord = std::make_pair(lon, lat);
             name = query.value(6).toString();
             NodeD n{id, pairLatLonToXY(coord), name};
-            d_descriptifNodes.emplace(name, n);
+            nodes.emplace(name, n);
+            log = QString("[SUCCESS] Noeuds de description n°: %1 recupérer avec succès.").arg(id);
+//            if(d_logger)
+//                d_logger->addLog(log, LogWidget::SUCCESS);
+//            else
+                qDebug() << log;
         }
     }
     query.clear();
+    log = "[INFO] Emission des noeuds pour affichage.";
+    // if(d_logger)
+    //     d_logger->addLog(log);
+    // else
+        qDebug() << log;
+    emit desciptionNodesDataReady(nodes);
 }
 
 //Node* MapWidget::findNodeById(long long id)
@@ -350,6 +416,7 @@ void MapWidget::initNodeDs()
 //            lon = query.value(2).toString().toDouble();
 
 //            coord = lambert93(lon, lat);
+//            coord = std::make_pair(lon, lat);
 //            Node n{id, pairLatLonToXY(coord)};
 //            d_nodes.emplace(id, n);
 
@@ -390,20 +457,27 @@ void MapWidget::initBuildings()
                     lat = q.value(1).toString().toDouble();
                     lon = q.value(2).toString().toDouble();
 
-                    coord = lambert93(lon, lat);
+                    //            coord = lambert93(lon, lat);
+                    coord = std::make_pair(lon, lat);
                     Node n{id, pairLatLonToXY(coord)};
                     b.addNode(n);
                 }
             }
             buildings.push_back(b);
-            qDebug() << "building: " << id;
+            // if(d_logger)
+            //     d_logger->addLog(QString("[SUCCESS] Building n°: %1.").arg(id), LogWidget::SUCCESS);
         }
         query.clear();
-        emit buildingsDataReady(buildings);
-        qDebug() << "emit buildings";
     }
-    else
-        qDebug() << "erreur";
+    // else
+    // {
+    //     if(d_logger)
+    //         d_logger->addLog("[ERREUR] Un problème est survenu lors de la récupération des buildings", LogWidget::DANGER);
+    // }
+
+    // if(d_logger)
+    //     d_logger->addLog("[INFO] Emission des buildings pour affichage.");
+    emit buildingsDataReady(buildings);
 }
 
 void MapWidget::initParks()
@@ -438,19 +512,26 @@ void MapWidget::initParks()
                     lat = q.value(1).toString().toDouble();
                     lon = q.value(2).toString().toDouble();
 
-                    coord = lambert93(lon, lat);
+                    //            coord = lambert93(lon, lat);
+                    coord = std::make_pair(lon, lat);
                     Node n{id, pairLatLonToXY(coord)};
                     p.addNode(n);
                 }
             }
             parks.push_back(p);
-            qDebug() << "park: " << id;
+            // if(d_logger)
+            // d_logger->addLog(QString("[SUCCESS] Park n°: %1.").arg(id), LogWidget::SUCCESS);
         }
         query.clear();
-        emit parksDataReady(parks);
     }
-    else
-        qDebug() << "erreur";
+    // else
+    // {
+    //     if(d_logger)
+    //     d_logger->addLog("[ERREUR] Un problème est survenu lors de la récupération des parks", LogWidget::DANGER);
+    // }
+    // if(d_logger)
+    // d_logger->addLog("[INFO] Emission des parks pour affichage.");
+    emit parksDataReady(parks);
 }
 
 void MapWidget::initWaters()
@@ -485,20 +566,24 @@ void MapWidget::initWaters()
                     lat = q.value(1).toString().toDouble();
                     lon = q.value(2).toString().toDouble();
 
-                    coord = lambert93(lon, lat);
+                    //            coord = lambert93(lon, lat);
+                    coord = std::make_pair(lon, lat);
                     Node n{id, pairLatLonToXY(coord)};
                     w.addNode(n);
                 }
             }
             waters.push_back(w);
-            qDebug() << "water: " << id;
+            // if(d_logger)
+            // d_logger->addLog(QString("[SUCCESS] Water n°: %1.").arg(id), LogWidget::SUCCESS);
         }
         query.clear();
-        emit watersDataReady(waters);
-        qDebug() << "emits waters";
     }
-    else
-        qDebug() << "erreur";
+    // else
+    // {
+    //     d_logger->addLog("[ERREUR] Un problème est survenu lors de la récupération des waters", LogWidget::DANGER);
+    // }
+    // d_logger->addLog("[INFO] Emission des waters pour affichage.");
+    emit watersDataReady(waters);
 }
 
 void MapWidget::initRoads()
@@ -527,7 +612,6 @@ void MapWidget::initRoads()
             {
                 while(q.next())
                 {
-                    std::pair<double, double> coord;
                     long long id;
                     double lat = 0.0, lon = 0.0;
 
@@ -535,20 +619,27 @@ void MapWidget::initRoads()
                     lat = q.value(1).toString().toDouble();
                     lon = q.value(2).toString().toDouble();
 
-                    coord = lambert93(lon, lat);
+                    //            coord = lambert93(lon, lat);
+                    std::pair<double, double> coord{lon, lat};
                     Node n{id, pairLatLonToXY(coord)};
                     w.addNode(n);
                 }
             }
             ways.push_back(w);
-            qDebug() << "ways: " << id;
+            // if(d_logger)
+            // d_logger->addLog(QString("[SUCCESS] Road n°: %1.").arg(id), LogWidget::SUCCESS);
         }
         query.clear();
-        emit roadsDataReady(ways);
-        qDebug() << "emit ways";
     }
-    else
-        qDebug() << "erreur";
+    // else
+    // {
+    //     if(d_logger)
+    //         d_logger->addLog("[ERREUR] Un problème est survenu lors de la récupération des roads", LogWidget::DANGER);
+    // }
+
+    // if(d_logger)
+    //     d_logger->addLog("[INFO] Emission des roads pour affichage.");
+    emit roadsDataReady(ways);
 }
 
 void MapWidget::setShowPark(bool show)

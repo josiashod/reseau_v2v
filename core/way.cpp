@@ -125,8 +125,6 @@ void Way::draw(QGraphicsItemGroup* group, double scale_factor) const
 //        road->setPen(pen);
 //        group->addToGroup(road);
 //    }
-
-    qDebug() << "drawing roads: " << d_id;
 }
 
 unsigned int Way::nodeSize() const {

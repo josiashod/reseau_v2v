@@ -5,6 +5,9 @@ MapItem::MapItem(long long id)
     : d_id{id}  
 {}
 
+long long MapItem::id() const
+{ return d_id; }
+
 void MapItem::addNode(const Node& n) {
     d_nodes.push_back(n);
 }

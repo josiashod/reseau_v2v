@@ -1,6 +1,6 @@
 QT       += core gui sql concurrent
 
-LIBS += -lproj
+#LIBS += -lproj
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -12,6 +12,7 @@ CONFIG += c++17
 
 SOURCES += \
     core/building.cpp \
+#    core/car.cpp \
     core/mapitem.cpp \
     core/node.cpp \
     core/noded.cpp \
@@ -27,6 +28,7 @@ SOURCES += \
 
 HEADERS += \
     core/building.h \
+#    core/car.h \
     core/mapitem.h \
     core/node.h \
     core/noded.h \

@@ -16,6 +16,12 @@ public:
     MapItem(long long);
 
     /**
+     * @brief id
+     * @return retourne l'id du MapItem
+     */
+    long long id() const;
+
+    /**
      * @brief addNode: ajoute un noeud à la liste des noeuds du mapItem
      * @param n: le noeud en question
      */

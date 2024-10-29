@@ -20,6 +20,8 @@ private slots:
     void onShowHideParks(bool);
     void onShowHideDescs(bool);
     void onShowHideLogs(bool);
+    void onMapLoading(bool);
+    void onMapLoaded(bool);
 
 private:
     void creerInterface();
@@ -31,6 +33,6 @@ private:
     bool d_showBuildings = true;
     bool d_showParks = true;
     bool d_showDescs = true;
-    bool d_showLogs = false;
+    bool d_showLogs = true;
 };
 #endif // MAINWINDOW_H

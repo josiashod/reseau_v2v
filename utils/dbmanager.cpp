@@ -117,7 +117,7 @@ QSqlQuery DBManager::getNodeDs(QSqlDatabase db) const
     QString queryStr = QString("SELECT  * "
         "FROM %1 "
         "LEFT JOIN %2 as t ON t.element_id = %1.id "
-       "WHERE t.key = '%3'").arg(_NODES_TABLE_, _TAGS_TABLE_, "name");
+       "WHERE t.t_key = '%3'").arg(_NODES_TABLE_, _TAGS_TABLE_, "name");
     QSqlQuery q(db);
     if (!q.prepare(queryStr)) {
         qDebug() << "Error preparing query: " << q.lastError().text();
@@ -131,7 +131,7 @@ QSqlQuery DBManager::getRoads(QSqlDatabase db) const
     QString queryStr = QString("SELECT  * "
         "FROM %1 "
         "LEFT JOIN %2 as t ON t.element_id = %1.id "
-        "WHERE t.key = 'highway'").arg(_WAYS_TABLE_, _TAGS_TABLE_);
+        "WHERE t.t_key = 'highway'").arg(_WAYS_TABLE_, _TAGS_TABLE_);
     QSqlQuery q(db);
     if (!q.prepare(queryStr)) {
         qDebug() << "Error preparing query: " << q.lastError().text();
@@ -145,7 +145,7 @@ QSqlQuery DBManager::getWaters(QSqlDatabase db) const
     QString queryStr = QString("SELECT  * "
         "FROM %1 "
         "LEFT JOIN %2 as t ON t.element_id = %1.id "
-        "WHERE t.key = 'waterway' LIMIT 10").arg(_WAYS_TABLE_, _TAGS_TABLE_);
+        "WHERE t.t_key = 'waterway' LIMIT 10").arg(_WAYS_TABLE_, _TAGS_TABLE_);
     QSqlQuery q(db);
     if (!q.prepare(queryStr)) {
         qDebug() << "Error preparing query: " << q.lastError().text();
@@ -159,7 +159,7 @@ QSqlQuery DBManager::getBuildings(QSqlDatabase db) const
     QString queryStr = QString("SELECT * "
         "FROM %1 "
         "LEFT JOIN %2 as t ON t.element_id = %1.id "
-        "WHERE t.key = 'building'").arg(_WAYS_TABLE_, _TAGS_TABLE_);
+        "WHERE t.t_key = 'building'").arg(_WAYS_TABLE_, _TAGS_TABLE_);
 
     QSqlQuery q(db);
     if (!q.prepare(queryStr)) {
@@ -174,8 +174,8 @@ QSqlQuery DBManager::getParks(QSqlDatabase db) const
     QString queryStr = QString("SELECT * "
         "FROM %1 "
         "LEFT JOIN %2 as t ON t.element_id = %1.id "
-        "WHERE (t.key = 'leisure' AND t.value IN ('garden', 'nature_reserve', 'playground', 'nature_reserve')) "
-        "OR (t.key = 'landuse' AND t.value = 'grass') ").arg(_WAYS_TABLE_, _TAGS_TABLE_);
+        "WHERE (t.t_key = 'leisure' AND t.t_value IN ('garden', 'nature_reserve', 'playground', 'nature_reserve')) "
+        "OR (t.t_key = 'landuse' AND t.t_value = 'grass') ").arg(_WAYS_TABLE_, _TAGS_TABLE_);
     QSqlQuery q(db);
     if (!q.prepare(queryStr)) {
         qDebug() << "Error preparing query: " << q.lastError().text();

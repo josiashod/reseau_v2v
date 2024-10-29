@@ -18,7 +18,6 @@ void Park::draw(QGraphicsItemGroup* group, double scale_factor) const
     QPen pen{QColor(172, 225, 120), 1}; // Noir, épaisseur 1 pixel
     park->setPen(pen);
     park->setBrush(brush);
-    qDebug() << "drawing park: " << d_id;
 
     group->addToGroup(park);
 }

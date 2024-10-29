@@ -19,8 +19,8 @@ void MainWindow::creerInterface()
     QRect  screenGeometry = screen->geometry();
     int height = screenGeometry.height();
     int width = screenGeometry.width();
-    //setMinimumSize(width - (width * 0.40), height - (height * 0.20));
-    setFixedSize(width , height);
+//    setMinimumSize(width - (width * 0.40), height - (height * 0.20));
+    setFixedSize(width , height - 70);
 
     auto viewMenu = menuBar()->addMenu("Vue");
 //    auto logMenu = menuBar()->addMenu("Logs");
@@ -43,6 +43,22 @@ void MainWindow::creerInterface()
     QAction *showLogsAct = new QAction{"Afficher/Masquer les logs"};
     viewMenu->addAction(showLogsAct);
 
+    auto mainWidget {new QWidget{this}};
+    auto *mainLayout = new QHBoxLayout();
+    mainLayout->setContentsMargins(0, 0, 0, 0);
+    mainWidget->setLayout(mainLayout);
+    setCentralWidget(mainWidget);
+
+    d_logsView = new LogWidget{this};
+
+    d_mapView = new MapWidget{this};
+    mainLayout->addWidget(d_mapView, 1);
+
+//    d_logsView->hide();
+    mainLayout->addWidget(d_logsView);
+    mainLayout->setContentsMargins(0, 0, 0, 0);
+
+    // actions connects
     connect(showRoadAct, &QAction::triggered, this, &MainWindow::onShowHideRoads);
     connect(showBuildindAct, &QAction::triggered, this, &MainWindow::onShowHideBuildings);
     connect(showWaterAct, &QAction::triggered, this, &MainWindow::onShowHideWaters);
@@ -50,19 +66,9 @@ void MainWindow::creerInterface()
     connect(showDescAct, &QAction::triggered, this, &MainWindow::onShowHideDescs);
     connect(showLogsAct, &QAction::triggered, this, &MainWindow::onShowHideLogs);
 
-    auto mainWidget {new QWidget{this}};
-    auto *mainLayout = new QHBoxLayout();
-    mainLayout->setContentsMargins(0, 0, 0, 0);
-    mainWidget->setLayout(mainLayout);
-    setCentralWidget(mainWidget);
-
-    d_mapView = new MapWidget{this};
-    mainLayout->addWidget(d_mapView, 1);
-
-    d_logsView = new LogWidget{this};
-    d_logsView->hide();
-    mainLayout->addWidget(d_logsView);
-    mainLayout->setContentsMargins(0, 0, 0, 0);
+    //map connects
+    connect(d_mapView, &MapWidget::isLoading, this, &MainWindow::onMapLoading);
+    connect(d_mapView, &MapWidget::isLoaded, this, &MainWindow::onMapLoaded);
 }
 
 void MainWindow::onShowHideBuildings(bool)
@@ -103,6 +109,16 @@ void MainWindow::onShowHideLogs(bool)
         d_logsView->show();
     else
         d_logsView->hide();
+}
+
+void MainWindow::onMapLoading(bool)
+{
+    d_logsView->addLog("The map is loading...............", LogWidget::WARNING);
+}
+
+void MainWindow::onMapLoaded(bool)
+{
+    d_logsView->addLog("The map has been loaded", LogWidget::SUCCESS);
 }
 
 MainWindow::~MainWindow()

@@ -25,6 +25,4 @@ void Building::draw(QGraphicsItemGroup* group, double scale_factor) const
     QPen pen{QColor(190, 190, 189), 1}; // Noir, épaisseur 1 pixel
     building->setPen(pen);
     group->addToGroup(building);
-
-    qDebug() << "drawing building: " << d_id;
 }
