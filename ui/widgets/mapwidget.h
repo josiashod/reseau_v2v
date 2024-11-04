@@ -8,7 +8,7 @@
 //#include <QPainter>
 #include <QPoint>
 #include <map>
-#include <proj.h>
+//#include <proj.h>
 
 #include "./../../core/node.h"
 #include "./../../core/noded.h"
@@ -17,6 +17,7 @@
 #include "./../../core/water.h"
 #include "./../../core/park.h"
 #include "./../../utils/dbmanager.h"
+#include "../../core/car.h"
 
 
 class MapWidget : public QGraphicsView
