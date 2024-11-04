@@ -8,6 +8,7 @@
 #include <QBrush>
 #include <QPen>
 #include "node.h"
+#include <QDebug>
 
 class MapItem
 {
