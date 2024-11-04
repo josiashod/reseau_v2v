@@ -1,4 +1,5 @@
 #include "car.h"
+#include <cmath>
 #include <QPropertyAnimation>
 
 Car::Car(): d_v{50.0}, d_freq{1.5}, d_pos{0, {0,0}}
