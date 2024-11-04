@@ -67,6 +67,8 @@ void MapWidget::creerInterface()
 
 //    layout->addWidget(d_view);
 
+
+
     connect(this, &MapWidget::desciptionNodesDataReady, this, &MapWidget::drawDescriptionLayer);
     connect(this, &MapWidget::buildingsDataReady, this, &MapWidget::drawBuildingLayer);
     connect(this, &MapWidget::parksDataReady, this, &MapWidget::drawParkLayer);
