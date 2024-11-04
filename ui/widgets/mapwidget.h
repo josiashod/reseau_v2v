@@ -7,6 +7,7 @@
 #include <QResizeEvent>
 //#include <QPainter>
 #include <QPoint>
+#include <QMap>
 #include <map>
 //#include <proj.h>
 
@@ -51,7 +52,7 @@ private slots :
     /**
      * @brief Dessiner la couche de description
      */
-    void drawDescriptionLayer(const std::map<QString, NodeD>& nodes);
+    void drawDescriptionLayer(QMap<QString, NodeD>& nodes);
     /**
      * Dessiner la couche des bâtiments
      */
@@ -66,7 +67,7 @@ private slots :
 signals :
     void isLoading(bool);
     void isLoaded(bool);
-    void desciptionNodesDataReady(const std::map<QString, NodeD>& nodes);
+    void desciptionNodesDataReady(QMap<QString, NodeD>& nodes);
     void buildingsDataReady(const QVector<Building>& buildings);
     void parksDataReady(const QVector<Park>& parks);
     void watersDataReady(const QVector<Water>& waters);

@@ -76,13 +76,13 @@ void MapWidget::creerInterface()
     connect(this, &MapWidget::roadsDataReady, this, &MapWidget::drawRoadLayer);
 }
 
-void MapWidget::drawDescriptionLayer(const std::map<QString, NodeD>& nodes)
+void MapWidget::drawDescriptionLayer(QMap<QString, NodeD>& nodes)
 {
     for (auto it = nodes.begin(); it != nodes.end(); ++it)
     {
         // Créer un nouvel élément texte
-        QGraphicsTextItem *textItem = new QGraphicsTextItem(it->second.name());
-        textItem->setPos(it->second);
+        QGraphicsTextItem *textItem = new QGraphicsTextItem(it.key());
+        textItem->setPos(it.value());
         QFont font = textItem->font();
         font.setPointSize(8 / d_scale_factor);  // Ajuster la taille de la police
         textItem->setFont(font);
@@ -175,7 +175,7 @@ void MapWidget::resizeEvent(QResizeEvent *event)
         // Lancer la fonction longue en asynchrone
         QFuture<void> future = QtConcurrent::run([this]() {
             DBManager::getInstance();
-            this->initNodeDs();
+//            this->initNodeDs();
             this->initWaters();
             this->initParks();
             this->initRoads();
@@ -351,7 +351,7 @@ void MapWidget::initNodeDs()
     QSqlQuery query = db->getNodeDs(db->getDatabase());
     bool success = false;
     QString log;
-    std::map<QString, NodeD> nodes{};
+    QMap<QString, NodeD> nodes{};
 
 
     success = query.exec();
@@ -372,7 +372,8 @@ void MapWidget::initNodeDs()
             coord = std::make_pair(lon, lat);
             name = query.value(6).toString();
             NodeD n{id, pairLatLonToXY(coord), name};
-            nodes.emplace(name, n);
+            nodes.insert(name, n);
+//            nodes.emplace();
             log = QString("[SUCCESS] Noeuds de description n°: %1 recupérer avec succès.").arg(id);
 //            if(d_logger)
 //                d_logger->addLog(log, LogWidget::SUCCESS);

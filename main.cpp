@@ -9,6 +9,11 @@
 int main(int argc, char *argv[])
 {
    QApplication a(argc, argv);
+   // Enregistrement des types pour le système de méta-objets de Qt
+   qRegisterMetaType<QVector<Water>>("QVector<Water>");
+   qRegisterMetaType<QVector<Park>>("QVector<Park>");
+   qRegisterMetaType<QVector<Way>>("QVector<Way>");
+   qRegisterMetaType<QVector<Building>>("QVector<Building>");
     MainWindow w;
     w.show();
     return a.exec();
