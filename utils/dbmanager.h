@@ -15,6 +15,10 @@ public:
      * @brief getInstance retourne l'instance unique d'utilisation de la bd
      * @return
      */
+    static long long getRandomWay();
+
+    static QVector<long long> getWaysByNode(long long nodeId);
+
     static DBManager* getInstance();
     /**
      * @brief getDatabase retourne la base de donnée du thread en cours

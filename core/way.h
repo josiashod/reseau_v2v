@@ -33,6 +33,13 @@ public:
      * @param scale_factor: le scale factor
      */
     void draw(QGraphicsItemGroup* group, double scale_factor) const override;
+    static Way* findWayById(long long id); // Méthode statique pour trouver un `way` par son ID
+        QVector<Node> nodes() const; // Retourne tous les nœuds associés à ce `way`
+    void addNode(const Node& node);
+
+private:
+    long long d_id;
+    QVector<Node> d_nodes;
 };
 
 #endif // WAY_H

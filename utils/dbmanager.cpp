@@ -197,3 +197,32 @@ QSqlQuery DBManager::getWayNodes(QSqlDatabase db, long long id) const
 
     return q;
 }
+long long DBManager::getRandomWay() {
+    auto db = getInstance()->getDatabase();
+    QSqlQuery query(db);
+    query.prepare("SELECT id FROM ways ORDER BY RANDOM() LIMIT 1");
+
+    if (query.exec() && query.next()) {
+        return query.value(0).toLongLong(); // Retourne l'ID du `way` aléatoire
+    } else {
+        qDebug() << "Erreur lors de la récupération d'un way aléatoire : " << query.lastError().text();
+        return -1; // Retourne -1 en cas d'erreur
+    }
+}
+QVector<long long> DBManager::getWaysByNode(long long nodeId) {
+    QVector<long long> wayIds;
+    auto db = getInstance()->getDatabase();
+    QSqlQuery query(db);
+    query.prepare("SELECT way_id FROM way_node WHERE node_id = :node_id");
+    query.bindValue(":node_id", nodeId);
+
+    if (query.exec()) {
+        while (query.next()) {
+            wayIds.append(query.value(0).toLongLong());
+        }
+    } else {
+        qDebug() << "Erreur lors de la récupération des ways pour le nœud : " << query.lastError().text();
+    }
+
+    return wayIds;
+}

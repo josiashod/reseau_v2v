@@ -46,6 +46,8 @@ public:
     void setShowRoad(bool);
     void setShowWater(bool);
     void setShowDescription(bool);
+    void addCarToRandomWay(); // Fonction pour ajouter une voiture sur un way aléatoire
+    void moveCarAlongWay(Car* car, const QVector<Node>& nodes); //
 
 private slots :
     void isLoadingFinished();

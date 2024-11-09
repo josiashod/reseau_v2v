@@ -1,63 +1,51 @@
 #include "car.h"
 #include <cmath>
-#include <QPropertyAnimation>
+#include <QGraphicsPolygonItem>
+#include <QPen>
+#include <QBrush>
+#include <QDebug>
 
-Car::Car(): d_v{50.0}, d_freq{1.5}, d_pos{0, {0,0}}
-{}
+Car::Car() : d_v{50.0}, d_freq{1.5}, d_pos{0, {0, 0}} {}
 
-Car::Car(const Node& pos, double vitesse, double frequence):
-    d_v{vitesse}, d_freq{frequence}, d_pos{pos}, d_pixmap{new QGraphicsPixmapItem{QPixmap{"/home/josh/Téléchargements/car/taxi.png"}}}
-{}
+// Constructeur avec position, vitesse et fréquence
+Car::Car(const Node& pos, double vitesse, double frequence)
+    : d_v{vitesse}, d_freq{frequence}, d_pos{pos} {
 
-Car::Car(const Car &c): d_v{c.d_v}, d_freq{c.d_freq},
-    d_pos{c.d_pos}
-{}
+    QPolygonF triangle;
+       triangle << QPointF(0, -10) << QPointF(5, 10) << QPointF(-5, 10);
+       d_polygon = new QGraphicsPolygonItem(triangle);
+       d_polygon->setBrush(QBrush(Qt::red)); // Remplir le triangle avec une couleur rouge
+       d_polygon->setPen(QPen(Qt::black));   // Contour du triangle en noir
+       d_polygon->setPos(d_pos.x(), d_pos.y());
 
-double Car::distance(const Node& pos) const
-{
-    double x = (pos.x() - d_pos.x()), y = (pos.y() - d_pos.y());
-    return std::sqrt((x*x) + (y*y));
+       // Ne pas utiliser le pixmap si vous utilisez un triangle
+       d_pixmap = nullptr;
 }
 
-double Car::duree(double distance) const
-{
-    return (d_v / distance);
+Car::Car(const Car &c) : d_v{c.d_v}, d_freq{c.d_freq}, d_pos{c.d_pos} {}
+
+// Déplacer la voiture à une nouvelle position
+void Car::moveTo(const Node& pos) {
+    d_pos = pos;
+    if (d_polygon) {
+        d_polygon->setPos(d_pos.x(), d_pos.y());
+    }
 }
 
-QGraphicsPixmapItem* Car::pixmap() const
-{
-//    if(!d_pixmap)
-//    {
-//        QPixmap pixmap("/home/josh/Téléchargements/car/taxi.png");
-//        d_pixmap = new QGraphicsPixmapItem(pixmap);
-//    }
 
+QGraphicsPixmapItem* Car::pixmap() const {
     return d_pixmap;
 }
 
-void Car::moveTo(const Node &pos)
-{
-////    distance(pos);
+QGraphicsPolygonItem* Car::polygon() const {
+    return d_polygon;
+}
 
-////    QGraphicsItem* d = new QGraphicsItem{};
-//    // Initialisation de l'animation de la position
-//    // Configuration de l'animation
-//    QVariantAnimation* animation = new QVariantAnimation;
-//    animation->setDuration(duree(distance(pos)) * 1000);
-//    animation->setStartValue(pos);
-//    animation->setEndValue(d_pos);
+double Car::distance(const Node& pos) const {
+    double x = (pos.x() - d_pos.x()), y = (pos.y() - d_pos.y());
+    return std::sqrt((x * x) + (y * y));
+}
 
-//    // Définir l'interpolation (optionnel, par exemple linéaire)
-//    animation->setEasingCurve(QEasingCurve::Linear);
-
-//    // Connecter l'animation à la position de l'élément
-//    QObject::connect(animation, &QVariantAnimation::valueChanged, [this](const QVariant& value) {
-//        d_pixmap->setPos(value.toPointF());
-//        qDebug() << value.toPointF();
-////        d_ellipse.setPos(value.toPointF());
-//    });
-
-//    // Démarrer l'animation
-//    animation->start(QAbstractAnimation::DeleteWhenStopped);
-    d_pos = pos;
+double Car::duree(double distance) const {
+    return (distance / d_v);
 }

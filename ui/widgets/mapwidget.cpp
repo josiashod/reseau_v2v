@@ -197,6 +197,7 @@ void MapWidget::isLoadingFinished()
 {
     d_elementsHasBeenLoaded = true;
     emit isLoaded(d_elementsHasBeenLoaded);
+    addCarToRandomWay();
 }
 
 void MapWidget::wheelEvent(QWheelEvent *event)
@@ -290,15 +291,17 @@ QPointF MapWidget::pairLatLonToXY(std::pair<double, double>& coord)
     return latLonToXY(coord.first, coord.second);
 }
 
-QPointF MapWidget::latLonToXY(double lon, double lat)
-{
-    double width = this->width(), height = this->height();
+QPointF MapWidget::latLonToXY(double lon, double lat) {
+    double width = this->width();
+    double height = this->height();
 
     double x = (lon - d_minCoord.first) / (d_maxCoord.first - d_minCoord.first) * width;
-    double y = height - (lat - d_minCoord.second) / (d_maxCoord.second - d_minCoord.second) * width;
+    double y = height - (lat - d_minCoord.second) / (d_maxCoord.second - d_minCoord.second) * height;
 
     return {x, y};
+
 }
+
 
 void MapWidget::initBounds()
 {
@@ -464,6 +467,7 @@ void MapWidget::initBuildings()
                     coord = std::make_pair(lon, lat);
                     Node n{id, pairLatLonToXY(coord)};
                     b.addNode(n);
+                     qDebug() << QString("[SUCCESS] Road n°: %1.").arg(id);
                 }
             }
             buildings.push_back(b);
@@ -626,6 +630,7 @@ void MapWidget::initRoads()
                     std::pair<double, double> coord{lon, lat};
                     Node n{id, pairLatLonToXY(coord)};
                     w.addNode(n);
+                    qDebug() << QString("[SUCCESS] Road n°: %1.").arg(id);
                 }
             }
             ways.push_back(w);
@@ -708,3 +713,63 @@ void MapWidget::setShowDescription(bool show)
 //{
 //    //update();
 //}
+void MapWidget::addCarToRandomWay() {
+    long long wayId = DBManager::getRandomWay();
+    if (wayId == -1) {
+        qDebug() << "Aucun way trouvé.";
+        return;
+    }
+
+    Way* way = Way::findWayById(wayId);
+    if (way == nullptr || way->nodes().isEmpty()) {
+        qDebug() << "Impossible de trouver le way ou le way est vide.";
+        return;
+    }
+
+    // Récupérer le premier nœud du Way
+    Node initialNode = way->nodes().first();
+
+    // Créer un std::pair temporaire pour stocker les coordonnées
+    std::pair<double, double> initialCoord = std::make_pair(initialNode.x(), initialNode.y());
+    QPointF initialPos = pairLatLonToXY(initialCoord);
+
+    // Créer la voiture à la position du premier nœud
+    Car* car = new Car(initialNode);
+    car->moveTo(initialNode);
+
+    // Ajouter le triangle (voiture) à la scène
+    if (car->polygon()) {
+        d_scene->addItem(car->polygon());
+    }
+
+    qDebug() << "Voiture ajoutée au way ID:" << wayId << "à la position" << initialPos;
+
+    // Lancer le mouvement le long du Way
+    moveCarAlongWay(car, way->nodes());
+}
+
+void MapWidget::moveCarAlongWay(Car* car, const QVector<Node>& nodes) {
+    static int currentIndex = 0;
+
+    if (nodes.isEmpty() || car->polygon() == nullptr) return;
+
+    if (currentIndex < nodes.size()) {
+        // Déplacer la voiture au prochain nœud
+        Node currentNode = nodes[currentIndex];
+        car->moveTo(currentNode);
+
+        // Créer un std::pair temporaire pour stocker les coordonnées
+        std::pair<double, double> currentCoord = std::make_pair(currentNode.x(), currentNode.y());
+
+        // Utiliser la variable temporaire pour obtenir la position
+        QPointF currentPos = pairLatLonToXY(currentCoord);
+        car->polygon()->setPos(currentPos);
+
+        currentIndex++;
+    } else {
+        currentIndex = 0; // Recommencer depuis le début
+    }
+
+    // Mettre à jour la position toutes les secondes
+    QTimer::singleShot(1000, [this, car, nodes]() { moveCarAlongWay(car, nodes); });
+}
