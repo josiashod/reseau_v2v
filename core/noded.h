@@ -6,6 +6,7 @@
 class NodeD : public Node
 {
 public:
+    NodeD();
     NodeD(long long, QPointF, QString);
     NodeD(Node, QString);
 
