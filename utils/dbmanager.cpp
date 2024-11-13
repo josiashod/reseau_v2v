@@ -10,30 +10,41 @@ const QString _NODES_TABLE_ = "nodes";
 const QString _WAYS_TABLE_ = "ways";
 const QString _WAY_NODE_TABLE_ = "way_node";
 const QString _TAGS_TABLE_ = "tags";
+const QString _BOUNDS_TABLE_ = "bounds";
 
-// Initialisation de l'instance statique à nullptr
+// Initialisation des attributs static
 DBManager* DBManager::d_instance = nullptr;
+QSqlDatabase DBManager::d_db = QSqlDatabase::addDatabase("QMYSQL");
 
 DBManager::DBManager()
-{}
+{
+    d_db.setHostName("127.0.0.1");
+    d_db.setPort(3306);
+    d_db.setDatabaseName("db_geo_osm");
+    d_db.setUserName("root");
+    d_db.setPassword("");
+
+    if (!d_db.open())
+    {
+       qDebug() << "Error: Unable to open database";
+    }
+    else
+    {
+      qDebug() << "Database: connection ok";
+    }
+}
 
 DBManager::~DBManager()
 {
-    QString threadId = QString::number(reinterpret_cast<quintptr>(QThread::currentThreadId()));
-    if (QSqlDatabase::contains(threadId)) {
-        qDebug() << threadId;
-        QSqlDatabase db = QSqlDatabase::database(threadId);
-        if (db.isOpen()) {
-            db.close(); // Close the database connection
-        }
-        QSqlDatabase::removeDatabase(threadId);
-        QSqlDatabase::removeDatabase(db.connectionName());
-    }
-
-//    if (d_db.isOpen())
-//    {
-//        d_db.close();
-//        qDebug() << "Database: connection closed";
+//    QString threadId = QString::number(reinterpret_cast<quintptr>(QThread::currentThreadId()));
+//    if (QSqlDatabase::contains(threadId)) {
+//        qDebug() << threadId;
+//        QSqlDatabase db = QSqlDatabase::database(threadId);
+//        if (db.isOpen()) {
+//            db.close(); // Close the database connection
+//        }
+//        QSqlDatabase::removeDatabase(threadId);
+//        QSqlDatabase::removeDatabase(db.connectionName());
 //    }
 }
 
@@ -52,43 +63,53 @@ void DBManager::destroyInstance()
     d_instance = nullptr;
 }
 
+void DBManager::closeDatabase()
+{
+    if (d_db.isOpen())
+    {
+        d_db.close();
+        qDebug() << "Database: connection closed";
+    }
+}
+
 QSqlDatabase DBManager::getDatabase()
 {
-    // Obtenez le chemin vers un répertoire accessible en lecture et écriture (par exemple un répertoire temporaire)
-    QString directory = QDir::homePath();
-    directory += "/" + QStandardPaths::displayName(QStandardPaths::DocumentsLocation) + "/";
-    // Créez le répertoire si nécessaire
-    QDir dir(directory);
-    if (!dir.exists()) {
-        dir.mkpath(".");
-    }
-    // Chemin complet où la base de données sera copiée
-    QString dbPath = directory + "mulhouse_network/geo.db";
-    // Si la base de données n'existe pas déjà à cet emplacement, copiez-la depuis les ressources
-    if (!QFile::exists(dbPath))
-        qDebug() << "Error: Unable to find database file: " << dbPath;
+//    // Obtenez le chemin vers un répertoire accessible en lecture et écriture (par exemple un répertoire temporaire)
+//    QString directory = QDir::homePath();
+//    directory += "/" + QStandardPaths::displayName(QStandardPaths::DocumentsLocation) + "/";
+//    // Créez le répertoire si nécessaire
+//    QDir dir(directory);
+//    if (!dir.exists()) {
+//        dir.mkpath(".");
+//    }
+//    // Chemin complet où la base de données sera copiée
+//    QString dbPath = directory + "mulhouse_network/geo.db";
+//    // Si la base de données n'existe pas déjà à cet emplacement, copiez-la depuis les ressources
+//    if (!QFile::exists(dbPath))
+//        qDebug() << "Error: Unable to find database file: " << dbPath;
 
-    QString threadId = QString::number(reinterpret_cast<quintptr>(QThread::currentThreadId()));
-    if (!QSqlDatabase::contains(threadId)) {
-        QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE", threadId);
+//    QString threadId = QString::number(reinterpret_cast<quintptr>(QThread::currentThreadId()));
+//    if (!QSqlDatabase::contains(threadId)) {
+//        QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE", threadId);
 
-        db.setDatabaseName(dbPath);
+//        db.setDatabaseName(dbPath);
 
-       if (!db.open())
-       {
-           qDebug() << "Error: Unable to open database";
-       }
-       else
-       {
-          qDebug() << "Database: connection ok";
-       }
-    }
-    return QSqlDatabase::database(threadId);
+//       if (!db.open())
+//       {
+//           qDebug() << "Error: Unable to open database";
+//       }
+//       else
+//       {
+//          qDebug() << "Database: connection ok";
+//       }
+//    }
+//    return QSqlDatabase::database(threadId);
+    return d_db;
 }
 
 QSqlQuery DBManager::getBounds(QSqlDatabase db) const
 {
-    QString queryStr = QString("SELECT min(lat) as min_lat, max(lat) as max_lat, min(lon) as min_lon, max(lon) as max_lon FROM %1").arg(_NODES_TABLE_);
+    QString queryStr = QString("SELECT * FROM %1").arg(_BOUNDS_TABLE_);
     QSqlQuery q(db);
     if (!q.prepare(queryStr)) {
         qDebug() << "Error preparing query: " << q.lastError().text();
@@ -145,7 +166,7 @@ QSqlQuery DBManager::getWaters(QSqlDatabase db) const
     QString queryStr = QString("SELECT  * "
         "FROM %1 "
         "LEFT JOIN %2 as t ON t.element_id = %1.id "
-        "WHERE t.t_key = 'waterway' LIMIT 10").arg(_WAYS_TABLE_, _TAGS_TABLE_);
+        "WHERE t.t_key = 'waterway' and t.t_value IN ('river', 'stream', 'canal')").arg(_WAYS_TABLE_, _TAGS_TABLE_);
     QSqlQuery q(db);
     if (!q.prepare(queryStr)) {
         qDebug() << "Error preparing query: " << q.lastError().text();
@@ -197,10 +218,18 @@ QSqlQuery DBManager::getWayNodes(QSqlDatabase db, long long id) const
 
     return q;
 }
+
 long long DBManager::getRandomWay() {
     auto db = getInstance()->getDatabase();
     QSqlQuery query(db);
-    query.prepare("SELECT id FROM ways ORDER BY RANDOM() LIMIT 1");
+    QString queryStr = QString("SELECT * "
+        "FROM %1 "
+        "LEFT JOIN %2 as t ON t.element_id = %1.id "
+        "WHERE t.t_key = 'highway' AND t.t_value NOT IN ('cycleway', 'footway', 'pedestrian', 'platform', 'bus_stop') "
+        "ORDER BY RAND() LIMIT 1").arg(_WAYS_TABLE_, _TAGS_TABLE_);
+
+//    query.prepare(QString("SELECT id FROM %1 ORDER BY RAND() LIMIT 1").arg(_WAYS_TABLE_));
+    query.prepare(queryStr);
 
     if (query.exec() && query.next()) {
         return query.value(0).toLongLong(); // Retourne l'ID du `way` aléatoire
@@ -209,6 +238,8 @@ long long DBManager::getRandomWay() {
         return -1; // Retourne -1 en cas d'erreur
     }
 }
+
+
 QVector<long long> DBManager::getWaysByNode(long long nodeId) {
     QVector<long long> wayIds;
     auto db = getInstance()->getDatabase();

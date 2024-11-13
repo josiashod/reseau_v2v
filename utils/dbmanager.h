@@ -15,10 +15,6 @@ public:
      * @brief getInstance retourne l'instance unique d'utilisation de la bd
      * @return
      */
-    static long long getRandomWay();
-
-    static QVector<long long> getWaysByNode(long long nodeId);
-
     static DBManager* getInstance();
     /**
      * @brief getDatabase retourne la base de donnée du thread en cours
@@ -29,6 +25,7 @@ public:
      * @brief destroyInstance Suppression de l'instance
      */
     static void destroyInstance();
+    static void closeDatabase();
     /**
      * @brief getBounds: retourne la requete pour avoir les coordonnes max et min
      * @return {{MaxLon, MaxLat}, {MinLon, MinLat}}
@@ -72,9 +69,14 @@ public:
      */
     QSqlQuery getWayNodes(QSqlDatabase db, long long id) const;
 
+    long long getRandomWay();
+
+    static QVector<long long> getWaysByNode(long long nodeId);
+
 private:
     DBManager();
     static DBManager* d_instance;
+    static QSqlDatabase d_db;
 };
 
 #endif // DBMANAGER_H

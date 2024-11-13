@@ -11,8 +11,6 @@
 #include <map>
 //#include <proj.h>
 
-#include "./../../core/node.h"
-#include "./../../core/noded.h"
 #include "./../../core/way.h"
 #include "./../../core/building.h"
 #include "./../../core/water.h"
@@ -45,16 +43,11 @@ public:
     void setShowBuilding(bool);
     void setShowRoad(bool);
     void setShowWater(bool);
-    void setShowDescription(bool);
-    void addCarToRandomWay(); // Fonction pour ajouter une voiture sur un way aléatoire
-    void moveCarAlongWay(Car* car, const QVector<Node>& nodes); //
+    // void addCarToRandomWay(); // Fonction pour ajouter une voiture sur un way aléatoire
+    // void moveCarAlongWay(Car* car, const QVector<Node>& nodes); //
 
 private slots :
     void isLoadingFinished();
-    /**
-     * @brief Dessiner la couche de description
-     */
-    void drawDescriptionLayer(QMap<QString, NodeD>& nodes);
     /**
      * Dessiner la couche des bâtiments
      */
@@ -69,7 +62,6 @@ private slots :
 signals :
     void isLoading(bool);
     void isLoaded(bool);
-    void desciptionNodesDataReady(QMap<QString, NodeD>& nodes);
     void buildingsDataReady(const QVector<Building>& buildings);
     void parksDataReady(const QVector<Park>& parks);
     void watersDataReady(const QVector<Water>& waters);
@@ -79,10 +71,10 @@ private:
     // lon, lat coord
     std::pair<double, double> d_maxCoord, d_minCoord;
 
-    const QVector<Way> d_roads;
 //    QVector<QPolygonF> d_meshs;
 
     double d_scale_factor = 1.15;
+    qreal d_perspective_offset = 0.5;
 
     // Permet d'afficher les différentes scenes
     bool d_showPark         = true;
@@ -107,10 +99,6 @@ private:
      * @brief d_waterLayer couche d'affichage de l'eau
      */
     QGraphicsItemGroup* d_waterLayer;
-    /**
-     * @brief d_descriptionLayer couche d'affichage des descriptions
-     */
-    QGraphicsItemGroup* d_descriptionLayer;
     /**
      * @brief d_parcLayer couche d'affichage des espaces verts
      */
@@ -162,7 +150,6 @@ private:
     QPointF latLonToXY(double lon, double lat);
 
     void initBounds();
-    void initNodeDs();
     void initBuildings();
     void initParks();
     void initWaters();

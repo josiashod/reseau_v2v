@@ -12,6 +12,7 @@ public:
     OsmReader();
     static void readOSMFile(const QString& filePath);
 private:
+    static void readBounds(QXmlStreamReader& xml);
     static void readNode(QXmlStreamReader& xml);
 //    void readRelation(QXmlStreamReader& xml);
     static void readWay(QXmlStreamReader& xml);

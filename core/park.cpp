@@ -3,13 +3,19 @@
 Park::Park(long long id): MapItem{id}
 {}
 
-void Park::draw(QGraphicsItemGroup* group, double scale_factor) const
+void Park::draw(QGraphicsItemGroup* group) const
 {
+    if(d_points.empty())
+    {
+        qDebug() << "No points available to draw the park.";
+        return;
+    }
+
     QPolygonF polygon;
 
-    for(const Node& n: d_nodes)
+    for(const QPointF& p: d_points)
     {
-        polygon << n;
+        polygon << p;
     }
 
     auto park = new QGraphicsPolygonItem();

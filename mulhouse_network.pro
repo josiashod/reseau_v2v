@@ -13,8 +13,6 @@ SOURCES += \
 #    core/car.cpp \
     core/car.cpp \
     core/mapitem.cpp \
-    core/node.cpp \
-    core/noded.cpp \
     core/park.cpp \
     core/water.cpp \
     core/way.cpp \
@@ -30,8 +28,6 @@ HEADERS += \
 #    core/car.h \
     core/car.h \
     core/mapitem.h \
-    core/node.h \
-    core/noded.h \
     core/park.h \
     core/water.h \
     core/way.h \

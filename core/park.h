@@ -13,7 +13,7 @@ public:
      * @param group le group ou doit etre l'instance
      * @param scale_factor: le scale factor
      */
-    void draw(QGraphicsItemGroup* group, double scale_factor) const override;
+    void draw(QGraphicsItemGroup* group) const override;
 };
 
 #endif // PARK_H

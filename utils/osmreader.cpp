@@ -23,7 +23,10 @@ void OsmReader::readOSMFile(const QString& filePath) {
                 readNode(xml);
             } else if (xml.name().toString() == "way") {
                 readWay(xml);
-            } /*else if (xml.name().toString() == "relation") {
+            }
+            else if (xml.name().toString() == "bounds") {
+                readBounds(xml);  // Pour des données plus complexes (comme les bâtiments)
+            }/*else if (xml.name().toString() == "relation") {
                 readRelation(xml);  // Pour des données plus complexes (comme les bâtiments)
             }*/
         }
@@ -35,7 +38,34 @@ void OsmReader::readOSMFile(const QString& filePath) {
 
     file.close();
 
+    DBManager::closeDatabase();
     DBManager::destroyInstance();
+}
+
+void OsmReader::readBounds(QXmlStreamReader& xml) {
+    double minlat = xml.attributes().value("minlat").toDouble();
+    double minlon = xml.attributes().value("minlon").toDouble();
+    double maxlat = xml.attributes().value("maxlat").toDouble();
+    double maxlon = xml.attributes().value("maxlon").toDouble();
+
+    auto db = DBManager::getInstance()->getDatabase();
+    QSqlQuery query(db);
+    query.prepare("INSERT INTO bounds(minlat, minlon, maxlat, maxlon) VALUES(:minlat, :minlon, :maxlat, :maxlon)");
+    query.bindValue(":minlat", minlat);
+    query.bindValue(":minlon", minlon);
+    query.bindValue(":maxlat", maxlat);
+    query.bindValue(":maxlon", maxlon);
+    if(query.exec())
+       {
+           qDebug() << "add bounds success";
+       }
+       else
+       {
+            qDebug() << "add bounds error " << db.lastError().text();;
+       }
+
+    query.finish();
+    query.clear();
 }
 
 void OsmReader::readNode(QXmlStreamReader& xml) {
@@ -82,6 +112,7 @@ void OsmReader::readNode(QXmlStreamReader& xml) {
     query.finish();
     query.clear();
 }
+
 
 void OsmReader::readWay(QXmlStreamReader& xml)
 {

@@ -19,6 +19,7 @@ MapWidget::MapWidget(QWidget *parent)
 
 MapWidget::~MapWidget()
 {
+    DBManager::closeDatabase();
     DBManager::destroyInstance();
 }
 
@@ -30,6 +31,12 @@ void MapWidget::creerInterface()
 
 //    d_view = new QGraphicsView{this};
 
+//    QTransform transform;
+//    transform.shear(0.4, 0); // Cisaillement horizontal pour simuler l'inclinaison
+//    transform.scale(1, 0.4); // Réduit la hauteur pour un effet isométrique
+//    setTransform(transform);
+//    rotate(-10);
+
     setMouseTracking(true);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -40,10 +47,6 @@ void MapWidget::creerInterface()
     setScene(d_scene);
     show();
 
-    d_wayLayer = new QGraphicsItemGroup();
-    d_wayLayer->setVisible(d_showWay);
-    d_scene->addItem(d_wayLayer);
-
     d_waterLayer = new QGraphicsItemGroup();
     d_waterLayer->setVisible(d_showWater);
     d_scene->addItem(d_waterLayer);
@@ -52,14 +55,13 @@ void MapWidget::creerInterface()
     d_parkLayer->setVisible(d_showPark);
     d_scene->addItem(d_parkLayer);
 
+    d_wayLayer = new QGraphicsItemGroup();
+    d_wayLayer->setVisible(d_showWay);
+    d_scene->addItem(d_wayLayer);
+
     d_buildingLayer = new QGraphicsItemGroup();
     d_buildingLayer->setVisible(d_showBuilding);
     d_scene->addItem(d_buildingLayer);
-
-    d_descriptionLayer = new QGraphicsItemGroup();
-    d_descriptionLayer->setVisible(d_showDescription);
-    d_scene->addItem(d_descriptionLayer);
-
 
 //    d_meshLayer = new QGraphicsItemGroup();
 //    d_meshLayer->setVisible(d_showMesh);
@@ -67,28 +69,10 @@ void MapWidget::creerInterface()
 
 //    layout->addWidget(d_view);
 
-
-
-    connect(this, &MapWidget::desciptionNodesDataReady, this, &MapWidget::drawDescriptionLayer);
     connect(this, &MapWidget::buildingsDataReady, this, &MapWidget::drawBuildingLayer);
     connect(this, &MapWidget::parksDataReady, this, &MapWidget::drawParkLayer);
     connect(this, &MapWidget::watersDataReady, this, &MapWidget::drawWaterLayer);
     connect(this, &MapWidget::roadsDataReady, this, &MapWidget::drawRoadLayer);
-}
-
-void MapWidget::drawDescriptionLayer(QMap<QString, NodeD>& nodes)
-{
-    for (auto it = nodes.begin(); it != nodes.end(); ++it)
-    {
-        // Créer un nouvel élément texte
-        QGraphicsTextItem *textItem = new QGraphicsTextItem(it.key());
-        textItem->setPos(it.value());
-        QFont font = textItem->font();
-        font.setPointSize(8 / d_scale_factor);  // Ajuster la taille de la police
-        textItem->setFont(font);
-
-        d_descriptionLayer->addToGroup(textItem);
-    }
 }
 
 void MapWidget::drawBuildingLayer(const QVector<Building>& buildings)
@@ -96,7 +80,7 @@ void MapWidget::drawBuildingLayer(const QVector<Building>& buildings)
     QString log;
     for (const Building& b : buildings)
     {
-        b.draw(d_buildingLayer, d_scale_factor); // Dessine dans le thread principal
+        b.draw(d_buildingLayer); // Dessine dans le thread principal
         log = QString("[INFO] Drawing building n°: %1.").arg(b.id());
         // if(d_logger)
         //     d_logger->addLog(log);
@@ -110,7 +94,7 @@ void MapWidget::drawWaterLayer(const QVector<Water>& waters)
     QString log;
     for (const Water& w : waters)
     {
-        w.draw(d_waterLayer, d_scale_factor); // Dessine dans le thread principal
+        w.draw(d_waterLayer); // Dessine dans le thread principal
         log = QString("[INFO] Drawing water n°: %1.").arg(w.id());
         // if(d_logger)
         //     d_logger->addLog(log);
@@ -124,7 +108,7 @@ void MapWidget::drawParkLayer(const QVector<Park>& parks)
     QString log;
     for (const Park& p : parks)
     {
-        p.draw(d_parkLayer, d_scale_factor); // Dessine dans le thread principal
+        p.draw(d_parkLayer); // Dessine dans le thread principal
         log = QString("[INFO] Drawing park n°: %1.").arg(p.id());
         // if(d_logger)
         //     d_logger->addLog(log);
@@ -138,7 +122,7 @@ void MapWidget::drawRoadLayer(const QVector<Way>& ways)
     QString log;
     for (const Way& w : ways)
     {
-        w.draw(d_wayLayer, d_scale_factor); // Dessine dans le thread principal
+        w.draw(d_wayLayer); // Dessine dans le thread principal
         log = QString("[INFO] Drawing road n°: %1.").arg(w.id());
         // if(d_logger)
         //     d_logger->addLog(log);
@@ -175,8 +159,7 @@ void MapWidget::resizeEvent(QResizeEvent *event)
         // Lancer la fonction longue en asynchrone
         QFuture<void> future = QtConcurrent::run([this]() {
             DBManager::getInstance();
-//            this->initNodeDs();
-            this->initWaters();
+//            this->initWaters();
             this->initParks();
             this->initRoads();
             this->initBuildings();
@@ -197,7 +180,6 @@ void MapWidget::isLoadingFinished()
 {
     d_elementsHasBeenLoaded = true;
     emit isLoaded(d_elementsHasBeenLoaded);
-    addCarToRandomWay();
 }
 
 void MapWidget::wheelEvent(QWheelEvent *event)
@@ -217,36 +199,8 @@ void MapWidget::wheelEvent(QWheelEvent *event)
             scale(1.0 / scaleFactor, 1.0 / scaleFactor);
         }
     }
-
-//    // Appliquer le nouveau facteur d'échelle aux éléments si nécessaire
-//    for (QGraphicsItem* item : d_descriptionLayer->childItems() ) {
-//        // Appliquer l'échelle uniquement aux éléments spécifiques, comme les textes ou les ellipses
-//        item->setScale(d_scale_factor);
-//    }
 }
 
-//void MapWidget::mousePressEvent(QMouseEvent *event)
-//{
-//    // Vérifiez si le bouton gauche de la souris est pressé
-//    if (event->button() == Qt::LeftButton) {
-//        setDragMode(QGraphicsView::ScrollHandDrag);
-//        QGraphicsView::mousePressEvent(event);
-//    } else {
-//        QGraphicsView::mousePressEvent(event);
-//    }
-//}
-
-//void MapWidget::mouseReleaseEvent(QMouseEvent *event)
-//{
-//    setDragMode(QGraphicsView::NoDrag);
-//    QGraphicsView::mouseReleaseEvent(event);
-//}
-
-//void MapWidget::mouseMoveEvent(QMouseEvent *event)
-//{
-//    setDragMode(QGraphicsView::NoDrag);
-//    QGraphicsView::mouseReleaseEvent(event);
-//}
 
 
 //std::pair<double, double> MapWidget::lambert93(double longitude, double latitude)
@@ -298,8 +252,8 @@ QPointF MapWidget::latLonToXY(double lon, double lat) {
     double x = (lon - d_minCoord.first) / (d_maxCoord.first - d_minCoord.first) * width;
     double y = height - (lat - d_minCoord.second) / (d_maxCoord.second - d_minCoord.second) * height;
 
+//    return {x, y * d_perspective_offset};
     return {x, y};
-
 }
 
 
@@ -315,10 +269,10 @@ void MapWidget::initBounds()
 
     if (success && query.next()) {
         // je récupère les bornes de la table nodes
-        minLat = query.value("min_lat").toDouble();
-        maxLat = query.value("max_lat").toDouble();
-        minLon = query.value("min_lon").toDouble();
-        maxLon = query.value("max_lon").toDouble();
+        minLat = query.value("minlat").toDouble();
+        maxLat = query.value("maxlat").toDouble();
+        minLon = query.value("minlon").toDouble();
+        maxLon = query.value("maxlon").toDouble();
 
         // Applique la transformation Lambert93 aux bornes
 //        d_maxCoord = lambert93(maxLon, maxLat);
@@ -347,89 +301,6 @@ void MapWidget::initBounds()
     }
     query.clear();
 }
-
-void MapWidget::initNodeDs()
-{
-    auto db = DBManager::getInstance();
-    QSqlQuery query = db->getNodeDs(db->getDatabase());
-    bool success = false;
-    QString log;
-    QMap<QString, NodeD> nodes{};
-
-
-    success = query.exec();
-    if(success)
-    {
-        while(query.next())
-        {
-            std::pair<double, double> coord;
-            long long id;
-            double lat = 0.0, lon = 0.0;
-            QString name = "";
-
-            id = query.value(0).toString().toLongLong();
-            lat = query.value(1).toString().toDouble();
-            lon = query.value(2).toString().toDouble();
-
-            //            coord = lambert93(lon, lat);
-            coord = std::make_pair(lon, lat);
-            name = query.value(6).toString();
-            NodeD n{id, pairLatLonToXY(coord), name};
-            nodes.insert(name, n);
-//            nodes.emplace();
-            log = QString("[SUCCESS] Noeuds de description n°: %1 recupérer avec succès.").arg(id);
-//            if(d_logger)
-//                d_logger->addLog(log, LogWidget::SUCCESS);
-//            else
-                qDebug() << log;
-        }
-    }
-    query.clear();
-    log = "[INFO] Emission des noeuds pour affichage.";
-    // if(d_logger)
-    //     d_logger->addLog(log);
-    // else
-        qDebug() << log;
-    emit desciptionNodesDataReady(nodes);
-}
-
-//Node* MapWidget::findNodeById(long long id)
-//{
-//    if(d_nodes.find(id) != d_nodes.end())
-//        return &d_nodes.at(id);
-//    else
-//        return nullptr;
-//}
-
-//void MapWidget::initNodes()
-//{
-//    QSqlQuery query;
-//    bool success = false;
-
-//    success = query.exec(d_db.getNodes());
-//    //    success = query.exec();
-//    if(success)
-//    {
-//        while(query.next())
-//        {
-//            std::pair<double, double> coord;
-//            long long id;
-//            double lat = 0.0, lon = 0.0;
-//            QString name = "";
-
-//            id = query.value(0).toString().toLongLong();
-//            lat = query.value(1).toString().toDouble();
-//            lon = query.value(2).toString().toDouble();
-
-//            coord = lambert93(lon, lat);
-//            coord = std::make_pair(lon, lat);
-//            Node n{id, pairLatLonToXY(coord)};
-//            d_nodes.emplace(id, n);
-
-//            qDebug() << "Nodes: " << id;
-//        }
-//    }
-//}
 
 void MapWidget::initBuildings()
 {
@@ -465,8 +336,8 @@ void MapWidget::initBuildings()
 
                     //            coord = lambert93(lon, lat);
                     coord = std::make_pair(lon, lat);
-                    Node n{id, pairLatLonToXY(coord)};
-                    b.addNode(n);
+                    QPointF p = pairLatLonToXY(coord);
+                    b.addPoint(p);
                      qDebug() << QString("[SUCCESS] Road n°: %1.").arg(id);
                 }
             }
@@ -503,7 +374,7 @@ void MapWidget::initParks()
             long long id;
             id = query.value(0).toString().toLongLong();
 
-            Park p{id};
+            Park park{id};
 
             auto q = db->getWayNodes(db->getDatabase(), id);
             success = q.exec();
@@ -521,11 +392,11 @@ void MapWidget::initParks()
 
                     //            coord = lambert93(lon, lat);
                     coord = std::make_pair(lon, lat);
-                    Node n{id, pairLatLonToXY(coord)};
-                    p.addNode(n);
+                    QPointF p = pairLatLonToXY(coord);
+                    park.addPoint(p);
                 }
             }
-            parks.push_back(p);
+            parks.push_back(park);
             // if(d_logger)
             // d_logger->addLog(QString("[SUCCESS] Park n°: %1.").arg(id), LogWidget::SUCCESS);
         }
@@ -575,8 +446,8 @@ void MapWidget::initWaters()
 
                     //            coord = lambert93(lon, lat);
                     coord = std::make_pair(lon, lat);
-                    Node n{id, pairLatLonToXY(coord)};
-                    w.addNode(n);
+                    QPointF p = pairLatLonToXY(coord);
+                    w.addPoint(p);
                 }
             }
             waters.push_back(w);
@@ -628,8 +499,8 @@ void MapWidget::initRoads()
 
                     //            coord = lambert93(lon, lat);
                     std::pair<double, double> coord{lon, lat};
-                    Node n{id, pairLatLonToXY(coord)};
-                    w.addNode(n);
+                    QPointF p = pairLatLonToXY(coord);
+                    w.addPoint(p);
                     qDebug() << QString("[SUCCESS] Road n°: %1.").arg(id);
                 }
             }
@@ -674,12 +545,6 @@ void MapWidget::setShowWater(bool show)
     d_waterLayer->setVisible(show);
 }
 
-void MapWidget::setShowDescription(bool show)
-{
-    d_showDescription = show;
-    d_descriptionLayer->setVisible(d_showDescription);
-}
-
 //void MapWidget::initMeshs()
 //{
 //    qreal hexRadius = 8.0;  // Adjust size as needed
@@ -708,68 +573,59 @@ void MapWidget::setShowDescription(bool show)
 //    }
 //}
 
+// void MapWidget::addCarToRandomWay() {
+//     auto db = DBManager::getInstance();
+//     long long wayId = db->getRandomWay();
+//     if (wayId == -1) {
+//         qDebug() << "Aucun way trouvé.";
+//         return;
+//     }
 
-//void MapWidget::map_update()
-//{
-//    //update();
-//}
-void MapWidget::addCarToRandomWay() {
-    long long wayId = DBManager::getRandomWay();
-    if (wayId == -1) {
-        qDebug() << "Aucun way trouvé.";
-        return;
-    }
+//     Way way = d_roads[wayId];
+//     // Récupérer le premier nœud du Way
+//     Node initialNode = way.nodes().first();
 
-    Way* way = Way::findWayById(wayId);
-    if (way == nullptr || way->nodes().isEmpty()) {
-        qDebug() << "Impossible de trouver le way ou le way est vide.";
-        return;
-    }
 
-    // Récupérer le premier nœud du Way
-    Node initialNode = way->nodes().first();
+//     // Créer la voiture à la position du premier nœud
+//     Car* car = new Car(initialNode);
+//     car->moveTo(initialNode);
 
-    // Créer un std::pair temporaire pour stocker les coordonnées
-    std::pair<double, double> initialCoord = std::make_pair(initialNode.x(), initialNode.y());
-    QPointF initialPos = pairLatLonToXY(initialCoord);
+//     // Ajouter le triangle (voiture) à la scène
+//     if (car->polygon()) {
+//         qDebug() << "ok";
+//         d_scene->addItem(car->polygon());
+//     }
 
-    // Créer la voiture à la position du premier nœud
-    Car* car = new Car(initialNode);
-    car->moveTo(initialNode);
+//     qDebug() << "Voiture ajoutée au way ID:" << wayId << "à la position" << initialNode;
 
-    // Ajouter le triangle (voiture) à la scène
-    if (car->polygon()) {
-        d_scene->addItem(car->polygon());
-    }
+//     // Lancer le mouvement le long du Way
+//     moveCarAlongWay(car, way.nodes());
+// }
 
-    qDebug() << "Voiture ajoutée au way ID:" << wayId << "à la position" << initialPos;
+// void MapWidget::moveCarAlongWay(Car* car, const QVector<Node>& nodes) {
+//     static int currentIndex = 0;
 
-    // Lancer le mouvement le long du Way
-    moveCarAlongWay(car, way->nodes());
-}
+//     if (nodes.isEmpty() || car->polygon() == nullptr) return;
 
-void MapWidget::moveCarAlongWay(Car* car, const QVector<Node>& nodes) {
-    static int currentIndex = 0;
+//     if (currentIndex < nodes.size()) {
+//         // Déplacer la voiture au prochain nœud
+//         Node currentNode = nodes[currentIndex];
+//         car->moveTo(currentNode);
 
-    if (nodes.isEmpty() || car->polygon() == nullptr) return;
+// //        // Créer un std::pair temporaire pour stocker les coordonnées
+// //        std::pair<double, double> currentCoord = std::make_pair(currentNode.x(), currentNode.y());
 
-    if (currentIndex < nodes.size()) {
-        // Déplacer la voiture au prochain nœud
-        Node currentNode = nodes[currentIndex];
-        car->moveTo(currentNode);
+// //        // Utiliser la variable temporaire pour obtenir la position
+// //        QPointF currentPos = pairLatLonToXY(currentCoord);
+// //        car->polygon()->setPos(currentNode);
 
-        // Créer un std::pair temporaire pour stocker les coordonnées
-        std::pair<double, double> currentCoord = std::make_pair(currentNode.x(), currentNode.y());
+//         qDebug() << "move called";
 
-        // Utiliser la variable temporaire pour obtenir la position
-        QPointF currentPos = pairLatLonToXY(currentCoord);
-        car->polygon()->setPos(currentPos);
+//         currentIndex++;
+//     } else {
+//         currentIndex = 0; // Recommencer depuis le début
+//     }
 
-        currentIndex++;
-    } else {
-        currentIndex = 0; // Recommencer depuis le début
-    }
-
-    // Mettre à jour la position toutes les secondes
-    QTimer::singleShot(1000, [this, car, nodes]() { moveCarAlongWay(car, nodes); });
-}
+//     // Mettre à jour la position toutes les secondes
+//     QTimer::singleShot(1000, [this, car, nodes]() { moveCarAlongWay(car, nodes); });
+// }

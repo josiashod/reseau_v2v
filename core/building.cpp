@@ -3,18 +3,19 @@
 Building::Building(long long id): MapItem{id}
 {}
 
-void Building::draw(QGraphicsItemGroup* group, double scale_factor) const
+void Building::draw(QGraphicsItemGroup* group) const
 {
-    if (d_nodes.empty())
+    if (d_points.empty())
     {
         qDebug() << "No nodes available to draw the building.";
         return;
     }
+
     QPolygonF polygon;
 
-    for(const Node& n: d_nodes)
+    for(const QPointF& p: d_points)
     {
-        polygon << n;
+        polygon << p;
     }
 
     auto building = new QGraphicsPolygonItem();

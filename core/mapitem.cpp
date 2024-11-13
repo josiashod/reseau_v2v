@@ -8,8 +8,8 @@ MapItem::MapItem(long long id)
 long long MapItem::id() const
 { return d_id; }
 
-void MapItem::addNode(const Node& n) {
-    d_nodes.push_back(n);
+void MapItem::addPoint(const QPointF& p) {
+    d_points.push_back(p);
 }
 
 void MapItem::addTag(const QString& key, const QString& value) {

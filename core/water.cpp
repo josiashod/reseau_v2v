@@ -3,19 +3,30 @@
 Water::Water(long long id): MapItem{id}
 {}
 
-void Water::draw(QGraphicsItemGroup* group, double scale_factor) const
+void Water::draw(QGraphicsItemGroup* group) const
 {
-    QPolygonF polygon;
-
-    for(const Node& n: d_nodes)
+    if(d_points.empty())
     {
-        polygon << n;
+        qDebug() << "No points available to draw the park.";
+        return;
     }
 
-    QPainterPath p;
-    p.addPolygon(polygon);
+    QPolygonF polygon;
 
-    auto water = new QGraphicsPathItem(p);
+    for(const QPointF& p: d_points)
+    {
+        polygon << p;
+    }
+
+    if (!polygon.isClosed())
+    {
+        polygon << polygon.first();
+    }
+
+//    QPainterPath p;
+//    p.addPolygon(polygon);
+
+    auto water = new QGraphicsPolygonItem(polygon);
     QBrush brush{QColor(0, 191, 255)};
     water->setBrush(brush);
     QPen pen{QColor(0, 191, 255), 1}; // Noir, épaisseur 1 pixel

@@ -7,7 +7,6 @@
 #include <QGraphicsItemGroup>
 #include <QBrush>
 #include <QPen>
-#include "node.h"
 #include <QDebug>
 
 class MapItem
@@ -23,10 +22,10 @@ public:
     long long id() const;
 
     /**
-     * @brief addNode: ajoute un noeud à la liste des noeuds du mapItem
-     * @param n: le noeud en question
+     * @brief addPoint: ajoute un noeud à la liste des noeuds du mapItem
+     * @param p: le point en question
      */
-    void addNode(const Node& n);
+    void addPoint(const QPointF& p);
     /**
      * @brief addTag: ajoute un tag a
      * @param key
@@ -50,10 +49,10 @@ public:
      * @param group le group ou doit etre l'instance
      * @param scale_factor: le scale factor
      */
-    virtual void draw(QGraphicsItemGroup* group, double scale_factor) const = 0;
+    virtual void draw(QGraphicsItemGroup* group) const = 0;
 protected:
     long long d_id;
-    std::vector<Node> d_nodes;
+    std::vector<QPointF> d_points;
     std::map<QString, QString> d_tags;
 };
 

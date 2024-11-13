@@ -37,9 +37,6 @@ void MainWindow::creerInterface()
     QAction *showParcAct = new QAction{"Afficher/Masquer les espaces verts"};
     viewMenu->addAction(showParcAct);
 
-    QAction *showDescAct = new QAction{"Afficher/Masquer les description"};
-    viewMenu->addAction(showDescAct);
-
     QAction *showLogsAct = new QAction{"Afficher/Masquer les logs"};
     viewMenu->addAction(showLogsAct);
 
@@ -63,7 +60,6 @@ void MainWindow::creerInterface()
     connect(showBuildindAct, &QAction::triggered, this, &MainWindow::onShowHideBuildings);
     connect(showWaterAct, &QAction::triggered, this, &MainWindow::onShowHideWaters);
     connect(showParcAct, &QAction::triggered, this, &MainWindow::onShowHideParks);
-    connect(showDescAct, &QAction::triggered, this, &MainWindow::onShowHideDescs);
     connect(showLogsAct, &QAction::triggered, this, &MainWindow::onShowHideLogs);
 
     //map connects
@@ -93,12 +89,6 @@ void MainWindow::onShowHideParks(bool)
 {
     d_showParks = !d_showParks;
     d_mapView->setShowPark(d_showParks);
-}
-
-void MainWindow::onShowHideDescs(bool)
-{
-    d_showDescs = !d_showDescs;
-    d_mapView->setShowDescription(d_showDescs);
 }
 
 void MainWindow::onShowHideLogs(bool)
