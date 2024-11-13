@@ -12,7 +12,7 @@ int main(int argc, char *argv[])
 //    Enregistrement des types pour le système de méta-objets de Qt
    qRegisterMetaType<QVector<Water>>("QVector<Water>");
    qRegisterMetaType<QVector<Park>>("QVector<Park>");
-   qRegisterMetaType<QMap<long long, Way>>("QMap<long long, Way>");
+   qRegisterMetaType<QVector<Way>>("QMap<long long, Way>");
    qRegisterMetaType<QVector<Building>>("QVector<Building>");
     MainWindow w;
     w.show();
