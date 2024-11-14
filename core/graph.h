@@ -7,6 +7,7 @@
 namespace osm
 {
     class Edge;
+
     class Node
     {
     public:
@@ -75,6 +76,11 @@ namespace osm
          */
         Edge(const Edge& e);
 
+        /**
+         * @brief findNode retourne le noeud ayant l'id passé en parametre
+         * @param id
+         * @return null si rien n'est trouvé
+         */
         Node* findNode(long long id) const;
         /**
          * @brief getStart: retourne le noeud de depart
