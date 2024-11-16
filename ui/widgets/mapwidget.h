@@ -87,6 +87,10 @@ private:
     // permet de savoir si les elements de la carte on été chargés
     bool d_elementsHasBeenLoaded = false;
 
+    int FPS = 30;
+    double T; // durée de l'animation
+    QTimer *d_timer;
+
     /**
      * @brief d_view la vue graphique pour la map
      */

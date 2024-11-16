@@ -1,4 +1,5 @@
 #include "dbmanager.h"
+#include "../env.h"
 #include <QDebug>
 #include <QSqlRecord>
 #include <QFile>
@@ -14,15 +15,22 @@ const QString _BOUNDS_TABLE_ = "bounds";
 
 // Initialisation des attributs static
 DBManager* DBManager::d_instance = nullptr;
-QSqlDatabase DBManager::d_db = QSqlDatabase::addDatabase("QMYSQL");
+QSqlDatabase DBManager::d_db = QSqlDatabase::addDatabase(env::DB_CONNECTION);
 
 DBManager::DBManager()
 {
-    d_db.setHostName("127.0.0.1");
-    d_db.setPort(3306);
-    d_db.setDatabaseName("db_geo_osm");
-    d_db.setUserName("root");
-    d_db.setPassword("");
+    if(env::DB_CONNECTION == "QSQLITE")
+    {
+        d_db.setDatabaseName(env::DB_DATABASE);
+    }
+    else
+    {
+        d_db.setHostName(env::DB_HOST);
+        d_db.setPort(env::DB_PORT);
+        d_db.setDatabaseName(env::DB_DATABASE);
+        d_db.setUserName(env::DB_USERNAME);
+        d_db.setPassword(env::DB_PASSWORD);
+    }
 
     if (!d_db.open())
     {
