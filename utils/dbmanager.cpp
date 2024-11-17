@@ -20,9 +20,9 @@ DBManager::DBManager()
 {
     d_db.setHostName("127.0.0.1");
     d_db.setPort(3306);
-    d_db.setDatabaseName("db_geo_osm");
-    d_db.setUserName("root");
-    d_db.setPassword("");
+    d_db.setDatabaseName("osm");
+    d_db.setUserName("admin");
+    d_db.setPassword("Adm1nS@ql");
 
     if (!d_db.open())
     {
