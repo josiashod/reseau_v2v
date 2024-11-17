@@ -17,6 +17,7 @@ SOURCES += \
     core/park.cpp \
     core/water.cpp \
     core/way.cpp \
+    env.cpp \
     main.cpp \
     ui/widgets/logwidget.cpp \
     ui/widgets/mapwidget.cpp \
@@ -33,6 +34,7 @@ HEADERS += \
     core/park.h \
     core/water.h \
     core/way.h \
+    env.h \
     ui/widgets/logwidget.h \
     ui/widgets/mapwidget.h \
     ui/windows/mainwindow.h \

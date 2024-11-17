@@ -6,5 +6,20 @@
         <file>lib/carte_3.osm</file>
         <file>lib/carte_4.osm</file>
         <file>lib/carte_5.osm</file>
+        <file>lib/img/cars/car_black_1.png</file>
+        <file>lib/img/cars/car_black_2.png</file>
+        <file>lib/img/cars/car_black_3.png</file>
+        <file>lib/img/cars/car_blue_1.png</file>
+        <file>lib/img/cars/car_blue_2.png</file>
+        <file>lib/img/cars/car_blue_3.png</file>
+        <file>lib/img/cars/car_green_1.png</file>
+        <file>lib/img/cars/car_green_2.png</file>
+        <file>lib/img/cars/car_green_3.png</file>
+        <file>lib/img/cars/car_red_1.png</file>
+        <file>lib/img/cars/car_red_2.png</file>
+        <file>lib/img/cars/car_red_3.png</file>
+        <file>lib/img/cars/car_yellow_1.png</file>
+        <file>lib/img/cars/car_yellow_2.png</file>
+        <file>lib/img/cars/car_yellow_3.png</file>
     </qresource>
 </RCC>

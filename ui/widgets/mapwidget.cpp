@@ -10,7 +10,7 @@
 // CRÉATION DE L'INTERFACE
 
 MapWidget::MapWidget(QWidget *parent)
-    : QGraphicsView{parent}
+    : QGraphicsView{parent}, d_cars{2}
 {
     creerInterface();
 //    initMeshs();
@@ -63,6 +63,10 @@ void MapWidget::creerInterface()
     d_buildingLayer->setVisible(d_showBuilding);
     d_scene->addItem(d_buildingLayer);
 
+    d_carsLayer = new QGraphicsItemGroup();
+    d_carsLayer->setVisible(d_showCar);
+    d_scene->addItem(d_carsLayer);
+
 //    d_meshLayer = new QGraphicsItemGroup();
 //    d_meshLayer->setVisible(d_showMesh);
 //    d_scene->addItem(d_meshLayer);
@@ -73,6 +77,12 @@ void MapWidget::creerInterface()
     connect(this, &MapWidget::parksDataReady, this, &MapWidget::drawParkLayer);
     connect(this, &MapWidget::watersDataReady, this, &MapWidget::drawWaterLayer);
     connect(this, &MapWidget::roadsDataReady, this, &MapWidget::drawRoadLayer);
+
+    T = 10;
+    d_timer = new QTimer(this);
+    connect(d_timer, &QTimer::timeout, this, &MapWidget::updateCarsPosition);
+
+    d_elapsed = 0;
 }
 
 void MapWidget::drawBuildingLayer(const QVector<Building>& buildings)
@@ -127,7 +137,7 @@ void MapWidget::drawRoadLayer(const QVector<Way>& ways)
         // if(d_logger)
         //     d_logger->addLog(log);
         // else
-            qDebug() << log;
+//            qDebug() << log;
     }
 }
 
@@ -158,11 +168,13 @@ void MapWidget::resizeEvent(QResizeEvent *event)
         fitInView(d_scene->sceneRect(), Qt::KeepAspectRatio);
         // Lancer la fonction longue en asynchrone
         QFuture<void> future = QtConcurrent::run([this]() {
-            DBManager::getInstance();
+//            DBManager::getInstance();
 //            this->initWaters();
             this->initParks();
             this->initRoads();
             this->initBuildings();
+            this->loadCars();
+            DBManager::closeDatabase();
             DBManager::destroyInstance();
         });
 
@@ -176,10 +188,14 @@ void MapWidget::resizeEvent(QResizeEvent *event)
         watcher->setFuture(future);
     }
 }
+
 void MapWidget::isLoadingFinished()
 {
     d_elementsHasBeenLoaded = true;
     emit isLoaded(d_elementsHasBeenLoaded);
+
+    double interval = 1000 / FPS;
+    d_timer->start(interval);  // Démarrer le timer
 }
 
 void MapWidget::wheelEvent(QWheelEvent *event)
@@ -200,7 +216,6 @@ void MapWidget::wheelEvent(QWheelEvent *event)
         }
     }
 }
-
 
 
 //std::pair<double, double> MapWidget::lambert93(double longitude, double latitude)
@@ -545,6 +560,31 @@ void MapWidget::setShowWater(bool show)
     d_waterLayer->setVisible(show);
 }
 
+void MapWidget::loadCars()
+{
+    for(int i = 0; i < d_cars.size(); i++)
+    {
+        d_cars[i] = Car({10 * i, 10 * i}, (20 * i) + 20);
+
+        d_carsLayer->addToGroup(d_cars[i].pixmap());
+    }
+}
+
+void MapWidget::updateCarsPosition()
+{
+    double interval = 1000 / FPS;
+    d_elapsed += (interval) / 1000.0;  // Convertir l'intervalle en secondes
+
+    if (d_elapsed > T) {
+        d_timer->stop();  // Arrêter l'animation à la fin
+        return;
+    }
+
+    for(int i = 0; i < d_cars.size(); i++)
+    {
+        d_cars[i].update(interval);
+    }
+}
 //void MapWidget::initMeshs()
 //{
 //    qreal hexRadius = 8.0;  // Adjust size as needed

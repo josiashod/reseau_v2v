@@ -43,6 +43,7 @@ public:
     void setShowBuilding(bool);
     void setShowRoad(bool);
     void setShowWater(bool);
+    void loadCars();
     // void addCarToRandomWay(); // Fonction pour ajouter une voiture sur un way aléatoire
     // void moveCarAlongWay(Car* car, const QVector<Node>& nodes); //
 
@@ -58,6 +59,11 @@ private slots :
      * @brief Dessiner la couche de
      */
     void drawRoadLayer(const QVector<Way>& roads);
+
+    /**
+     * @brief updateCarsPosition: update cars position
+     */
+    void updateCarsPosition();
 
 signals :
     void isLoading(bool);
@@ -82,14 +88,16 @@ private:
     bool d_showBuilding     = true;
     bool d_showWay          = true;
     bool d_showDescription  = true;
+    bool d_showCar          = true;
 //    bool d_showMesh  = true;
 
     // permet de savoir si les elements de la carte on été chargés
     bool d_elementsHasBeenLoaded = false;
 
-    int FPS = 30;
+    int FPS = 60;
     double T; // durée de l'animation
     QTimer *d_timer;
+    double d_elapsed; // Temps écoulé depuis le début de l'animation
 
     /**
      * @brief d_view la vue graphique pour la map
@@ -115,10 +123,16 @@ private:
      * @brief d_wayLayer couche d'affichage des routes
      */
     QGraphicsItemGroup* d_wayLayer;
+    /**
+     * @brief d_carsLayer couche d'affichage des routes
+     */
+    QGraphicsItemGroup* d_carsLayer;
 //    /**
 //     * @brief d_meshLayer couche d'affichage des mailles
 //     */
 //    QGraphicsItemGroup* d_meshLayer;
+
+    QVector<Car> d_cars;
 
     void creerInterface();
     void resizeEvent(QResizeEvent *event) override;
