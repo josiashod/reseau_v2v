@@ -10,8 +10,9 @@
 // CRÉATION DE L'INTERFACE
 
 MapWidget::MapWidget(QWidget *parent)
-    : QGraphicsView{parent}, d_cars{2}
+    : QGraphicsView{parent}, d_cars{}, d_graph{}
 {
+    d_dbmanager = DBManager::getInstance();
     creerInterface();
 //    initMeshs();
     initBounds();
@@ -21,6 +22,7 @@ MapWidget::~MapWidget()
 {
     DBManager::closeDatabase();
     DBManager::destroyInstance();
+    d_scene->clear();
 }
 
 void MapWidget::creerInterface()
@@ -78,11 +80,8 @@ void MapWidget::creerInterface()
     connect(this, &MapWidget::watersDataReady, this, &MapWidget::drawWaterLayer);
     connect(this, &MapWidget::roadsDataReady, this, &MapWidget::drawRoadLayer);
 
-    T = 10;
     d_timer = new QTimer(this);
     connect(d_timer, &QTimer::timeout, this, &MapWidget::updateCarsPosition);
-
-    d_elapsed = 0;
 }
 
 void MapWidget::drawBuildingLayer(const QVector<Building>& buildings)
@@ -168,14 +167,11 @@ void MapWidget::resizeEvent(QResizeEvent *event)
         fitInView(d_scene->sceneRect(), Qt::KeepAspectRatio);
         // Lancer la fonction longue en asynchrone
         QFuture<void> future = QtConcurrent::run([this]() {
-//            DBManager::getInstance();
 //            this->initWaters();
             this->initParks();
             this->initRoads();
-            this->initBuildings();
+//            this->initBuildings();
             this->loadCars();
-            DBManager::closeDatabase();
-            DBManager::destroyInstance();
         });
 
         // Configurer la vue (taille et centrage)
@@ -267,15 +263,14 @@ QPointF MapWidget::latLonToXY(double lon, double lat) {
     double x = (lon - d_minCoord.first) / (d_maxCoord.first - d_minCoord.first) * width;
     double y = height - (lat - d_minCoord.second) / (d_maxCoord.second - d_minCoord.second) * height;
 
-//    return {x, y * d_perspective_offset};
-    return {x, y};
+    return {x, y * d_perspective_offset};
+//    return {x, y};
 }
 
 
 void MapWidget::initBounds()
 {
-    auto db = DBManager::getInstance();
-    QSqlQuery query = db->getBounds(db->getDatabase());
+    QSqlQuery query = d_dbmanager->getBounds(d_dbmanager->getDatabase());
     double minLat = 0.0, maxLat = 0.0, minLon = 0.0, maxLon = 0.0;
     bool success = false;
     QString log;
@@ -320,8 +315,7 @@ void MapWidget::initBounds()
 void MapWidget::initBuildings()
 {
     QVector<Building> buildings;
-    auto db = DBManager::getInstance();
-    auto query = db->getBuildings(db->getDatabase());
+    auto query = d_dbmanager->getBuildings(d_dbmanager->getDatabase());
     bool success = false;
 
     success = query.exec();
@@ -335,17 +329,15 @@ void MapWidget::initBuildings()
 
             Building b{id};
 
-            auto q = db->getWayNodes(db->getDatabase(), id);
+            auto q = d_dbmanager->getWayNodes(d_dbmanager->getDatabase(), id);
             success = q.exec();
             if(success)
             {
                 while(q.next())
                 {
                     std::pair<double, double> coord;
-                    long long id;
                     double lat = 0.0, lon = 0.0;
 
-                    id = q.value(0).toString().toLongLong();
                     lat = q.value(1).toString().toDouble();
                     lon = q.value(2).toString().toDouble();
 
@@ -353,7 +345,7 @@ void MapWidget::initBuildings()
                     coord = std::make_pair(lon, lat);
                     QPointF p = pairLatLonToXY(coord);
                     b.addPoint(p);
-                     qDebug() << QString("[SUCCESS] Road n°: %1.").arg(id);
+//                    qDebug() << QString("[SUCCESS] Building n°: %1.").arg(id);
                 }
             }
             buildings.push_back(b);
@@ -376,8 +368,7 @@ void MapWidget::initBuildings()
 void MapWidget::initParks()
 {
     QVector<Park> parks;
-    auto db = DBManager::getInstance();
-    auto query = db->getParks(db->getDatabase());
+    auto query = d_dbmanager->getParks(d_dbmanager->getDatabase());
     bool success = false;
 
     success = query.exec();
@@ -391,17 +382,17 @@ void MapWidget::initParks()
 
             Park park{id};
 
-            auto q = db->getWayNodes(db->getDatabase(), id);
+            auto q = d_dbmanager->getWayNodes(d_dbmanager->getDatabase(), id);
             success = q.exec();
             if(success)
             {
                 while(q.next())
                 {
                     std::pair<double, double> coord;
-                    long long id;
+//                    long long id;
                     double lat = 0.0, lon = 0.0;
 
-                    id = q.value(0).toString().toLongLong();
+//                    id = q.value(0).toString().toLongLong();
                     lat = q.value(1).toString().toDouble();
                     lon = q.value(2).toString().toDouble();
 
@@ -430,8 +421,7 @@ void MapWidget::initParks()
 void MapWidget::initWaters()
 {
     QVector<Water> waters;
-    auto db = DBManager::getInstance();
-    auto query = db->getWaters(db->getDatabase());
+    auto query = d_dbmanager->getWaters(d_dbmanager->getDatabase());
     bool success = false;
 
     success = query.exec();
@@ -445,17 +435,17 @@ void MapWidget::initWaters()
 
             Water w{id};
 
-            auto q = db->getWayNodes(db->getDatabase(), id);
+            auto q = d_dbmanager->getWayNodes(d_dbmanager->getDatabase(), id);
             success = q.exec();
             if(success)
             {
                 while(q.next())
                 {
                     std::pair<double, double> coord;
-                    long long id;
+//                    long long id;
                     double lat = 0.0, lon = 0.0;
 
-                    id = q.value(0).toString().toLongLong();
+//                    id = q.value(0).toString().toLongLong();
                     lat = q.value(1).toString().toDouble();
                     lon = q.value(2).toString().toDouble();
 
@@ -482,8 +472,7 @@ void MapWidget::initWaters()
 void MapWidget::initRoads()
 {
     QVector<Way> ways;
-    auto db = DBManager::getInstance();
-    auto query = db->getRoads(db->getDatabase());
+    auto query = d_dbmanager->getRoads(d_dbmanager->getDatabase());
     bool success = false;
 
     success = query.exec();
@@ -496,17 +485,35 @@ void MapWidget::initRoads()
             id = query.value(0).toString().toLongLong();
 
             Way w{id};
+            QString key = query.value(3).toString();
+            QString value = query.value(4).toString();
+            w.addTag(key, value);
 
-            w.addTag(query.value(3).toString(), query.value(4).toString());
-
-            auto q = db->getWayNodes(db->getDatabase(), id);
+            auto q = d_dbmanager->getWayNodes(d_dbmanager->getDatabase(), id);
             success = q.exec();
             if(success)
             {
+                long long id;
+                double lat = 0.0, lon = 0.0;
+                QPointF p;
+                osm::Node* start    = nullptr;
+                osm::Node* end      = nullptr;
+
+                if (w.isCarWay())
+                {
+                    if(q.next())
+                    {
+                        id = q.value(0).toString().toLongLong();
+                        lat = q.value(1).toString().toDouble();
+                        lon = q.value(2).toString().toDouble();
+                        std::pair<double, double> c{lon, lat};
+                        p = pairLatLonToXY(c);
+                        w.addPoint(p);
+                        start = d_graph.addNode(id, p.x(), p.y());
+                    }
+                }
                 while(q.next())
                 {
-                    long long id;
-                    double lat = 0.0, lon = 0.0;
 
                     id = q.value(0).toString().toLongLong();
                     lat = q.value(1).toString().toDouble();
@@ -514,12 +521,24 @@ void MapWidget::initRoads()
 
                     //            coord = lambert93(lon, lat);
                     std::pair<double, double> coord{lon, lat};
-                    QPointF p = pairLatLonToXY(coord);
+                    p = pairLatLonToXY(coord);
                     w.addPoint(p);
+
+                    // Ajouter un nœud au graphe et connecter l'arête
+                    if (start) {
+                        end = d_graph.addNode(id, p.x(), p.y());
+                        if (start && end) {
+                            // on verifie si l'arret n'existe pas dejà
+                            if (!start->hasNeighbor(end)) {
+                                d_graph.addEdge(start, end);
+                            }
+                        }
+                        start = end;
+                    }
                     qDebug() << QString("[SUCCESS] Road n°: %1.").arg(id);
                 }
+                ways.push_back(w);
             }
-            ways.push_back(w);
             // if(d_logger)
             // d_logger->addLog(QString("[SUCCESS] Road n°: %1.").arg(id), LogWidget::SUCCESS);
         }
@@ -562,27 +581,25 @@ void MapWidget::setShowWater(bool show)
 
 void MapWidget::loadCars()
 {
-    for(int i = 0; i < d_cars.size(); i++)
+    for(int i = 0; i < 2; i++)
     {
-        d_cars[i] = Car({10 * i, 10 * i}, (20 * i) + 20);
+        osm::Node*  n = d_graph.getRandomNode();
 
-        d_carsLayer->addToGroup(d_cars[i].pixmap());
+        if(n)
+        {
+            d_cars.push_back(std::make_unique<Car>(Car{n}));
+            d_carsLayer->addToGroup(d_cars.back()->pixmap());
+        }
     }
 }
 
 void MapWidget::updateCarsPosition()
 {
     double interval = 1000 / FPS;
-    d_elapsed += (interval) / 1000.0;  // Convertir l'intervalle en secondes
-
-    if (d_elapsed > T) {
-        d_timer->stop();  // Arrêter l'animation à la fin
-        return;
-    }
 
     for(int i = 0; i < d_cars.size(); i++)
     {
-        d_cars[i].update(interval);
+        d_cars[i].get()->update(interval);
     }
 }
 //void MapWidget::initMeshs()
@@ -614,8 +631,7 @@ void MapWidget::updateCarsPosition()
 //}
 
 // void MapWidget::addCarToRandomWay() {
-//     auto db = DBManager::getInstance();
-//     long long wayId = db->getRandomWay();
+//     long long wayId = d_dbmanager->getRandomWay();
 //     if (wayId == -1) {
 //         qDebug() << "Aucun way trouvé.";
 //         return;

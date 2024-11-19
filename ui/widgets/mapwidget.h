@@ -16,6 +16,7 @@
 #include "./../../core/water.h"
 #include "./../../core/park.h"
 #include "./../../utils/dbmanager.h"
+#include "../../core/graph.h"
 #include "../../core/car.h"
 
 
@@ -80,7 +81,7 @@ private:
 //    QVector<QPolygonF> d_meshs;
 
     double d_scale_factor = 1.15;
-    qreal d_perspective_offset = 0.5;
+    qreal d_perspective_offset = 0.6;
 
     // Permet d'afficher les différentes scenes
     bool d_showPark         = true;
@@ -94,10 +95,10 @@ private:
     // permet de savoir si les elements de la carte on été chargés
     bool d_elementsHasBeenLoaded = false;
 
-    int FPS = 60;
-    double T; // durée de l'animation
+    int FPS = 120;
     QTimer *d_timer;
-    double d_elapsed; // Temps écoulé depuis le début de l'animation
+
+    DBManager* d_dbmanager;
 
     /**
      * @brief d_view la vue graphique pour la map
@@ -132,7 +133,9 @@ private:
 //     */
 //    QGraphicsItemGroup* d_meshLayer;
 
-    QVector<Car> d_cars;
+    std::vector<std::unique_ptr<Car>> d_cars;
+
+    osm::Graph d_graph;
 
     void creerInterface();
     void resizeEvent(QResizeEvent *event) override;

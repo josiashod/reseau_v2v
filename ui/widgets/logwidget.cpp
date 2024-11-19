@@ -57,3 +57,8 @@ bool LogWidget::addLog(const QString& text, int type)
     d_logtext->verticalScrollBar()->setValue(pos);
     return true;
 }
+
+LogWidget::~LogWidget()
+{
+delete d_logtext;
+}
