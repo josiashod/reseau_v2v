@@ -1,14 +1,14 @@
+
 #ifndef CAR_H
 #define CAR_H
 
-// #include "node.h"
+ #include "graph.h"
  #include <QGraphicsPixmapItem>
 // #include <QGraphicsPolygonItem>
 
  class Car
  {
  public:
-     // constructeur par défaut
     Car();
      /**
       * @brief Car avec paramètre
@@ -16,29 +16,49 @@
       * @param vitesse: la vitesse de la voiture
       * @param frequence: la fréquence de la voiture
       */
-    Car(const QPointF& pos, double vitesse = 100.0, double frequence = 1.5);
-
-     /**
-      * @brief Car constructeur de recopie
-      */
-    Car(const Car&);
-
-    QPointF pos() const;
+    Car(osm::Node* from, double vitesse = 30.9, double frequence = 10.5, double intensity = 10);
 
 //     /**
-//      * @brief moveTo déplace la voiture à la nouvelle position donnée
+//      * @brief Car constructeur de recopie
 //      */
-//     void moveTo();
+//    Car(const Car&);
 
+    /**
+     * @brief pos
+     * @return
+     */
+    QPointF pos() const;
+    /**
+     * @brief acceleration
+     */
+    double acceleration() const;
+    /**
+     * @brief frequence
+     * @return
+     */
+    double frequence() const;
+    /**
+     * @brief intensity
+     * @return
+     */
+    double intensity() const;
+    /**
+     * @brief accelerate
+     * @param nv
+     */
+    void accelerate(double acc);
     /**
     * @brief pixmap retourne l'image de la voiture (si utilisée)
     */
     QGraphicsPixmapItem* pixmap() const;
 
-//     /**
-//      * @brief polygon retourne le triangle représentant la voiture
-//      */
-//     QGraphicsPolygonItem* polygon() const;
+    QGraphicsEllipseItem* ellipse() const;
+
+    void randomDestination();
+
+    void nextMove();
+
+//    void centerPixmap();
 
     /**
      * @brief update mettre à jour la position de la voiture selon un interval
@@ -51,29 +71,28 @@
     double d_v;
     // fréquence
     double d_freq;
+    // puissance de la voiture
+    double d_intensity;
+    // vitesse de lecture dans l'animation
+    double d_acceleration;
+
+    // position reel de la voiture
+    QPointF d_pos;
+
     // position de depart de la voiture
-    QPointF d_from;
+    osm::Node* d_from;
     // position de position d'arrivée
-    QPointF d_to = {750, 400};
+    osm::Node* d_to;
+
     // pixmap pour dessiner la voiture
     QGraphicsPixmapItem* d_pixmap = nullptr;
-    double d_elapsed = 0.0; // Temps écoulé depuis le début de l'animation
+
+    double d_elapsed = 0.0; // Temps écoulé dans l'animation
 
 //     // cercle pour représenter la fréquence de la voiture
-//     QGraphicsEllipseItem* d_ellipse = nullptr;
+    QGraphicsEllipseItem* d_ellipse = nullptr;
 
-    /**
-    * @brief distance: calcule la distance entre la voiture et la position passée en paramètre
-    * @return la distance obtenue
-    */
-    double distance() const;
-
-    /**
-    * @brief duree: retourne la durée pour parcourir une distance donnée
-    * @param distance
-    * @return la durée obtenue
-    */
-    double duree(double distance) const;
+    double d_sens = 1;
  };
 
 #endif // CAR_H

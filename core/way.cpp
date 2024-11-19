@@ -16,6 +16,15 @@
 // Constructeur de la classe Way
 Way::Way(long long id) : MapItem{id}, d_id{id} {}
 
+bool Way::isCarWay() const
+{
+    QString type = tag("highway");
+    return type == "motorway" || type == "primary" || type == "secondary" ||
+            type == "tertiary" || type == "residential" || type == "unclassified" ||
+            type == "service";
+}
+
+
 // Méthode pour dessiner la route sur la carte
 void Way::draw(QGraphicsItemGroup* group) const {
     if (d_points.empty()) {
@@ -32,26 +41,31 @@ void Way::draw(QGraphicsItemGroup* group) const {
     QString type = tag("highway");
 
     // Configuration du style de la route en fonction du type
-    if (type == "footway" || type == "cycleway") {
+    if (type == "footway" || type == "cycleway" || type == "steps") {
         pen.setStyle(Qt::DotLine);
         pen.setWidth(1);
         pen.setColor(type == "cycleway" ? QColor{"#0080FF"} : QColor{"#FF7F00"});
-    } else {
+    }
+    else
+    {
         pen.setWidth(4);
-        pen.setColor(QColor{"#FED7A1"}); // Couleur par défaut pour les routes
+        if(isCarWay())
+            pen.setColor(QColor{"#FED7A1"}); // Couleur par défaut pour les routes
+        else
+            pen.setColor(QColor{"#F9C0CA"});
 
         if (type == "pedestrian") {
             pen.setColor(QColor{"#DDDDE9"});
-//            pen.setWidth();
-        } else if (type == "platform") {
-            return;
-//            pen.setColor(QColor{"#B5B5B6"});
-//            pen.setWidth(3);
         }
+        /*else if (type == "platform") {
+            return;
+            pen.setColor(QColor{"#B5B5B6"});
+            pen.setWidth(3);
+        }*/
     }
 
     // Si le type est "bus_stop", dessiner des marqueurs de bus
-    if (type == "bus_stop") {
+    /*if (type == "bus_stop") {
         for(const QPointF& p: d_points)
         {
             QGraphicsTextItem* textItem = new QGraphicsTextItem("B");
@@ -61,7 +75,9 @@ void Way::draw(QGraphicsItemGroup* group) const {
             textItem->setFont(font);
             group->addToGroup(textItem);
         }
-    } else {
+    } else*/
+    if(type != "bus_stop")
+    {
         // Ajouter tous les nœuds au polygone pour dessiner la route
         for(const QPointF& p: d_points)
         {

@@ -16,11 +16,11 @@ void MapItem::addTag(const QString& key, const QString& value) {
     d_tags[key] = value; 
 }
 
-bool MapItem::tagExist(QString tag) const {
+bool MapItem::tagExist(const QString& tag) const {
     return d_tags.find(tag) != d_tags.end();  
 }
 
-QString MapItem::tag(QString tag) const {
+QString MapItem::tag(const QString& tag) const {
     auto it = d_tags.find(tag);
     if (it != d_tags.end()) {
         return it->second;

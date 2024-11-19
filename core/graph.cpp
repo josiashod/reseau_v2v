@@ -1,114 +1,214 @@
 #include "graph.h"
-#include <cmath> // pour std::hypot
-#include <cstdlib> // pour rand()
+#include <random>
+#include <QDebug>
 
 namespace osm
 {
-Graph::Graph() : d_nodes{}, d_edges{}
+
+double distance(QPointF s, QPointF e)
+{
+    QPointF d = e - s;
+    return std::sqrt((d.x() * d.x()) + (d.y() * d.y()));
+}
+
+Node::Node(long long id, double x, double y): d_id{id}, d_pos{x, y}, d_edges{}
+{}
+Node::Node(const Node &n): d_id{n.d_id}, d_pos{n.d_pos}, d_edges{n.d_edges}
+{}
+long long Node::id() const
+{ return d_id; }
+
+QPointF Node::pos() const
+{ return d_pos; }
+
+std::vector<Edge*> Node::getEdges() const
+{ return d_edges; }
+
+Edge* Node::getRandomEdge() const
+{
+    if (d_edges.empty())
+        return nullptr;
+
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dist(0, d_edges.size() - 1);
+
+    return d_edges[dist(gen)];
+}
+
+std::pair<Node*, double> Node::getRandomNeighbor() const
+{
+    if (d_neighbors.empty())
+        return std::make_pair(nullptr, 0.0);
+
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dist(0, d_neighbors.size() - 1);
+
+    return d_neighbors[dist(gen)];
+}
+
+void Node::addEdge(Edge *e)
+{
+    d_edges.push_back(e);
+}
+
+void Node::addNeighbor(Node* neighbor, double distance)
+{
+    d_neighbors.emplace_back(neighbor, distance);
+}
+
+bool Node::hasNeighbor(Node* n) const
+{
+    size_t i = 0;
+
+    while(i < d_neighbors.size() && d_neighbors[i].first != n)
+        ++i;
+
+    return i != d_neighbors.size();
+}
+
+bool Node::operator==(const Node& n) const
+{
+    return (d_id == n.d_id) && std::equal(d_edges.begin(), d_edges.end(), n.d_edges.begin());
+}
+
+Node& Node::operator=(const Node& n)
+{
+    if(this != &n)
+    {
+        d_id = n.d_id;
+        d_edges = n.d_edges;
+        d_neighbors = n.d_neighbors;
+        d_pos = n.d_pos;
+    }
+
+    return *this;
+}
+
+Edge::Edge(Node* start, Node* end): d_start{start}, d_end{end}
+{
+//    if (start)
+//        d_start->addEdge(this);
+//    if (end)
+//        d_end->addEdge(this);
+}
+
+Edge::Edge(const Edge& e): d_start(e.d_start), d_end(e.d_end)
 {}
 
-Node* Graph::addNode(int id, double x, double y)
+Node* Edge::getStart() const
 {
-    Node* nouveauNoeud = new Node(id, x, y);
-    d_nodes.push_back(nouveauNoeud);
-    return nouveauNoeud;
+    return d_start;
 }
 
-Edge* Graph::addEdge(const Node* start, const Node* end)
+Node* Edge::getEnd() const
 {
-    Edge* nouvelArret = new Edge(const_cast<Node*>(start), const_cast<Node*>(end));
-    d_edges.push_back(nouvelArret);
-    return nouvelArret;
+    return d_end;
 }
 
-// === Implémentation de Node ===
+Node* Edge::destination(Node* source) const
+{
+    if(*source == *d_start)
+        return d_end;
+    else if (*source == *d_end)
+        return d_start;
 
-Node::Node(int id, double x, double y)
-    : d_id(id), d_coord(x, y), d_egdes() {}
-
-Node::Node(const Node &n)
-    : d_id(n.d_id), d_coord(n.d_coord), d_egdes(n.d_egdes) {}
-
-long long Node::getId() const {
-    return d_id;
+    return nullptr;
 }
 
-std::vector<Edge*>& Node::getEdges() const {
-    return const_cast<std::vector<Edge*>&>(d_egdes); // Cast pour permettre de retourner une référence modifiable
+bool Edge::operator==(const Edge& e) {
+    return (*d_start == *(e.d_start) && *d_end == *(e.d_end)) ||
+    (*d_start == *(e.d_end) && *d_end == *(e.d_start));
 }
 
-void Node::addEdge(Edge *e) {
-    d_egdes.push_back(e);
+Edge& Edge::operator=(const Edge& e)
+{
+    if(this != &e)
+    {
+        *d_start = *(e.d_start);
+        *d_end = *(e.d_end);
+    }
+
+    return *this;
 }
 
-Edge* Node::getRandomEdge() const {
-    if (d_egdes.empty()) return nullptr;
-    int randomIndex = rand() % d_egdes.size();
-    return d_egdes[randomIndex];
+Graph::Graph():d_nodes{}, d_nodesId{}, d_edges{}
+{}
+
+Graph::~Graph()
+{
+//    for(size_t i = 0; i < d_nodes.size(); ++i)
+//        delete d_nodes[i];
+
+//    for(size_t i = 0; i < d_edges.size(); ++i)
+//        delete d_edges[i];
 }
 
-bool Node::operator==(const Node& n) {
-    return d_id == n.d_id;
+
+Node* Graph::findNode(long long id) const
+{
+    if(d_nodes.find(id) == d_nodes.end())
+        return nullptr;
+
+    return d_nodes.at(id).get();
 }
 
-// === Implémentation de Edge ===
+Node* Graph::getRandomNode() const
+{
+    if(d_nodesId.size() == 0)
+        return nullptr;
 
-// Edge::Edge(Node* start, Node* end)
-//     : d_start(start), d_end(end), d_distance(0), d_duree(0) {
-//     // Calculer la distance et la durée à l'initialisation
-//     d_distance = distance();
-//     d_duree = duree();
-// }
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dist(0, d_nodesId.size() - 1);
 
-// Edge::Edge(const Edge& e)
-//     : d_start(e.d_start), d_end(e.d_end), d_distance(e.d_distance), d_duree(e.d_duree) {}
+    size_t index = dist(gen);
 
-// Node* Edge::findNode(long long id) const {
-//     if (d_start->getId() == id) return d_start;
-//     if (d_end->getId() == id) return d_end;
-//     return nullptr;
-// }
+    return findNode(d_nodesId[index]);
 
-// Node* Edge::getStart() const {
-//     return d_start;
-// }
+//    return d_nodes.at(d_nodesId[index]).get();
+}
 
-// Node* Edge::getEnd() const {
-//     return d_end;
-// }
+Node* Graph::addNode(long long id, double x, double y)
+{
+    Node* n = findNode(id);
 
-// bool Edge::operator==(const Edge& e) {
-//     return (d_start == e.d_start && d_end == e.d_end);
-// }
+    if(!n)
+    {
+        d_nodes.emplace(id, std::make_unique<Node>(Node(id, x, y)));
+        d_nodesId.push_back(id);
+        return d_nodes.at(id).get();
+    }
+    return n;
+}
 
-// double Edge::distance() {
-//     return std::hypot(d_end->x - d_start->x, d_end->y - d_start->y);
-// }
-// double Edge::duree() {
-//     double averageSpeed = 50.0; // Supposons une vitesse moyenne de 50 unités
-//     return distance() / averageSpeed;
-// }
+void Graph::addEdge(Node* start, Node* end)
+{
+    if (!start || !end)  // Vérifie la validité des nœuds.
+        return;
 
-// === Implémentation de Graph ===
+//    d_edges.push_back(std::make_unique<Edge>(Edge(start, end)));
+//    Edge* newEdge = d_edges.back().get();
 
-// Graph::Graph() : d_nodes(), d_edges() {}
+    double dist = distance(start->d_pos, end->d_pos);
 
-// Node* Graph::addNode(int id, double x, double y) {
-//     Node* newNode = new Node(id, x, y);
-//     d_nodes.push_back(newNode);
-//     return newNode;
-// }
+    start->addNeighbor(end, dist);
+    end->addNeighbor(start, dist);
+}
 
-// Edge* Graph::addEdge(const Node* start, const Node* end) {
-//     if (!start || !end) return nullptr; // Vérifie si les nœuds sont valides
-//     Edge* newEdge = new Edge(const_cast<Node*>(start), const_cast<Node*>(end));
-//     d_edges.push_back(newEdge);
+//    void Node::addEdge(Edge *e) {
+//        d_egdes.push_back(e);
+//    }
 
-//     // Ajouter l'arête aux nœuds de départ et d'arrivée
-//     const_cast<Node*>(start)->addEdge(newEdge);
-//     const_cast<Node*>(end)->addEdge(newEdge);
+//    Edge* Node::getRandomEdge() const {
+//        if (d_egdes.empty()) return nullptr;
+//        int randomIndex = rand() % d_egdes.size();
+//        return d_egdes[randomIndex];
+//    }
 
-//     return newEdge;
-// }
+//    bool Node::operator==(const Node& n) {
+//        return d_id == n.d_id;
+//    }
 
-} // namespace osm
+}

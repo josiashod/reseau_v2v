@@ -1,24 +1,19 @@
 #ifndef GRAPH_H
 #define GRAPH_H
 
+#include <unordered_map>
 #include <vector>
-#include<QPointF>
+#include <QPointF>
+#include <memory>
 
 namespace osm
 {
     class Edge;
+    class Graph;
 
     class Node
     {
     public:
-        /**
-         * @brief Node Construit un noeud
-         * @param id: id du noeud
-         * @param x: abscisse
-         * @param y: ordonnée
-         */
-        Node(int id, double x, double y);
-
         /**
          * @brief Node Constructeur de copie
          * @param n
@@ -29,19 +24,19 @@ namespace osm
          * @brief getId retourne l'id du noeud
          * @return
          */
-        long long getId() const;
+        long long id() const;
+
+        /**
+         * @brief pos
+         * @return
+         */
+        QPointF pos() const;
 
         /**
          * @brief getEdges retourne les arrets lies aux noeuds
          * @return
          */
-        std::vector<Edge*>& getEdges() const;
-
-        /**
-         * @brief addEdge Ajoute un arrets à la liste des arrets du noeuds
-         * @param e: Egde
-         */
-        void addEdge(Edge *e);
+        std::vector<Edge*> getEdges() const;
 
         /**
          * @brief getRandomEdge Retourne un arrêt aleatoire
@@ -49,39 +44,52 @@ namespace osm
          */
         Edge* getRandomEdge() const;
 
+        std::pair<Node*, double> getRandomNeighbor() const;
+
+        bool hasNeighbor(Node* n) const;
+
         /**
          * @brief operator== compare deux noeuds entre eux
          * @param n: Node
          * @return
          */
-        bool operator==(const Node& n);
+        bool operator==(const Node& n) const;
+
+        Node& operator=(const Node& n);
 
     private:
+        /**
+         * @brief Node Construit un noeud
+         * @param id: id du noeud
+         * @param x: abscisse
+         * @param y: ordonnée
+         */
+        Node(long long id, double x, double y);
+        /**
+         * @brief addEdge Ajoute un arrets à la liste des arrets du noeuds
+         * @param e: Egde
+         */
+        void addEdge(Edge *e);
+
+        void addNeighbor(Node* neighbor, double distance);
+
+
         long long d_id;
-        QPointF d_coord;
-        std::vector<Edge*> d_egdes;
+        QPointF d_pos;
+        std::vector<Edge*> d_edges;
+        std::vector<std::pair<Node*, double>> d_neighbors;
+
+        friend class Graph;
+        friend class Edge;
     };
 
     class Edge{
     public:
         /**
-         * @brief Edge
-         * @param start
-         * @param end
-         */
-        Edge(Node* start, Node* end);
-        /**
          * @brief Edge: constructeur de copie
          * @param e
          */
         Edge(const Edge& e);
-
-        /**
-         * @brief findNode retourne le noeud ayant l'id passé en parametre
-         * @param id
-         * @return null si rien n'est trouvé
-         */
-        Node* findNode(long long id) const;
         /**
          * @brief getStart: retourne le noeud de depart
          * @return
@@ -93,33 +101,51 @@ namespace osm
          */
         Node* getEnd()const;
         /**
+         * @brief destination
+         * @param source
+         * @return
+         */
+        Node* destination(Node* source) const;
+        /**
          * @brief operator == compare deux arret
          * @param e
          * @return
          */
         bool operator==(const Edge& e);
+        /**
+         * @brief operator =
+         * @param e
+         * @return
+         */
+        Edge& operator=(const Edge& e);
     private:
-
-        double distance();
-        double duree();
+        /**
+         * @brief Edge
+         * @param start
+         * @param end
+         */
+        Edge(Node* start, Node* end);
 
         Node* d_start;
         Node* d_end;
-        double d_distance;
-        double d_duree;
+        friend class Graph;
     };
 
     class Graph
     {
     public:
-        Graph():d_nodes{}, d_edges{}
-        {};
+        Graph();
+        ~Graph();
 
-        Node* addNode(int id, double x, double y);
-        Edge* addEdge(const Node* start, const Node* end);
+        Node* findNode(long long id) const;
+//        Edge* findEdge(long long id) const;
+        Node* getRandomNode() const;
+        Node* addNode(long long id, double x, double y);
+        void addEdge(Node* start, Node* end);
     private:
-        std::vector<Node*> d_nodes;
-        std::vector<Edge*> d_edges;
+        std::unordered_map<long long, std::unique_ptr<Node>> d_nodes;
+        std::vector<long long> d_nodesId;
+        std::vector<std::unique_ptr<Edge>> d_edges;
     };
 }
 
