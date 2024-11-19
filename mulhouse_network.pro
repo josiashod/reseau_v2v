@@ -10,7 +10,6 @@ CONFIG += c++17
 
 SOURCES += \
     core/building.cpp \
-#    core/car.cpp \
     core/car.cpp \
     core/graph.cpp \
     core/mapitem.cpp \
@@ -27,7 +26,6 @@ SOURCES += \
 
 HEADERS += \
     core/building.h \
-#    core/car.h \
     core/car.h \
     core/graph.h \
     core/mapitem.h \
