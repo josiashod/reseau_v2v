@@ -37,13 +37,13 @@ public:
      * @param tag: le nom du tag à trouver
      * @return true si le tag existe false sinon
      */
-    bool tagExist(QString tag) const;
+    bool tagExist(const QString& tag) const;
     /**
      * @brief tag: retourne la valeur du tag donné
      * @param tag: le nom du tag à retourner
      * @return QString la valeur du tag
      */
-    QString tag(QString tag) const;
+    QString tag(const QString& tag) const;
     /**
      * @brief draw: dessine la route avec un scale_factor donné
      * @param group le group ou doit etre l'instance

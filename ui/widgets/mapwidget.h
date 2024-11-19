@@ -16,6 +16,7 @@
 #include "./../../core/water.h"
 #include "./../../core/park.h"
 #include "./../../utils/dbmanager.h"
+#include "../../core/graph.h"
 #include "../../core/car.h"
 
 
@@ -43,6 +44,7 @@ public:
     void setShowBuilding(bool);
     void setShowRoad(bool);
     void setShowWater(bool);
+    void loadCars();
     // void addCarToRandomWay(); // Fonction pour ajouter une voiture sur un way aléatoire
     // void moveCarAlongWay(Car* car, const QVector<Node>& nodes); //
 
@@ -59,6 +61,11 @@ private slots :
      */
     void drawRoadLayer(const QVector<Way>& roads);
 
+    /**
+     * @brief updateCarsPosition: update cars position
+     */
+    void updateCarsPosition();
+
 signals :
     void isLoading(bool);
     void isLoaded(bool);
@@ -74,7 +81,7 @@ private:
 //    QVector<QPolygonF> d_meshs;
 
     double d_scale_factor = 1.15;
-    qreal d_perspective_offset = 0.5;
+    qreal d_perspective_offset = 0.6;
 
     // Permet d'afficher les différentes scenes
     bool d_showPark         = true;
@@ -82,10 +89,16 @@ private:
     bool d_showBuilding     = true;
     bool d_showWay          = true;
     bool d_showDescription  = true;
+    bool d_showCar          = true;
 //    bool d_showMesh  = true;
 
     // permet de savoir si les elements de la carte on été chargés
     bool d_elementsHasBeenLoaded = false;
+
+    int FPS = 120;
+    QTimer *d_timer;
+
+    DBManager* d_dbmanager;
 
     /**
      * @brief d_view la vue graphique pour la map
@@ -111,10 +124,18 @@ private:
      * @brief d_wayLayer couche d'affichage des routes
      */
     QGraphicsItemGroup* d_wayLayer;
+    /**
+     * @brief d_carsLayer couche d'affichage des routes
+     */
+    QGraphicsItemGroup* d_carsLayer;
 //    /**
 //     * @brief d_meshLayer couche d'affichage des mailles
 //     */
 //    QGraphicsItemGroup* d_meshLayer;
+
+    std::vector<std::unique_ptr<Car>> d_cars;
+
+    osm::Graph d_graph;
 
     void creerInterface();
     void resizeEvent(QResizeEvent *event) override;

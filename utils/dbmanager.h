@@ -69,10 +69,6 @@ public:
      */
     QSqlQuery getWayNodes(QSqlDatabase db, long long id) const;
 
-    long long getRandomWay();
-
-    static QVector<long long> getWaysByNode(long long nodeId);
-
 private:
     DBManager();
     static DBManager* d_instance;

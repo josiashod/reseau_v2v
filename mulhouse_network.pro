@@ -10,12 +10,13 @@ CONFIG += c++17
 
 SOURCES += \
     core/building.cpp \
-#    core/car.cpp \
     core/car.cpp \
+    core/graph.cpp \
     core/mapitem.cpp \
     core/park.cpp \
     core/water.cpp \
     core/way.cpp \
+    env.cpp \
     main.cpp \
     ui/widgets/logwidget.cpp \
     ui/widgets/mapwidget.cpp \
@@ -25,12 +26,13 @@ SOURCES += \
 
 HEADERS += \
     core/building.h \
-#    core/car.h \
     core/car.h \
+    core/graph.h \
     core/mapitem.h \
     core/park.h \
     core/water.h \
     core/way.h \
+    env.h \
     ui/widgets/logwidget.h \
     ui/widgets/mapwidget.h \
     ui/windows/mainwindow.h \

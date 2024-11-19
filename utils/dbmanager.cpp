@@ -1,4 +1,5 @@
 #include "dbmanager.h"
+#include "../env.h"
 #include <QDebug>
 #include <QSqlRecord>
 #include <QFile>
@@ -14,15 +15,22 @@ const QString _BOUNDS_TABLE_ = "bounds";
 
 // Initialisation des attributs static
 DBManager* DBManager::d_instance = nullptr;
-QSqlDatabase DBManager::d_db = QSqlDatabase::addDatabase("QMYSQL");
+QSqlDatabase DBManager::d_db = QSqlDatabase::addDatabase(env::DB_CONNECTION);
 
 DBManager::DBManager()
 {
-    d_db.setHostName("127.0.0.1");
-    d_db.setPort(3306);
-    d_db.setDatabaseName("db_geo_osm");
-    d_db.setUserName("root");
-    d_db.setPassword("");
+    if(env::DB_CONNECTION == "QSQLITE")
+    {
+        d_db.setDatabaseName(env::DB_DATABASE);
+    }
+    else
+    {
+        d_db.setHostName(env::DB_HOST);
+        d_db.setPort(env::DB_PORT);
+        d_db.setDatabaseName(env::DB_DATABASE);
+        d_db.setUserName(env::DB_USERNAME);
+        d_db.setPassword(env::DB_PASSWORD);
+    }
 
     if (!d_db.open())
     {
@@ -217,43 +225,4 @@ QSqlQuery DBManager::getWayNodes(QSqlDatabase db, long long id) const
     }
 
     return q;
-}
-
-long long DBManager::getRandomWay() {
-    auto db = getInstance()->getDatabase();
-    QSqlQuery query(db);
-    QString queryStr = QString("SELECT * "
-        "FROM %1 "
-        "LEFT JOIN %2 as t ON t.element_id = %1.id "
-        "WHERE t.t_key = 'highway' AND t.t_value NOT IN ('cycleway', 'footway', 'pedestrian', 'platform', 'bus_stop') "
-        "ORDER BY RAND() LIMIT 1").arg(_WAYS_TABLE_, _TAGS_TABLE_);
-
-//    query.prepare(QString("SELECT id FROM %1 ORDER BY RAND() LIMIT 1").arg(_WAYS_TABLE_));
-    query.prepare(queryStr);
-
-    if (query.exec() && query.next()) {
-        return query.value(0).toLongLong(); // Retourne l'ID du `way` aléatoire
-    } else {
-        qDebug() << "Erreur lors de la récupération d'un way aléatoire : " << query.lastError().text();
-        return -1; // Retourne -1 en cas d'erreur
-    }
-}
-
-
-QVector<long long> DBManager::getWaysByNode(long long nodeId) {
-    QVector<long long> wayIds;
-    auto db = getInstance()->getDatabase();
-    QSqlQuery query(db);
-    query.prepare("SELECT way_id FROM way_node WHERE node_id = :node_id");
-    query.bindValue(":node_id", nodeId);
-
-    if (query.exec()) {
-        while (query.next()) {
-            wayIds.append(query.value(0).toLongLong());
-        }
-    } else {
-        qDebug() << "Erreur lors de la récupération des ways pour le nœud : " << query.lastError().text();
-    }
-
-    return wayIds;
 }

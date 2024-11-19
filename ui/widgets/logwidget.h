@@ -10,6 +10,7 @@ class LogWidget : public QWidget
     Q_OBJECT
 public:
     explicit LogWidget(QWidget *parent = nullptr);
+    ~LogWidget();
 
     // LOG TYPE
     static constexpr int INFO = 0;

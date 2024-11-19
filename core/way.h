@@ -12,6 +12,12 @@ public:
     Way(long long id);
 
     /**
+     * @brief isCarWay determine si un way est adapté au voiture
+     * @return
+     */
+    bool isCarWay() const;
+
+    /**
      * @brief draw: dessine la route avec un scale_factor donné
      * @param group le group ou doit etre l'instance
      * @param scale_factor: le scale factor
