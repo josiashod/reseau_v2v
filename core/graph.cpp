@@ -36,16 +36,30 @@ Edge* Node::getRandomEdge() const
     return d_edges[dist(gen)];
 }
 
-std::pair<Node*, double> Node::getRandomNeighbor() const
+Node* Node::getRandomNeighbor(Node* d_from) const
 {
     if (d_neighbors.empty())
-        return std::make_pair(nullptr, 0.0);
+        return nullptr;
+
+    if(d_neighbors.size() == 1)
+        return d_neighbors[0].first;
 
     static std::random_device rd;
     static std::mt19937 gen(rd());
     std::uniform_int_distribution<> dist(0, d_neighbors.size() - 1);
 
-    return d_neighbors[dist(gen)];
+    int i = dist(gen);
+
+    if(!d_from)
+        d_neighbors[i].first;
+    else
+    {
+        while(d_neighbors[i].first == d_from)
+            i = dist(gen);
+    }
+
+
+    return d_neighbors[i].first;
 }
 
 void Node::addEdge(Edge *e)
@@ -133,7 +147,7 @@ Edge& Edge::operator=(const Edge& e)
     return *this;
 }
 
-Graph::Graph():d_nodes{}, d_nodesId{}, d_edges{}
+Graph::Graph():d_nodes{}, d_edges{}
 {}
 
 Graph::~Graph()
@@ -156,16 +170,17 @@ Node* Graph::findNode(long long id) const
 
 Node* Graph::getRandomNode() const
 {
-    if(d_nodesId.size() == 0)
+    if(d_nodes.empty())
         return nullptr;
 
     static std::random_device rd;
     static std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dist(0, d_nodesId.size() - 1);
+    std::uniform_int_distribution<> dist(0, d_nodes.size() - 1);
 
-    size_t index = dist(gen);
+    auto it = d_nodes.begin();
+    std::advance(it, dist(gen));
 
-    return findNode(d_nodesId[index]);
+    return it->second.get();
 
 //    return d_nodes.at(d_nodesId[index]).get();
 }
@@ -177,7 +192,7 @@ Node* Graph::addNode(long long id, double x, double y)
     if(!n)
     {
         d_nodes.emplace(id, std::make_unique<Node>(Node(id, x, y)));
-        d_nodesId.push_back(id);
+//        d_nodesId.push_back(id);
         return d_nodes.at(id).get();
     }
     return n;

@@ -5,12 +5,13 @@
 #include <QFuture>
 #include <QFutureWatcher>
 #include "logwidget.h"
+#include "../../core/graph.h"
 
 
 // CRÉATION DE L'INTERFACE
 
-MapWidget::MapWidget(QWidget *parent)
-    : QGraphicsView{parent}, d_cars{}, d_graph{}
+MapWidget::MapWidget(QWidget *parent, osm::Graph* graph)
+    : QGraphicsView{parent}, d_graph{graph}
 {
     d_dbmanager = DBManager::getInstance();
     creerInterface();
@@ -49,9 +50,9 @@ void MapWidget::creerInterface()
     setScene(d_scene);
     show();
 
-    d_waterLayer = new QGraphicsItemGroup();
-    d_waterLayer->setVisible(d_showWater);
-    d_scene->addItem(d_waterLayer);
+//    d_waterLayer = new QGraphicsItemGroup();
+//    d_waterLayer->setVisible(d_showWater);
+//    d_scene->addItem(d_waterLayer);
 
     d_parkLayer = new QGraphicsItemGroup();
     d_parkLayer->setVisible(d_showPark);
@@ -65,6 +66,10 @@ void MapWidget::creerInterface()
     d_buildingLayer->setVisible(d_showBuilding);
     d_scene->addItem(d_buildingLayer);
 
+    d_freqCarsLayer = new QGraphicsItemGroup();
+    d_freqCarsLayer->setVisible(d_showCarFreq);
+    d_scene->addItem(d_freqCarsLayer);
+
     d_carsLayer = new QGraphicsItemGroup();
     d_carsLayer->setVisible(d_showCar);
     d_scene->addItem(d_carsLayer);
@@ -77,11 +82,8 @@ void MapWidget::creerInterface()
 
     connect(this, &MapWidget::buildingsDataReady, this, &MapWidget::drawBuildingLayer);
     connect(this, &MapWidget::parksDataReady, this, &MapWidget::drawParkLayer);
-    connect(this, &MapWidget::watersDataReady, this, &MapWidget::drawWaterLayer);
+//    connect(this, &MapWidget::watersDataReady, this, &MapWidget::drawWaterLayer);
     connect(this, &MapWidget::roadsDataReady, this, &MapWidget::drawRoadLayer);
-
-    d_timer = new QTimer(this);
-    connect(d_timer, &QTimer::timeout, this, &MapWidget::updateCarsPosition);
 }
 
 void MapWidget::drawBuildingLayer(const QVector<Building>& buildings)
@@ -98,7 +100,7 @@ void MapWidget::drawBuildingLayer(const QVector<Building>& buildings)
     }
 }
 
-void MapWidget::drawWaterLayer(const QVector<Water>& waters)
+/*void MapWidget::drawWaterLayer(const QVector<Water>& waters)
 {
     QString log;
     for (const Water& w : waters)
@@ -110,7 +112,7 @@ void MapWidget::drawWaterLayer(const QVector<Water>& waters)
         // else
             qDebug() << log;
     }
-}
+}*/
 
 void MapWidget::drawParkLayer(const QVector<Park>& parks)
 {
@@ -167,11 +169,9 @@ void MapWidget::resizeEvent(QResizeEvent *event)
         fitInView(d_scene->sceneRect(), Qt::KeepAspectRatio);
         // Lancer la fonction longue en asynchrone
         QFuture<void> future = QtConcurrent::run([this]() {
-//            this->initWaters();
-            this->initParks();
+//            this->initParks();
             this->initRoads();
 //            this->initBuildings();
-            this->loadCars();
         });
 
         // Configurer la vue (taille et centrage)
@@ -189,9 +189,6 @@ void MapWidget::isLoadingFinished()
 {
     d_elementsHasBeenLoaded = true;
     emit isLoaded(d_elementsHasBeenLoaded);
-
-    double interval = 1000 / FPS;
-    d_timer->start(interval);  // Démarrer le timer
 }
 
 void MapWidget::wheelEvent(QWheelEvent *event)
@@ -213,43 +210,48 @@ void MapWidget::wheelEvent(QWheelEvent *event)
     }
 }
 
+void MapWidget::addCarSymbols(QGraphicsPixmapItem* car, QGraphicsEllipseItem* freq)
+{
+    d_carsLayer->addToGroup(car);
+    d_freqCarsLayer->addToGroup(freq);
+}
 
-//std::pair<double, double> MapWidget::lambert93(double longitude, double latitude)
-//{
-//    // Créer un contexte PROJ
-//    PJ_CONTEXT *ctx = proj_context_create();
-//    if (ctx == nullptr) {
-//        throw std::runtime_error("Failed to create PROJ context.");
-//    }
+/*std::pair<double, double> MapWidget::lambert93(double longitude, double latitude)
+{
+    // Créer un contexte PROJ
+    PJ_CONTEXT *ctx = proj_context_create();
+    if (ctx == nullptr) {
+        throw std::runtime_error("Failed to create PROJ context.");
+    }
 
-//    // Définir les systèmes de coordonnées avec des chaînes PROJ
-//    const char* wgs84 = "+proj=longlat +datum=WGS84 +no_defs";
-//    const char* lambert93 = "+proj=lcc +lat_1=49 +lat_2=44 +lat_0=46.5 +lon_0=3 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs";
+    // Définir les systèmes de coordonnées avec des chaînes PROJ
+    const char* wgs84 = "+proj=longlat +datum=WGS84 +no_defs";
+    const char* lambert93 = "+proj=lcc +lat_1=49 +lat_2=44 +lat_0=46.5 +lon_0=3 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs";
 
-//    // Créer la transformation CRS
-//    PJ *P = proj_create_crs_to_crs(ctx, wgs84, lambert93, nullptr);
-//    if (P == nullptr) {
-//        proj_context_destroy(ctx);
-//        throw std::runtime_error("Failed to create CRS transformation.");
-//    }
+    // Créer la transformation CRS
+    PJ *P = proj_create_crs_to_crs(ctx, wgs84, lambert93, nullptr);
+    if (P == nullptr) {
+        proj_context_destroy(ctx);
+        throw std::runtime_error("Failed to create CRS transformation.");
+    }
 
-//    // Convertir les coordonnées
-//    PJ_COORD coord = proj_coord(longitude, latitude, 0, 0);
-//    PJ_COORD result = proj_trans(P, PJ_FWD, coord);
+    // Convertir les coordonnées
+    PJ_COORD coord = proj_coord(longitude, latitude, 0, 0);
+    PJ_COORD result = proj_trans(P, PJ_FWD, coord);
 
-//    // Vérifier si la transformation a échoué
-//    if (result.xyzt.x == HUGE_VAL || result.xyzt.y == HUGE_VAL) {
-//        proj_destroy(P);
-//        proj_context_destroy(ctx);
-//        throw std::runtime_error("Transformation failed.");
-//    }
+    // Vérifier si la transformation a échoué
+    if (result.xyzt.x == HUGE_VAL || result.xyzt.y == HUGE_VAL) {
+        proj_destroy(P);
+        proj_context_destroy(ctx);
+        throw std::runtime_error("Transformation failed.");
+    }
 
-//    // Libérer les ressources
-//    proj_destroy(P);
-//    proj_context_destroy(ctx);
+    // Libérer les ressources
+    proj_destroy(P);
+    proj_context_destroy(ctx);
 
-//    return {result.xyzt.x, result.xyzt.y}; // Retourner les coordonnées Lambert93
-//}
+    return {result.xyzt.x, result.xyzt.y}; // Retourner les coordonnées Lambert93
+}*/
 
 QPointF MapWidget::pairLatLonToXY(std::pair<double, double>& coord)
 {
@@ -263,8 +265,8 @@ QPointF MapWidget::latLonToXY(double lon, double lat) {
     double x = (lon - d_minCoord.first) / (d_maxCoord.first - d_minCoord.first) * width;
     double y = height - (lat - d_minCoord.second) / (d_maxCoord.second - d_minCoord.second) * height;
 
-    return {x, y * d_perspective_offset};
-//    return {x, y};
+//    return {x, y * d_perspective_offset};
+    return {x, y};
 }
 
 
@@ -418,7 +420,7 @@ void MapWidget::initParks()
     emit parksDataReady(parks);
 }
 
-void MapWidget::initWaters()
+/*void MapWidget::initWaters()
 {
     QVector<Water> waters;
     auto query = d_dbmanager->getWaters(d_dbmanager->getDatabase());
@@ -467,7 +469,7 @@ void MapWidget::initWaters()
     // }
     // d_logger->addLog("[INFO] Emission des waters pour affichage.");
     emit watersDataReady(waters);
-}
+}*/
 
 void MapWidget::initRoads()
 {
@@ -499,7 +501,7 @@ void MapWidget::initRoads()
                 osm::Node* start    = nullptr;
                 osm::Node* end      = nullptr;
 
-                if (w.isCarWay())
+                if (d_graph &&  w.isCarWay())
                 {
                     if(q.next())
                     {
@@ -509,7 +511,7 @@ void MapWidget::initRoads()
                         std::pair<double, double> c{lon, lat};
                         p = pairLatLonToXY(c);
                         w.addPoint(p);
-                        start = d_graph.addNode(id, p.x(), p.y());
+                        start = d_graph->addNode(id, p.x(), p.y());
                     }
                 }
                 while(q.next())
@@ -526,11 +528,11 @@ void MapWidget::initRoads()
 
                     // Ajouter un nœud au graphe et connecter l'arête
                     if (start) {
-                        end = d_graph.addNode(id, p.x(), p.y());
+                        end = d_graph->addNode(id, p.x(), p.y());
                         if (start && end) {
                             // on verifie si l'arret n'existe pas dejà
                             if (!start->hasNeighbor(end)) {
-                                d_graph.addEdge(start, end);
+                                d_graph->addEdge(start, end);
                             }
                         }
                         start = end;
@@ -573,35 +575,27 @@ void MapWidget::setShowRoad(bool show)
     d_wayLayer->setVisible(d_showWay);
 }
 
-void MapWidget::setShowWater(bool show)
+/*void MapWidget::setShowWater(bool show)
 {
     d_showWater = show;
     d_waterLayer->setVisible(show);
-}
+}*/
 
-void MapWidget::loadCars()
-{
-    for(int i = 0; i < 2; i++)
-    {
-        osm::Node*  n = d_graph.getRandomNode();
+//void MapWidget::loadCars()
+//{
+//    for(int i = 0; i < 1; i++)
+//    {
+////        osm::Node*  n = d_graph.getRandomNode();
 
-        if(n)
-        {
-            d_cars.push_back(std::make_unique<Car>(Car{n}));
-            d_carsLayer->addToGroup(d_cars.back()->pixmap());
-        }
-    }
-}
+////        if(n)
+////        {
+////            d_cars.push_back(std::make_unique<Car>(Car{n}));
+////            d_freqCarsLayer->addToGroup(d_cars.back()->ellipse());
+////            d_carsLayer->addToGroup(d_cars.back()->pixmap());
+////        }
+//    }
+//}
 
-void MapWidget::updateCarsPosition()
-{
-    double interval = 1000 / FPS;
-
-    for(int i = 0; i < d_cars.size(); i++)
-    {
-        d_cars[i].get()->update(interval);
-    }
-}
 //void MapWidget::initMeshs()
 //{
 //    qreal hexRadius = 8.0;  // Adjust size as needed
@@ -629,59 +623,3 @@ void MapWidget::updateCarsPosition()
 //        }
 //    }
 //}
-
-// void MapWidget::addCarToRandomWay() {
-//     long long wayId = d_dbmanager->getRandomWay();
-//     if (wayId == -1) {
-//         qDebug() << "Aucun way trouvé.";
-//         return;
-//     }
-
-//     Way way = d_roads[wayId];
-//     // Récupérer le premier nœud du Way
-//     Node initialNode = way.nodes().first();
-
-
-//     // Créer la voiture à la position du premier nœud
-//     Car* car = new Car(initialNode);
-//     car->moveTo(initialNode);
-
-//     // Ajouter le triangle (voiture) à la scène
-//     if (car->polygon()) {
-//         qDebug() << "ok";
-//         d_scene->addItem(car->polygon());
-//     }
-
-//     qDebug() << "Voiture ajoutée au way ID:" << wayId << "à la position" << initialNode;
-
-//     // Lancer le mouvement le long du Way
-//     moveCarAlongWay(car, way.nodes());
-// }
-
-// void MapWidget::moveCarAlongWay(Car* car, const QVector<Node>& nodes) {
-//     static int currentIndex = 0;
-
-//     if (nodes.isEmpty() || car->polygon() == nullptr) return;
-
-//     if (currentIndex < nodes.size()) {
-//         // Déplacer la voiture au prochain nœud
-//         Node currentNode = nodes[currentIndex];
-//         car->moveTo(currentNode);
-
-// //        // Créer un std::pair temporaire pour stocker les coordonnées
-// //        std::pair<double, double> currentCoord = std::make_pair(currentNode.x(), currentNode.y());
-
-// //        // Utiliser la variable temporaire pour obtenir la position
-// //        QPointF currentPos = pairLatLonToXY(currentCoord);
-// //        car->polygon()->setPos(currentNode);
-
-//         qDebug() << "move called";
-
-//         currentIndex++;
-//     } else {
-//         currentIndex = 0; // Recommencer depuis le début
-//     }
-
-//     // Mettre à jour la position toutes les secondes
-//     QTimer::singleShot(1000, [this, car, nodes]() { moveCarAlongWay(car, nodes); });
-// }

@@ -16,7 +16,7 @@
       * @param vitesse: la vitesse de la voiture
       * @param frequence: la fréquence de la voiture
       */
-    Car(osm::Node* from, double vitesse = 30.9, double frequence = 10.5, double intensity = 10);
+    Car(osm::Node* from, double vitesse = 30.9, double frequence = 60, double intensity = 10);
 
 //     /**
 //      * @brief Car constructeur de recopie
@@ -58,7 +58,8 @@
 
     void nextMove();
 
-//    void centerPixmap();
+    void updateItem();
+    void updateOrientation();
 
     /**
      * @brief update mettre à jour la position de la voiture selon un interval

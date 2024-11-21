@@ -5,7 +5,6 @@
 #include <QGraphicsView>
 #include <QGraphicsScene>
 #include <QResizeEvent>
-//#include <QPainter>
 #include <QPoint>
 #include <QMap>
 #include <map>
@@ -13,65 +12,46 @@
 
 #include "./../../core/way.h"
 #include "./../../core/building.h"
-#include "./../../core/water.h"
+//#include "./../../core/water.h"
 #include "./../../core/park.h"
 #include "./../../utils/dbmanager.h"
-#include "../../core/graph.h"
-#include "../../core/car.h"
 
+namespace osm
+{
+    class Graph;
+}
 
 class MapWidget : public QGraphicsView
 {
     Q_OBJECT
 public:
-    explicit MapWidget(QWidget *parent = nullptr);
+    explicit MapWidget(QWidget *parent = nullptr, osm::Graph* graph = nullptr);
     ~MapWidget();
-
-//    /**
-//     * @brief findNodeById retourne le noeud correspondant à l'id donné
-//     * @param id: id du noeud à retourner
-//     * @return nullptr si aucun noeud trouvé sinon retourn un pointeur sur noeud
-//     */
-//    Node* findNodeById(long long id);
-//    /**
-//     * @brief findWayById retourne la voie en fonction de l'id
-//     * @param id
-//     * @return
-//     */
-//    Way* findWayById(long long id);
 
     void setShowPark(bool);
     void setShowBuilding(bool);
     void setShowRoad(bool);
     void setShowWater(bool);
-    void loadCars();
-    // void addCarToRandomWay(); // Fonction pour ajouter une voiture sur un way aléatoire
-    // void moveCarAlongWay(Car* car, const QVector<Node>& nodes); //
-
+    void addCarSymbols(QGraphicsPixmapItem*, QGraphicsEllipseItem*);
 private slots :
     void isLoadingFinished();
     /**
      * Dessiner la couche des bâtiments
      */
     void drawBuildingLayer(const QVector<Building>& buildings);
-    void drawWaterLayer(const QVector<Water>& waters);
+//    void drawWaterLayer(const QVector<Water>& waters);
     void drawParkLayer(const QVector<Park>& parks);
     /**
      * @brief Dessiner la couche de
      */
     void drawRoadLayer(const QVector<Way>& roads);
 
-    /**
-     * @brief updateCarsPosition: update cars position
-     */
-    void updateCarsPosition();
-
 signals :
     void isLoading(bool);
     void isLoaded(bool);
     void buildingsDataReady(const QVector<Building>& buildings);
     void parksDataReady(const QVector<Park>& parks);
-    void watersDataReady(const QVector<Water>& waters);
+//    void watersDataReady(const QVector<Water>& waters);
     void roadsDataReady(const QVector<Way>& roads);
 
 private:
@@ -90,15 +70,15 @@ private:
     bool d_showWay          = true;
     bool d_showDescription  = true;
     bool d_showCar          = true;
+    bool d_showCarFreq      = true;
 //    bool d_showMesh  = true;
 
     // permet de savoir si les elements de la carte on été chargés
     bool d_elementsHasBeenLoaded = false;
 
-    int FPS = 120;
-    QTimer *d_timer;
-
     DBManager* d_dbmanager;
+
+    osm::Graph* d_graph;
 
     /**
      * @brief d_view la vue graphique pour la map
@@ -108,10 +88,10 @@ private:
      * @brief d_scene scene de la map
      */
     QGraphicsScene*     d_scene;
-    /**
-     * @brief d_waterLayer couche d'affichage de l'eau
-     */
-    QGraphicsItemGroup* d_waterLayer;
+//    /**
+//     * @brief d_waterLayer couche d'affichage de l'eau
+//     */
+//    QGraphicsItemGroup* d_waterLayer;
     /**
      * @brief d_parcLayer couche d'affichage des espaces verts
      */
@@ -125,21 +105,22 @@ private:
      */
     QGraphicsItemGroup* d_wayLayer;
     /**
-     * @brief d_carsLayer couche d'affichage des routes
+     * @brief d_carsLayer couche d'affichage des frequences de voitures
+     */
+    QGraphicsItemGroup* d_freqCarsLayer;
+    /**
+     * @brief d_carsLayer couche d'affichage des voitures
      */
     QGraphicsItemGroup* d_carsLayer;
+
+
 //    /**
 //     * @brief d_meshLayer couche d'affichage des mailles
 //     */
 //    QGraphicsItemGroup* d_meshLayer;
 
-    std::vector<std::unique_ptr<Car>> d_cars;
-
-    osm::Graph d_graph;
-
     void creerInterface();
     void resizeEvent(QResizeEvent *event) override;
-
     // zoom et deplacement sur la carte
     void wheelEvent(QWheelEvent *event) override;
 
@@ -173,7 +154,7 @@ private:
     void initBounds();
     void initBuildings();
     void initParks();
-    void initWaters();
+//    void initWaters();
     void initRoads();
 //    void initMeshs();
 };

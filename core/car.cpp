@@ -23,6 +23,7 @@ QPixmap getRandomImage()
 
     int newWidth = static_cast<int>(pixmap.width() * 0.25);  // 80% de la largeur actuelle
     int newHeight = static_cast<int>(pixmap.height() * 0.25);
+
     pixmap = pixmap.scaled({newWidth, newHeight}, Qt::KeepAspectRatio, Qt::SmoothTransformation);
 
     return pixmap;
@@ -43,23 +44,6 @@ double duree(double distance, double vitesse)
     return (distance / vitesse);
 }
 
-//    /**
-//    * @brief duree: retourne la durée pour parcourir une distance donnée
-//    * @param distance
-//    * @return la durée obtenue
-//    */
-//    double duree(double distance) const;
-
-//double Car::distance() const
-//{
-//    QPointF d = d_to - d_from;
-//    return std::sqrt((d.x() * d.x()) + (d.y() * d.y()));
-//}
-
-//double Car::duree(double distance) const
-//{
-//    return (distance / d_v);
-//}
 Car::Car(): d_v{20.0}, d_freq{10.5}, d_intensity{10}, d_acceleration{1.0}
   , d_pos{0,0}, d_from{nullptr}, d_to{nullptr}
 {}
@@ -72,12 +56,14 @@ Car::Car(osm::Node* from, double vitesse, double frequence, double intensity):
     {
         d_pos = d_from->pos();
         d_pixmap = new QGraphicsPixmapItem(getRandomImage());
-        d_pixmap->setPos(d_pos);
-//        centerPixmap();
-
+        d_pixmap->setTransformOriginPoint(d_pixmap->pixmap().width() / 2, d_pixmap->pixmap().height() / 2);
+        d_to = d_from;
         randomDestination();
 
-//        d_ellipse = new QGraphicsEllipseItem(d_pos.x(), d_pos.y(), d_freq, d_freq);
+        d_ellipse = new QGraphicsEllipseItem(0, 0, d_freq, d_freq);
+
+        updateItem();
+        updateOrientation();
     }
 }
 
@@ -91,18 +77,6 @@ Car::Car(osm::Node* from, double vitesse, double frequence, double intensity):
 ////        d_ellipse = new QGraphicsEllipseItem(d_pos.x(), d_pos.y(), d_freq, d_freq);
 //    }
 //}
-
-// // Déplacer la voiture à une nouvelle position
-// void Car::moveTo(const Node& pos) {
-//     if (d_polygon) {
-// //        qreal dx = pos.x() - d_from.x();
-// //        qreal dy = pos.y() - d_from.y();
-//         d_from = pos;
-// //        qreal angle = std::atan2(dy, dx) * 180 / M_PI;
-// //        d_polygon->setRotation(angle);
-//         d_polygon->setPos(d_from.x(), d_from.y());
-//     }
-// }
 
 QPointF Car::pos() const
 {
@@ -142,63 +116,42 @@ QGraphicsEllipseItem* Car::ellipse() const
 
 void Car::randomDestination()
 {
-    std::pair<osm::Node*, double> destination = d_from->getRandomNeighbor();
-    if(destination.first)
-        d_to = destination.first;
+    osm::Node* destination = d_from->getRandomNeighbor();
+    if(destination)
+        d_to = destination;
     else
         d_to = d_from;
+}
 
+void Car::updateOrientation()
+{
     QPointF d = d_to->pos() - d_from->pos();
     qreal angle = std::atan2(d.y(), d.x()) * 180 / M_PI;
-    d_pixmap->setRotation(angle + 90);
+    d_pixmap->setRotation(angle - 90);
 }
 
 void Car::nextMove()
 {
-//    std::swap(d_from, d_to);
-std::pair<osm::Node*, double> destination = std::make_pair(nullptr, 0.0);
-    do
-    {
-        destination = d_to->getRandomNeighbor();
+    osm::Node* destination = nullptr;
+    destination = d_to->getRandomNeighbor(d_from);
 
-    }while(!destination.first || destination.first == d_to);
+    d_from = d_to;
+    d_to = destination;
 
-//    if(destination.first)
-//    {
-        d_from = d_to;
-        d_to = destination.first;
-//    }
-//    if(destination.first && destination.first != d_to)
-//    {
-//        d_from = d_to;
-//        d_to = destination.first;
-//    }
-//    else
-//    {
-//        osm::Node* tmp = d_to;
-//        d_to = d_from;
-//        d_from = tmp;
-//        qDebug() << "blocage";
-//    }
-
-//    qDebug() << "d_to: " << d_to->pos() << " d_from: " << d_from->pos();
     d_pos = d_from->pos();
-
-    QPointF d = d_to->pos() - d_from->pos();
-    qreal angle = std::atan2(d.y(), d.x()) * 180 / M_PI;
-    d_pixmap->setRotation(angle + 90);
 }
 
-//void Car::centerPixmap()
-//{
-//    int labelWidth = d_pixmap->pixmap().width();
-//    int labelHeight = d_pixmap->pixmap().height();
+void Car::updateItem()
+{
+    qreal pixWidth = d_pixmap->pixmap().width();
+    qreal pixHeight = d_pixmap->pixmap().height();
 
-//    // Calculer la position pour que l'image soit centrée autour du point
-//    qreal x = d_pos.x() - labelWidth / 2;
-//    qreal y = d_pos.y() - labelHeight / 2;
-//    d_pixmap->setPos(QPointF{x, y});
-//}
+    d_pixmap->setTransformOriginPoint(pixWidth / 2, pixHeight / 2);
+
+    auto carPos = d_pos - QPointF{pixWidth / 2, pixHeight / 2};
+    d_pixmap->setPos(carPos);
+    d_ellipse->setPos(d_pos - QPointF(d_freq / 2, d_freq / 2));
+}
 
 void Car::update(double interval)
 {
@@ -217,14 +170,16 @@ void Car::update(double interval)
         d_from = d_to;
         d_elapsed = 0.0;
         nextMove();
+        updateOrientation();
     }
     else
     {
         double progress = d_elapsed / time;
 //        QPointF pos = from + (to - from) * progress;
+
         d_pos = d_from->pos() + ((d_to->pos() - d_from->pos()) * progress);
-        d_pixmap->setPos(d_pos);
-//        centerPixmap();
+//        d_pixmap->setPos(d_pos);
+        updateItem();
 //        d_ellipse->setPos(d_pos);
     }
 }

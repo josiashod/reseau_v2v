@@ -44,7 +44,7 @@ namespace osm
          */
         Edge* getRandomEdge() const;
 
-        std::pair<Node*, double> getRandomNeighbor() const;
+        Node* getRandomNeighbor(Node* d_from = nullptr) const;
 
         bool hasNeighbor(Node* n) const;
 
@@ -144,7 +144,7 @@ namespace osm
         void addEdge(Node* start, Node* end);
     private:
         std::unordered_map<long long, std::unique_ptr<Node>> d_nodes;
-        std::vector<long long> d_nodesId;
+//        std::vector<long long> d_nodesId;
         std::vector<std::unique_ptr<Edge>> d_edges;
     };
 }
