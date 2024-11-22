@@ -30,6 +30,8 @@ public:
      */
     bool addLog(const QString& text, int type = LogWidget::INFO);
 
+    void clearLog();
+
 signals:
 
 private:

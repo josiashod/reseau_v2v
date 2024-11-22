@@ -19,11 +19,6 @@
       */
     Car(std::vector<osm::Node*>& path, double vitesse = 30.9, double frequence = 60, double intensity = 10);
 
-//     /**
-//      * @brief Car constructeur de recopie
-//      */
-//    Car(const Car&);
-
     /**
      * @brief pos
      * @return
@@ -55,13 +50,18 @@
 
     QGraphicsEllipseItem* ellipse() const;
 
+    osm::Node* from() const;
+    osm::Node* to() const;
+
     void randomDestination();
 
     void nextMove();
 
     void updateItem();
     void updateOrientation();
+    void updatePath(std::vector<osm::Node*>& path);
 
+    bool hasReachedEndOfPath() const;
 
 
     /**
@@ -69,6 +69,10 @@
      * @param interval
      */
     void update(double interval);
+
+    QString toString() const;
+ signals:
+    void endPathReach(long long currentPos);
  private:
     // vitesse de la voiture
     double d_v;

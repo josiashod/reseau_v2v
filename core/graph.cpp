@@ -229,7 +229,7 @@ std::vector<Node*> Graph::dijkstraPath(long long startId, long long endId)
     }
     distances[startId] = 0;
 
-    // Comparateur pour la priority_queue
+    // Comparateur pour la pour notre file de priorité
     auto cmp = [&distances](Node* left, Node* right) {
         return distances[left->id()] > distances[right->id()];
     };
@@ -247,11 +247,13 @@ std::vector<Node*> Graph::dijkstraPath(long long startId, long long endId)
             break;
         }
 
+        // on cherche les sommets qui ont les distances les plus courtes
         for (const auto& neighbor : current->d_neighbors) {
             Node* neighborNode = neighbor.first;
             double weight = neighbor.second;
             double alternativeDist = distances[current->id()] + weight;
 
+            // on ajoute le noeud a notre pile et on met à jour son precedent
             if (alternativeDist < distances[neighborNode->id()]) {
                 distances[neighborNode->id()] = alternativeDist;
                 previous[neighborNode->id()] = current;
@@ -273,6 +275,7 @@ std::vector<Node*> Graph::dijkstraPath(long long startId, long long endId)
 
     return path;
 }
+
 //    void Node::addEdge(Edge *e) {
 //        d_egdes.push_back(e);
 //    }

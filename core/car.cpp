@@ -185,3 +185,34 @@ void Car::update(double interval)
         updateItem();
     }
 }
+
+osm::Node* Car::from() const
+{
+    return d_from;
+}
+
+osm::Node* Car::to() const
+{
+    return d_to;
+}
+
+void Car::updatePath(std::vector<osm::Node*>& path)
+{
+    i = 1;
+    d_path = path;
+    d_to = d_path[1];
+    d_elapsed = 0.0;
+    updateOrientation();
+}
+
+bool Car::hasReachedEndOfPath() const
+{
+    return d_to == d_from;
+}
+
+QString Car::toString() const
+{
+    QString str = "Car: pos:(), vitesse: % km/h, frequence: %f, puissance: %";
+
+    return str;
+}

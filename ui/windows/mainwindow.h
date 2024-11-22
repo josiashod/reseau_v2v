@@ -26,10 +26,11 @@ private slots:
     void onShowHideBuildings(bool);
 //    void onShowHideWaters(bool);
     void onShowHideParks(bool);
-    void onShowHideLogs(bool);
+    void onShowHideSidebar(bool);
     void onMapLoading(bool);
     void onMapLoaded(bool);
     void onPlay(bool);
+    void onClearLog();
 
 
     /**
@@ -52,7 +53,7 @@ private:
 
     MapWidget* d_mapView;
     LogWidget* d_logsView;
-    QVBoxLayout* d_rightSidebar;
+    QWidget* d_rightSidebar;
     QPushButton* d_playButton;
     QComboBox* d_speedSelector;
 
@@ -66,7 +67,7 @@ private:
     bool d_showWaters = true;
     bool d_showBuildings = true;
     bool d_showParks = true;
-    bool d_showLogs = true;
+    bool d_showSidebar = true;
 
     bool d_isPlaying = false;
     double d_v = 1.0;

@@ -51,11 +51,12 @@ void MainWindow::creerInterface()
 
 //    mainLayout->setContentsMargins(20, 20, 20, 20);
     mainWidget->setLayout(mainLayout);
-    mainWidget->setContentsMargins(10, 10, 10, 10);
+    mainWidget->setContentsMargins(0, 0, 0, 0);
     setCentralWidget(mainWidget);
 
     // creation des differents layout
-    d_rightSidebar = new QVBoxLayout{this};
+    d_rightSidebar = new QWidget{this};
+    auto rightSidebarLayout = new QVBoxLayout{d_rightSidebar};
 //    d_rightSidebar->setContentsMargins(0, 0, 10, 0);
     auto *simulationControlLayout = new QHBoxLayout{this};
 
@@ -63,10 +64,11 @@ void MainWindow::creerInterface()
     d_mapView = new MapWidget{this, &d_graph};
 
     mainLayout->addWidget(d_mapView, 1);
-    d_rightSidebar->addWidget(d_logsView, 1);
-    d_rightSidebar->addWidget(new QPushButton{"Add cars"});
-    d_rightSidebar->addWidget(new QPushButton{"Clear logs"});
-    d_rightSidebar->addLayout(simulationControlLayout);
+    rightSidebarLayout->addWidget(d_logsView, 1);
+    rightSidebarLayout->addWidget(new QPushButton{"Add cars"});
+    auto clearLogButton = new QPushButton{"Clear logs"};
+    rightSidebarLayout->addWidget(clearLogButton);
+    rightSidebarLayout->addLayout(simulationControlLayout);
     d_playButton = new QPushButton{"play"};
     d_speedSelector = new QComboBox{};
 //    simulationControlLayout->addSpacing(100);
@@ -79,29 +81,32 @@ void MainWindow::creerInterface()
 //    vLayout->addLayout(simulationControlLayout);
 //    mainLayout->addLayout(vLayout, 1);
 
-    d_rightSidebar->setEnabled(false);
-//    d_logsView->hide();
-    d_showLogs = false;
-    mainLayout->addLayout(d_rightSidebar);
+//    d_rightSidebar->hide();
+    d_rightSidebar->setLayout(rightSidebarLayout);
+    d_rightSidebar->setContentsMargins(0, 0, 0, 0);
+    mainLayout->addWidget(d_rightSidebar);
     mainLayout->setContentsMargins(0, 0, 0, 0);
+
 
     // actions connects
     connect(showRoadAct, &QAction::triggered, this, &MainWindow::onShowHideRoads);
     connect(showBuildindAct, &QAction::triggered, this, &MainWindow::onShowHideBuildings);
     connect(showParcAct, &QAction::triggered, this, &MainWindow::onShowHideParks);
-    connect(showLogsAct, &QAction::triggered, this, &MainWindow::onShowHideLogs);
+    connect(showLogsAct, &QAction::triggered, this, &MainWindow::onShowHideSidebar);
 //    connect(showFrequenceAct, &QAction::triggered, this, &MainWindow::onShowHideFreq);
 
     // buttons control for the simulation connects
     connect(d_playButton, &QPushButton::clicked, this, &MainWindow::onPlay);
+    connect(clearLogButton, &QPushButton::clicked, this, &MainWindow::onClearLog);
 
     createVComboBox();
     selectSpeed();
     connect(d_speedSelector, &QComboBox::currentIndexChanged, this, &MainWindow::updateSpeedSelector);
 
-    //map connects
+    //connects
     connect(d_mapView, &MapWidget::isLoading, this, &MainWindow::onMapLoading);
     connect(d_mapView, &MapWidget::isLoaded, this, &MainWindow::onMapLoaded);
+
 
     d_timer = new QTimer(this);
     // Mettre l'interval de rafraichissement de l'affichage
@@ -136,15 +141,14 @@ void MainWindow::onShowHideParks(bool)
     d_mapView->setShowPark(d_showParks);
 }
 
-void MainWindow::onShowHideLogs(bool)
+void MainWindow::onShowHideSidebar(bool)
 {
-    d_showLogs = !d_showLogs;
+    d_showSidebar = !d_showSidebar;
 
-//    if(d_showLogs)
-        d_rightSidebar->setEnabled(d_showLogs);
-//    else
-//        d_rightSidebar->hide();
-        qDebug() << "cache" << d_rightSidebar->isEnabled();
+    if(d_showSidebar)
+        d_rightSidebar->show();
+    else
+        d_rightSidebar->hide();
 }
 
 void MainWindow::onMapLoading(bool)
@@ -156,22 +160,16 @@ void MainWindow::onMapLoaded(bool)
 {
     d_logsView->addLog("The map has been loaded", LogWidget::SUCCESS);
 
-    for(int i = 0; i < 10; i++)
+    for(int i = 0; i < 20; i++)
     {
         osm::Node*  n1 = d_graph.getRandomNode(), *n2 = d_graph.getRandomNode();
 
         auto v = d_graph.dijkstraPath(n1->id(), n2->id());
         if(!v.empty() && v.size() > 1)
         {
-            d_cars.push_back(std::make_unique<Car>(Car{v}));
+            d_cars.push_back(std::make_unique<Car>(v));
             d_mapView->addCarSymbols(d_cars.back()->pixmap(), d_cars.back()->ellipse());
         }
-
-//        if(n)
-//        {
-//            d_cars.push_back(std::make_unique<Car>(Car{n}));
-//            d_mapView->addCarSymbols(d_cars.back()->pixmap(), d_cars.back()->ellipse());
-//        }
     }
 }
 
@@ -192,6 +190,11 @@ void MainWindow::onPlay(bool)
     updatePlayButtonLabel();
 }
 
+void MainWindow::onClearLog()
+{
+    d_logsView->clearLog();
+}
+
 void MainWindow::createVComboBox()
 {
     d_speedSelector->addItems(d_listOfSpeeds);
@@ -203,6 +206,20 @@ void MainWindow::updateSpeedSelector(int i)
     selectSpeed();
     accelerate();
 }
+
+//void MainWindow::onCarReachEndRoad(long long currentPos)
+//{
+//    Car* car = qobject_cast<Car *>(sender());
+//    osm::Node* newnode;
+//    do
+//    {
+//        newnode = d_graph.getRandomNode();
+//    }
+//    while(!newnode || newnode->id() == currentPos);
+
+//    auto path = d_graph.dijkstraPath(currentPos, newnode->id());
+//    car->updatePath(path);
+//}
 
 void MainWindow::playOrPause()
 {
@@ -227,6 +244,20 @@ void MainWindow::updateCarsPosition()
     for(size_t i = 0; i < d_cars.size(); i++)
     {
         d_cars[i].get()->update(interval);
+
+        if(d_cars[i].get()->hasReachedEndOfPath())
+        {
+            auto currentPos = d_cars[i].get()->to()->id();
+            osm::Node* newnode;
+            do
+            {
+                newnode = d_graph.getRandomNode();
+            }
+            while(!newnode || newnode->id() == currentPos);
+
+            auto path = d_graph.dijkstraPath(currentPos, newnode->id());
+            d_cars[i].get()->updatePath(path);
+        }
     }
 }
 
@@ -234,6 +265,7 @@ void MainWindow::selectSpeed()
 {
     d_speedSelector->setCurrentIndex(d_selectedSpeed);
 }
+
 
 MainWindow::~MainWindow()
 {

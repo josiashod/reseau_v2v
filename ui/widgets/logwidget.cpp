@@ -58,6 +58,11 @@ bool LogWidget::addLog(const QString& text, int type)
     return true;
 }
 
+void LogWidget::clearLog()
+{
+    d_logtext->clear();
+}
+
 LogWidget::~LogWidget()
 {
 delete d_logtext;
