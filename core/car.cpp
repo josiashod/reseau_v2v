@@ -49,22 +49,24 @@ Car::Car(): d_v{20.0}, d_freq{10.5}, d_intensity{10}, d_acceleration{1.0}
 {}
 
 // // Constructeur avec position, vitesse et fréquence
-Car::Car(osm::Node* from, double vitesse, double frequence, double intensity):
-    d_v{vitesse}, d_freq{frequence}, d_intensity{intensity}, d_acceleration{1.0}, d_from{from}
+Car::Car( std::vector<osm::Node*>& path, double vitesse, double frequence, double intensity):
+    d_v{vitesse}, d_freq{frequence}, d_intensity{intensity}, d_acceleration{1.0}, d_path{path}
 {
-    if(d_from != nullptr)
+    if(d_path.size() >= 2)
     {
-        d_pos = d_from->pos();
-        d_pixmap = new QGraphicsPixmapItem(getRandomImage());
-        d_pixmap->setTransformOriginPoint(d_pixmap->pixmap().width() / 2, d_pixmap->pixmap().height() / 2);
-        d_to = d_from;
-        randomDestination();
-
-        d_ellipse = new QGraphicsEllipseItem(0, 0, d_freq, d_freq);
-
-        updateItem();
-        updateOrientation();
+        d_from = d_path[0];
+        d_to = d_path[1];
     }
+    else if(d_path.size() == 1)
+    {
+        d_from = d_path[0];
+        d_to = d_from;
+    }
+    d_pos = d_from->pos();
+    d_pixmap = new QGraphicsPixmapItem(getRandomImage());
+    d_ellipse = new QGraphicsEllipseItem(0, 0, d_freq, d_freq);
+
+    updateItem();
 }
 
 //Car::Car(const Car &c): d_v{c.d_v}, d_freq{c.d_freq}, d_intensity{c.d_intensity},
@@ -123,21 +125,29 @@ void Car::randomDestination()
         d_to = d_from;
 }
 
+
 void Car::updateOrientation()
 {
+    d_pixmap->setTransformOriginPoint(d_pixmap->pixmap().width() / 2, d_pixmap->pixmap().height() / 2);
     QPointF d = d_to->pos() - d_from->pos();
     qreal angle = std::atan2(d.y(), d.x()) * 180 / M_PI;
-    d_pixmap->setRotation(angle - 90);
+    d_pixmap->setRotation(angle + 90);
 }
 
 void Car::nextMove()
 {
-    osm::Node* destination = nullptr;
-    destination = d_to->getRandomNeighbor(d_from);
+//    osm::Node* destination = nullptr;
+//    destination = d_to->getRandomNeighbor(d_from);
 
+//    d_from = d_to;
+//    d_to = destination;
+
+//    d_pos = d_from->pos();
     d_from = d_to;
-    d_to = destination;
-
+    if((++i) < d_path.size())
+    {
+        d_to = d_path[i];
+    }
     d_pos = d_from->pos();
 }
 
@@ -155,14 +165,9 @@ void Car::updateItem()
 
 void Car::update(double interval)
 {
-//    qDebug() << d_from->pos();
     d_elapsed += interval / 1000.0;  // Convertir l'intervalle en secondes
 
-//    qDebug() << distance(from, to);
-//    double time = duree(distance(from, to), d_v);
     double time = duree(distance(d_from->pos(), d_to->pos()), d_v);
-
-//    qDebug() << time;
 
     // Vérifier si on est arrivée à destination
     if (d_elapsed > time)
@@ -175,11 +180,8 @@ void Car::update(double interval)
     else
     {
         double progress = d_elapsed / time;
-//        QPointF pos = from + (to - from) * progress;
 
         d_pos = d_from->pos() + ((d_to->pos() - d_from->pos()) * progress);
-//        d_pixmap->setPos(d_pos);
         updateItem();
-//        d_ellipse->setPos(d_pos);
     }
 }

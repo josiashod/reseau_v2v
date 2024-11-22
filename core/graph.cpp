@@ -1,5 +1,9 @@
 #include "graph.h"
 #include <random>
+#include <stack>
+#include <limits>
+#include <queue>
+
 #include <QDebug>
 
 namespace osm
@@ -212,6 +216,63 @@ void Graph::addEdge(Node* start, Node* end)
     end->addNeighbor(start, dist);
 }
 
+
+std::vector<Node*> Graph::dijkstraPath(long long startId, long long endId)
+{
+    std::unordered_map<long long, double> distances;
+    std::unordered_map<long long, Node*> previous;
+    std::vector<Node*> path;
+
+    // Initialisation des distances avec l'infini
+    for (const auto& pair : d_nodes) {
+        distances[pair.first] = std::numeric_limits<double>::infinity();
+    }
+    distances[startId] = 0;
+
+    // Comparateur pour la priority_queue
+    auto cmp = [&distances](Node* left, Node* right) {
+        return distances[left->id()] > distances[right->id()];
+    };
+
+    // Priority queue pour explorer les noeuds
+    std::priority_queue<Node*, std::vector<Node*>, decltype(cmp)> queue(cmp);
+    queue.push(d_nodes[startId].get());
+
+    while (!queue.empty()) {
+        Node* current = queue.top();
+        queue.pop();
+
+        // Arrêtez l'algorithme si on atteint le nœud cible
+        if (current->id() == endId) {
+            break;
+        }
+
+        for (const auto& neighbor : current->d_neighbors) {
+            Node* neighborNode = neighbor.first;
+            double weight = neighbor.second;
+            double alternativeDist = distances[current->id()] + weight;
+
+            if (alternativeDist < distances[neighborNode->id()]) {
+                distances[neighborNode->id()] = alternativeDist;
+                previous[neighborNode->id()] = current;
+                queue.push(neighborNode);
+            }
+        }
+    }
+
+    // Reconstruire le chemin en remontant par les "previous"
+    Node* step = d_nodes[endId].get();
+    while (step) {
+        path.push_back(step);
+        if (step->id() == startId) break;
+        step = previous[step->id()];
+    }
+
+    // Inverser le chemin pour partir de startId vers endId
+    std::reverse(path.begin(), path.end());
+
+    return path;
+}
 //    void Node::addEdge(Edge *e) {
 //        d_egdes.push_back(e);
 //    }

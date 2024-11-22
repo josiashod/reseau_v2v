@@ -2,8 +2,9 @@
 #ifndef CAR_H
 #define CAR_H
 
- #include "graph.h"
- #include <QGraphicsPixmapItem>
+#include <functional>
+#include "graph.h"
+#include <QGraphicsPixmapItem>
 // #include <QGraphicsPolygonItem>
 
  class Car
@@ -16,7 +17,7 @@
       * @param vitesse: la vitesse de la voiture
       * @param frequence: la fréquence de la voiture
       */
-    Car(osm::Node* from, double vitesse = 30.9, double frequence = 60, double intensity = 10);
+    Car(std::vector<osm::Node*>& path, double vitesse = 30.9, double frequence = 60, double intensity = 10);
 
 //     /**
 //      * @brief Car constructeur de recopie
@@ -61,12 +62,13 @@
     void updateItem();
     void updateOrientation();
 
+
+
     /**
      * @brief update mettre à jour la position de la voiture selon un interval
      * @param interval
      */
     void update(double interval);
-
  private:
     // vitesse de la voiture
     double d_v;
@@ -85,6 +87,9 @@
     // position de position d'arrivée
     osm::Node* d_to;
 
+    std::vector<osm::Node*> d_path;
+
+    size_t i = 1;
     // pixmap pour dessiner la voiture
     QGraphicsPixmapItem* d_pixmap = nullptr;
 
@@ -92,8 +97,6 @@
 
 //     // cercle pour représenter la fréquence de la voiture
     QGraphicsEllipseItem* d_ellipse = nullptr;
-
-    double d_sens = 1;
  };
 
 #endif // CAR_H

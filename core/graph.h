@@ -142,6 +142,7 @@ namespace osm
         Node* getRandomNode() const;
         Node* addNode(long long id, double x, double y);
         void addEdge(Node* start, Node* end);
+        std::vector<Node*> dijkstraPath(long long startId, long long endId);
     private:
         std::unordered_map<long long, std::unique_ptr<Node>> d_nodes;
 //        std::vector<long long> d_nodesId;

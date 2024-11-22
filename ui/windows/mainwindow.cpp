@@ -156,15 +156,22 @@ void MainWindow::onMapLoaded(bool)
 {
     d_logsView->addLog("The map has been loaded", LogWidget::SUCCESS);
 
-    for(int i = 0; i < 1; i++)
+    for(int i = 0; i < 10; i++)
     {
-        osm::Node*  n = d_graph.getRandomNode();
+        osm::Node*  n1 = d_graph.getRandomNode(), *n2 = d_graph.getRandomNode();
 
-        if(n)
+        auto v = d_graph.dijkstraPath(n1->id(), n2->id());
+        if(!v.empty() && v.size() > 1)
         {
-            d_cars.push_back(std::make_unique<Car>(Car{n}));
+            d_cars.push_back(std::make_unique<Car>(Car{v}));
             d_mapView->addCarSymbols(d_cars.back()->pixmap(), d_cars.back()->ellipse());
         }
+
+//        if(n)
+//        {
+//            d_cars.push_back(std::make_unique<Car>(Car{n}));
+//            d_mapView->addCarSymbols(d_cars.back()->pixmap(), d_cars.back()->ellipse());
+//        }
     }
 }
 
