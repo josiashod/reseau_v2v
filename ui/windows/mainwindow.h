@@ -24,7 +24,7 @@ public:
 private slots:
     void onShowHideRoads(bool);
     void onShowHideBuildings(bool);
-//    void onShowHideWaters(bool);
+    void onShowHideFreq(bool);
     void onShowHideParks(bool);
     void onShowHideSidebar(bool);
     void onMapLoading(bool);
@@ -55,16 +55,17 @@ private:
     LogWidget* d_logsView;
     QWidget* d_rightSidebar;
     QPushButton* d_playButton;
+    QPushButton* d_addCarButton;
     QComboBox* d_speedSelector;
 
-    int FPS = 60;
+    int FPS = 120;
     QTimer *d_timer;
 
     osm::Graph d_graph;
     std::vector<std::unique_ptr<Car>> d_cars;
 
     bool d_showRoads = true;
-    bool d_showWaters = true;
+    bool d_showCarFreq = true;
     bool d_showBuildings = true;
     bool d_showParks = true;
     bool d_showSidebar = true;

@@ -8,6 +8,7 @@
 #include <QComboBox>
 #include <QMenuBar>
 #include <QTimer>
+#include <QtConcurrent>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), d_graph{}
@@ -65,17 +66,23 @@ void MainWindow::creerInterface()
 
     mainLayout->addWidget(d_mapView, 1);
     rightSidebarLayout->addWidget(d_logsView, 1);
-    rightSidebarLayout->addWidget(new QPushButton{"Add cars"});
+    auto d_addCarButton = new QPushButton{"Add cars"};
+    rightSidebarLayout->addWidget(d_addCarButton);
+//    d_addCarButton->setEnabled(false);
     auto clearLogButton = new QPushButton{"Clear logs"};
     rightSidebarLayout->addWidget(clearLogButton);
     rightSidebarLayout->addLayout(simulationControlLayout);
     d_playButton = new QPushButton{"play"};
     d_speedSelector = new QComboBox{};
+
+    d_playButton->setEnabled(false);
+    d_speedSelector->setEnabled(false);
 //    simulationControlLayout->addSpacing(100);
 
 
     simulationControlLayout->addWidget(d_playButton);
     simulationControlLayout->addWidget(d_speedSelector);
+    rightSidebarLayout->addWidget(molette);
 //    simulationControlLayout->setContentsMargins(0,0,1000,0);
 //    simulationControlLayout->addWidget(new QPushButton{"test"}, 0, Qt::AlignHCenter);
 //    vLayout->addLayout(simulationControlLayout);
@@ -93,7 +100,7 @@ void MainWindow::creerInterface()
     connect(showBuildindAct, &QAction::triggered, this, &MainWindow::onShowHideBuildings);
     connect(showParcAct, &QAction::triggered, this, &MainWindow::onShowHideParks);
     connect(showLogsAct, &QAction::triggered, this, &MainWindow::onShowHideSidebar);
-//    connect(showFrequenceAct, &QAction::triggered, this, &MainWindow::onShowHideFreq);
+    connect(showFrequenceAct, &QAction::triggered, this, &MainWindow::onShowHideFreq);
 
     // buttons control for the simulation connects
     connect(d_playButton, &QPushButton::clicked, this, &MainWindow::onPlay);
@@ -129,11 +136,11 @@ void MainWindow::onShowHideRoads(bool)
     d_mapView->setShowRoad(d_showRoads);
 }
 
-/*void MainWindow::onShowHideWaters(bool)
+void MainWindow::onShowHideFreq(bool)
 {
-    d_showWaters = !d_showWaters;
-    d_mapView->setShowWater(d_showWaters);
-}*/
+    d_showCarFreq = !d_showCarFreq;
+    d_mapView->setShowFreq(d_showCarFreq);
+}
 
 void MainWindow::onShowHideParks(bool)
 {
@@ -158,9 +165,13 @@ void MainWindow::onMapLoading(bool)
 
 void MainWindow::onMapLoaded(bool)
 {
+    d_playButton->setEnabled(true);
+    d_speedSelector->setEnabled(true);
+//    d_addCarButton->setEnabled(true);
+
     d_logsView->addLog("The map has been loaded", LogWidget::SUCCESS);
 
-    for(int i = 0; i < 20; i++)
+    for(int i = 0; i < 3; i++)
     {
         osm::Node*  n1 = d_graph.getRandomNode(), *n2 = d_graph.getRandomNode();
 
@@ -168,7 +179,8 @@ void MainWindow::onMapLoaded(bool)
         if(!v.empty() && v.size() > 1)
         {
             d_cars.push_back(std::make_unique<Car>(v));
-            d_mapView->addCarSymbols(d_cars.back()->pixmap(), d_cars.back()->ellipse());
+            d_mapView->addCarImage(d_cars.back()->pixmap());
+            d_mapView->addCarEllipse(d_cars.back()->ellipse());
         }
     }
 }
@@ -240,24 +252,33 @@ void MainWindow::accelerate()
 void MainWindow::updateCarsPosition()
 {
     double interval = 1000 / FPS;
+    static size_t frameCounter = 0;
 
     for(size_t i = 0; i < d_cars.size(); i++)
     {
-        d_cars[i].get()->update(interval);
+        auto currentPos = d_cars[i].get()->to()->id();
 
-        if(d_cars[i].get()->hasReachedEndOfPath())
-        {
-            auto currentPos = d_cars[i].get()->to()->id();
-            osm::Node* newnode;
-            do
+        QtConcurrent::run([this, currentPos, i]() {
+            if(d_cars[i].get()->hasReachedEndOfPath())
             {
-                newnode = d_graph.getRandomNode();
-            }
-            while(!newnode || newnode->id() == currentPos);
+                osm::Node* newnode;
+                do
+                {
+                    newnode = d_graph.getRandomNode();
+                }
+                while(!newnode || newnode->id() == currentPos);
 
-            auto path = d_graph.dijkstraPath(currentPos, newnode->id());
-            d_cars[i].get()->updatePath(path);
-        }
+                auto path = d_graph.dijkstraPath(currentPos, newnode->id());
+                d_cars[i].get()->updatePath(path);
+//                QMetaObject::invokeMethod(this, [this, i, path](){
+//                });
+            }
+        });
+
+        if((i % 2) == (frameCounter++ % 2))
+            d_cars[i].get()->update(interval);
+
+//        frameCounter++;
     }
 }
 

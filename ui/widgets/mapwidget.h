@@ -31,8 +31,12 @@ public:
     void setShowPark(bool);
     void setShowBuilding(bool);
     void setShowRoad(bool);
-    void setShowWater(bool);
-    void addCarSymbols(QGraphicsPixmapItem*, QGraphicsEllipseItem*);
+    void setShowFreq(bool);
+    void addCarImage(QGraphicsPixmapItem*);
+    void addCarEllipse(QGraphicsEllipseItem*);
+    void drawMeshLayer();
+
+    static QPointF observation_point;
 private slots :
     void isLoadingFinished();
     /**
@@ -58,20 +62,20 @@ private:
     // lon, lat coord
     std::pair<double, double> d_maxCoord, d_minCoord;
 
-//    QVector<QPolygonF> d_meshs;
+    QVector<QPolygonF> d_meshs;
 
     double d_scale_factor = 1.15;
     qreal d_perspective_offset = 0.6;
 
     // Permet d'afficher les différentes scenes
     bool d_showPark         = true;
-    bool d_showWater        = true;
+//    bool d_showWater        = true;
     bool d_showBuilding     = true;
     bool d_showWay          = true;
     bool d_showDescription  = true;
     bool d_showCar          = true;
     bool d_showCarFreq      = true;
-//    bool d_showMesh  = true;
+    bool d_showMesh  = true;
 
     // permet de savoir si les elements de la carte on été chargés
     bool d_elementsHasBeenLoaded = false;
@@ -114,10 +118,10 @@ private:
     QGraphicsItemGroup* d_carsLayer;
 
 
-//    /**
-//     * @brief d_meshLayer couche d'affichage des mailles
-//     */
-//    QGraphicsItemGroup* d_meshLayer;
+    /**
+     * @brief d_meshLayer couche d'affichage des mailles
+     */
+    QGraphicsItemGroup* d_meshLayer;
 
     void creerInterface();
     void resizeEvent(QResizeEvent *event) override;
@@ -156,7 +160,7 @@ private:
     void initParks();
 //    void initWaters();
     void initRoads();
-//    void initMeshs();
+    void initMeshs();
 };
 
 #endif // MAPWIDGET_H

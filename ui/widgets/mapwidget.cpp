@@ -74,9 +74,9 @@ void MapWidget::creerInterface()
     d_carsLayer->setVisible(d_showCar);
     d_scene->addItem(d_carsLayer);
 
-//    d_meshLayer = new QGraphicsItemGroup();
-//    d_meshLayer->setVisible(d_showMesh);
-//    d_scene->addItem(d_meshLayer);
+    d_meshLayer = new QGraphicsItemGroup();
+    d_meshLayer->setVisible(d_showMesh);
+    d_scene->addItem(d_meshLayer);
 
 //    layout->addWidget(d_view);
 
@@ -142,17 +142,17 @@ void MapWidget::drawRoadLayer(const QVector<Way>& ways)
     }
 }
 
-//void MapWidget::drawMeshLayer()
-//{
-//    for (QPolygonF& hexagon : d_meshs)
-//    {
-//        // Créer un nouvel élément texte
-//        QGraphicsPolygonItem *polygon = new QGraphicsPolygonItem();
-//        polygon->setPolygon(hexagon);
+void MapWidget::drawMeshLayer()
+{
+    for (QPolygonF& hexagon : d_meshs)
+    {
+        // Créer un nouvel élément texte
+        QGraphicsPolygonItem *polygon = new QGraphicsPolygonItem();
+        polygon->setPolygon(hexagon);
 
-//        d_meshLayer->addToGroup(polygon);
-//    }
-//}
+        d_meshLayer->addToGroup(polygon);
+    }
+}
 
 void MapWidget::resizeEvent(QResizeEvent *event)
 {
@@ -164,12 +164,14 @@ void MapWidget::resizeEvent(QResizeEvent *event)
         emit isLoading(d_elementsHasBeenLoaded);
 
         setRenderHint(QPainter::Antialiasing);
-
+        //initMeshs();
+        drawMeshLayer();
+//        observation_point = QPointF(event->size().width() / 2, event->size().height() / 2);
     //    d_scene->setSceneRect(0, 0, event->size().width() * 2, event->size().height() * 2);
         fitInView(d_scene->sceneRect(), Qt::KeepAspectRatio);
         // Lancer la fonction longue en asynchrone
         QFuture<void> future = QtConcurrent::run([this]() {
-//            this->initParks();
+            this->initParks();
             this->initRoads();
 //            this->initBuildings();
         });
@@ -210,10 +212,14 @@ void MapWidget::wheelEvent(QWheelEvent *event)
     }
 }
 
-void MapWidget::addCarSymbols(QGraphicsPixmapItem* car, QGraphicsEllipseItem* freq)
+void MapWidget::addCarImage(QGraphicsPixmapItem* car)
 {
     d_carsLayer->addToGroup(car);
-    d_freqCarsLayer->addToGroup(freq);
+}
+
+void MapWidget::addCarEllipse(QGraphicsEllipseItem* ellipse)
+{
+    d_freqCarsLayer->addToGroup(ellipse);
 }
 
 /*std::pair<double, double> MapWidget::lambert93(double longitude, double latitude)
@@ -575,11 +581,11 @@ void MapWidget::setShowRoad(bool show)
     d_wayLayer->setVisible(d_showWay);
 }
 
-/*void MapWidget::setShowWater(bool show)
+void MapWidget::setShowFreq(bool show)
 {
-    d_showWater = show;
-    d_waterLayer->setVisible(show);
-}*/
+    d_showCarFreq = show;
+    d_freqCarsLayer->setVisible(show);
+}
 
 //void MapWidget::loadCars()
 //{
@@ -596,30 +602,42 @@ void MapWidget::setShowRoad(bool show)
 //    }
 //}
 
-//void MapWidget::initMeshs()
-//{
-//    qreal hexRadius = 8.0;  // Adjust size as needed
-//    int rows = height();
-//    int cols = width();
+void MapWidget::initMeshs()
+{
+    qreal hexRadius = 70.0;  // Ajuster la taille au besoin
+    qreal dx = 1.5 * hexRadius;  // Décalage horizontal (distance entre centres des hexagones)
+    qreal dy = sqrt(3) * hexRadius;  // Décalage vertical (distance entre centres des hexagones)
 
-//    for (int i = 0; i < rows; ++i) {
-//        for (int j = 0; j < cols; ++j) {
-//            qreal x = j * 1.5 * hexRadius;
-//            qreal y = i * sqrt(3) * hexRadius;
+    int rows = height() / dy;  // Calcul du nombre de rangées en fonction de la hauteur de la scène
+    int cols = width() / dx;   // Calcul du nombre de colonnes en fonction de la largeur de la scène
 
-//            if (j % 2 == 1) {
-//                y += sqrt(3) / 2 * hexRadius;
-//            }
-//            QPolygonF polygon;
+    // Ajuster légèrement la taille des hexagones pour combler toute la scène
+    qreal adjustedHexRadius = std::min(width() / (cols * 1.5), height() / (rows * sqrt(3)));
+    dx = 1.5 * adjustedHexRadius;
+    dy = sqrt(3) * adjustedHexRadius;
 
-//            // Initialize the polygon in the constructor
-//            for (int i = 0; i < 6; ++i) {
-//                qreal angle = 2 * M_PI * i / 6.0;
-//                x = x + hexRadius * cos(angle);
-//                y = y + hexRadius * sin(angle);
-//                polygon << QPointF(x, y);
-//            }
-//            d_meshs.push_back(polygon);
-//        }
-//    }
-//}
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            qreal x = j * dx;
+            qreal y = i * dy;
+
+            // Décalage pour les rangées impaires
+            if (j % 2 == 1) {
+                y += dy / 2;
+            }
+
+            QPolygonF polygon;
+
+            // Créer les sommets de l'hexagone
+            for (int k = 0; k < 6; ++k) {
+                qreal angle = 2 * M_PI * k / 6.0;
+                qreal vertexX = x + adjustedHexRadius * cos(angle);
+                qreal vertexY = y + adjustedHexRadius * sin(angle);
+                polygon << QPointF(vertexX, vertexY);
+            }
+
+            // Ajouter l'hexagone à la collection
+            d_meshs.push_back(polygon);
+        }
+    }
+}

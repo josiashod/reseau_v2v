@@ -1,7 +1,11 @@
 #include "car.h"
 #include <random>
+#include <QBrush>
+#include <QPen>
+#include <QColor>
 
 QString colors[] = {"black", "blue", "red", "green", "yellow"};
+size_t Car::d_compteur_instance = 1;
 
 QPixmap getRandomImage()
 {
@@ -29,6 +33,22 @@ QPixmap getRandomImage()
     return pixmap;
 }
 
+QColor randomColor()
+{
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+
+    std::uniform_int_distribution<> dist(1, 255);
+
+    int r,g,b;
+    do
+    {
+        r = dist(gen), g = dist(gen), b = dist(gen);
+    }while((r + b + g) > 500);
+
+    return QColor(r, g, b);
+}
+
 //    /**
 //    * @brief distance: calcule la distance entre la voiture et la position passée en paramètre
 //    * @return la distance obtenue
@@ -44,14 +64,24 @@ double duree(double distance, double vitesse)
     return (distance / vitesse);
 }
 
+double fspl(double dist, double freq)
+{
+    const double C = -147.55;  // Constante pour des distances en mètres et des fréquences en Hz
+    return (20 * std::log10(dist) + 20 * std::log10(freq) + C);
+}
+
 Car::Car(): d_v{20.0}, d_freq{10.5}, d_intensity{10}, d_acceleration{1.0}
   , d_pos{0,0}, d_from{nullptr}, d_to{nullptr}
-{}
+{
+    d_id = ++d_compteur_instance;
+}
 
 // // Constructeur avec position, vitesse et fréquence
 Car::Car( std::vector<osm::Node*>& path, double vitesse, double frequence, double intensity):
     d_v{vitesse}, d_freq{frequence}, d_intensity{intensity}, d_acceleration{1.0}, d_path{path}
 {
+    d_id = ++d_compteur_instance;
+
     if(d_path.size() >= 2)
     {
         d_from = d_path[0];
@@ -64,9 +94,18 @@ Car::Car( std::vector<osm::Node*>& path, double vitesse, double frequence, doubl
     }
     d_pos = d_from->pos();
     d_pixmap = new QGraphicsPixmapItem(getRandomImage());
+    d_color = randomColor();
     d_ellipse = new QGraphicsEllipseItem(0, 0, d_freq, d_freq);
 
     updateItem();
+
+    d_color.setAlphaF(0.5);
+
+    QBrush brush(d_color);
+    QPen pen(Qt::NoPen);
+    d_ellipse->setBrush(brush);
+    d_ellipse->setPen(pen);
+    d_ellipse->setPos(d_pos - QPointF(d_freq / 2, d_freq / 2));
 }
 
 //Car::Car(const Car &c): d_v{c.d_v}, d_freq{c.d_freq}, d_intensity{c.d_intensity},
@@ -136,13 +175,7 @@ void Car::updateOrientation()
 
 void Car::nextMove()
 {
-//    osm::Node* destination = nullptr;
-//    destination = d_to->getRandomNeighbor(d_from);
 
-//    d_from = d_to;
-//    d_to = destination;
-
-//    d_pos = d_from->pos();
     d_from = d_to;
     if((++i) < d_path.size())
     {
@@ -160,7 +193,24 @@ void Car::updateItem()
 
     auto carPos = d_pos - QPointF{pixWidth / 2, pixHeight / 2};
     d_pixmap->setPos(carPos);
-    d_ellipse->setPos(d_pos - QPointF(d_freq / 2, d_freq / 2));
+}
+
+void Car::update_coverage()
+{
+    double received_intensity = receivedPower({0, 0});
+    if (received_intensity < d_power_threshold)
+    {
+        d_color.setAlphaF(0);
+        d_ellipse->setBrush(d_color);
+        return;
+    }
+
+    double rad = std::sqrt(received_intensity / d_power_threshold) * 20;
+
+    d_color.setAlphaF(std::clamp(received_intensity / 100, 0.1, 0.55));
+    d_ellipse->setRect(0, 0, rad, rad);
+    d_ellipse->setBrush(d_color);
+    d_ellipse->setPos(d_pos - QPointF(rad / 2, rad / 2));
 }
 
 void Car::update(double interval)
@@ -183,6 +233,7 @@ void Car::update(double interval)
 
         d_pos = d_from->pos() + ((d_to->pos() - d_from->pos()) * progress);
         updateItem();
+        update_coverage();
     }
 }
 
@@ -210,9 +261,35 @@ bool Car::hasReachedEndOfPath() const
     return d_to == d_from;
 }
 
+//QGraphicsEllipseItem* coverage = new QGraphicsEllipseItem(d_pos.x() - 50, d_pos.y() - 50, 100, 100);  // Ajuster la taille du cercle
+//coverage->setPen(Qt::NoPen);  // Pas de bordure
+//coverage->setBrush(QColor(255, 0, 0, static_cast<int>(255 * (power / d_intensity))));
+
+double Car::receivedPower(const QPointF& pos) const
+{
+    // Distance entre le véhicule et un point donné
+    double dist = distance(d_pos, pos);
+
+    if (dist == 0) return d_intensity;  // Puissance maximale à la position du véhicule
+
+    // Calcul de la perte FSPL et de la puissance reçue
+    return d_intensity - fspl(dist, d_freq);
+}
+
 QString Car::toString() const
 {
-    QString str = "Car: pos:(), vitesse: % km/h, frequence: %f, puissance: %";
+//        result += "\n\tConnected Cars:";
+//        for (const Car* connectedCar : connectedCars) {
+//            result += " " + QString::number(connectedCar->getId());
+//        }
+//        return result;
+    QString str = QString("Car N°%1: posistion:(%2, %3), speed: (%4)km/h, frequence: %5 Hz, puissance r: %6")
+            .arg(d_id)
+            .arg(d_pos.x())
+            .arg(d_pos.y())
+            .arg(d_v)
+            .arg(d_freq)
+            .arg(receivedPower(d_pos));
 
     return str;
 }
