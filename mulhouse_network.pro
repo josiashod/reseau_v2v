@@ -18,6 +18,7 @@ SOURCES += \
     core/way.cpp \
     env.cpp \
     main.cpp \
+    ui/dialog/addcardialog.cpp \
     ui/widgets/logwidget.cpp \
     ui/widgets/mapwidget.cpp \
     ui/windows/mainwindow.cpp \
@@ -33,6 +34,7 @@ HEADERS += \
     core/water.h \
     core/way.h \
     env.h \
+    ui/dialog/addcardialog.h \
     ui/widgets/logwidget.h \
     ui/widgets/mapwidget.h \
     ui/windows/mainwindow.h \

@@ -9,6 +9,7 @@
 #include <QMenuBar>
 #include <QTimer>
 #include <QtConcurrent>
+#include "../dialog/addcardialog.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), d_graph{}
@@ -25,8 +26,6 @@ void MainWindow::creerInterface()
     int width = screenGeometry.width();
 //    setMinimumSize(width - (width * 0.15), height - (height * 0.15));
     setFixedSize(width - (width * 0.01), height - (height * 0.10));
-
-//    this->setStyleSheet("QPushButton { background-color: #CDCDCD; border: 1px solid black; padding: 4px 3px; cursor: pointer; }");
 
     auto viewMenu = menuBar()->addMenu("Vue");
 //    auto logMenu = menuBar()->addMenu("Logs");
@@ -66,9 +65,10 @@ void MainWindow::creerInterface()
 
     mainLayout->addWidget(d_mapView, 1);
     rightSidebarLayout->addWidget(d_logsView, 1);
-    auto d_addCarButton = new QPushButton{"Add cars"};
+    d_addCarButton = new QPushButton{"Add cars"};
     rightSidebarLayout->addWidget(d_addCarButton);
-//    d_addCarButton->setEnabled(false);
+    d_addCarButton->setEnabled(false);
+
     auto clearLogButton = new QPushButton{"Clear logs"};
     rightSidebarLayout->addWidget(clearLogButton);
     rightSidebarLayout->addLayout(simulationControlLayout);
@@ -82,7 +82,6 @@ void MainWindow::creerInterface()
 
     simulationControlLayout->addWidget(d_playButton);
     simulationControlLayout->addWidget(d_speedSelector);
-    rightSidebarLayout->addWidget(molette);
 //    simulationControlLayout->setContentsMargins(0,0,1000,0);
 //    simulationControlLayout->addWidget(new QPushButton{"test"}, 0, Qt::AlignHCenter);
 //    vLayout->addLayout(simulationControlLayout);
@@ -104,6 +103,7 @@ void MainWindow::creerInterface()
 
     // buttons control for the simulation connects
     connect(d_playButton, &QPushButton::clicked, this, &MainWindow::onPlay);
+    connect(d_addCarButton, &QPushButton::clicked, this, &MainWindow::onAddCar);
     connect(clearLogButton, &QPushButton::clicked, this, &MainWindow::onClearLog);
 
     createVComboBox();
@@ -165,24 +165,9 @@ void MainWindow::onMapLoading(bool)
 
 void MainWindow::onMapLoaded(bool)
 {
-    d_playButton->setEnabled(true);
-    d_speedSelector->setEnabled(true);
-//    d_addCarButton->setEnabled(true);
+    d_addCarButton->setEnabled(true);
 
     d_logsView->addLog("The map has been loaded", LogWidget::SUCCESS);
-
-    for(int i = 0; i < 3; i++)
-    {
-        osm::Node*  n1 = d_graph.getRandomNode(), *n2 = d_graph.getRandomNode();
-
-        auto v = d_graph.dijkstraPath(n1->id(), n2->id());
-        if(!v.empty() && v.size() > 1)
-        {
-            d_cars.push_back(std::make_unique<Car>(v));
-            d_mapView->addCarImage(d_cars.back()->pixmap());
-            d_mapView->addCarEllipse(d_cars.back()->ellipse());
-        }
-    }
 }
 
 void  MainWindow::updatePlayButtonLabel()
@@ -270,8 +255,6 @@ void MainWindow::updateCarsPosition()
 
                 auto path = d_graph.dijkstraPath(currentPos, newnode->id());
                 d_cars[i].get()->updatePath(path);
-//                QMetaObject::invokeMethod(this, [this, i, path](){
-//                });
             }
         });
 
@@ -287,6 +270,38 @@ void MainWindow::selectSpeed()
     d_speedSelector->setCurrentIndex(d_selectedSpeed);
 }
 
+void MainWindow::onAddCar()
+{
+    d_isPlaying = false;
+    updatePlayButtonLabel();
+    playOrPause();
+
+    auto dialog = new AddCarDialog(this);
+    dialog->show();
+
+    connect(dialog, &AddCarDialog::create_car, this, &MainWindow::addCar);
+}
+
+void MainWindow::addCar(int nb, double speed, double freq, double intensity)
+{
+    for(int i = 0; i < nb; i++)
+    {
+        osm::Node*  n1 = d_graph.getRandomNode(), *n2 = d_graph.getRandomNode();
+
+        auto v = d_graph.dijkstraPath(n1->id(), n2->id());
+        if(!v.empty() && v.size() > 1)
+        {
+            d_cars.push_back(std::make_unique<Car>(v, speed, freq, intensity));
+            d_mapView->addCarImage(d_cars.back()->pixmap());
+            d_mapView->addCarEllipse(d_cars.back()->ellipse());
+            d_cars.back()->accelerate(d_speeds[d_selectedSpeed]);
+        }
+    }
+
+    // on active les boutons de play et vitesse
+    d_playButton->setEnabled(true);
+    d_speedSelector->setEnabled(true);
+}
 
 MainWindow::~MainWindow()
 {

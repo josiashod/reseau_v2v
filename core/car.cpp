@@ -105,7 +105,7 @@ Car::Car( std::vector<osm::Node*>& path, double vitesse, double frequence, doubl
     QPen pen(Qt::NoPen);
     d_ellipse->setBrush(brush);
     d_ellipse->setPen(pen);
-    d_ellipse->setPos(d_pos - QPointF(d_freq / 2, d_freq / 2));
+    update_coverage();
 }
 
 //Car::Car(const Car &c): d_v{c.d_v}, d_freq{c.d_freq}, d_intensity{c.d_intensity},
@@ -205,7 +205,9 @@ void Car::update_coverage()
         return;
     }
 
-    double rad = std::sqrt(received_intensity / d_power_threshold) * 20;
+    double scaling_factor = d_freq / 10.0;
+    double rad = std::sqrt(received_intensity / d_power_threshold) * 4 * scaling_factor;
+//    rad = std::clamp(rad, 10.0, 200.0);
 
     d_color.setAlphaF(std::clamp(received_intensity / 100, 0.1, 0.55));
     d_ellipse->setRect(0, 0, rad, rad);

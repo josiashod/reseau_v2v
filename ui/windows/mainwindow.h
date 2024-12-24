@@ -31,6 +31,8 @@ private slots:
     void onMapLoaded(bool);
     void onPlay(bool);
     void onClearLog();
+    void onAddCar();
+    void addCar(int nb, double speed, double freq, double intensity);
 
 
     /**
@@ -38,6 +40,8 @@ private slots:
      */
     void updatePlayButtonLabel();
     void updateSpeedSelector(int i);
+
+//    void addCar(int nb, double freq, double intensity);
 
     /**
      * @brief updateCarsPosition: update cars position
