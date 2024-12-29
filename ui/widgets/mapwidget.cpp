@@ -21,7 +21,8 @@ MapWidget::MapWidget(QWidget *parent, osm::Graph* graph)
 
 MapWidget::~MapWidget()
 {
-    DBManager::closeDatabase();
+    auto db = DBManager::getInstance();
+    db->closeDatabase();
     DBManager::destroyInstance();
     d_scene->clear();
 }
@@ -172,8 +173,9 @@ void MapWidget::resizeEvent(QResizeEvent *event)
         emit isLoading(d_elementsHasBeenLoaded);
 
         setRenderHint(QPainter::Antialiasing);
+        d_scene->setSceneRect(0, 0, event->size().width() * 2.5, event->size().height() * 2.5);
 //        observation_point = QPointF(event->size().width() / 2, event->size().height() / 2);
-        fitInView(d_scene->sceneRect(), Qt::KeepAspectRatio);
+//        fitInView(d_scene->sceneRect(), Qt::KeepAspectRatio);
         // Lancer la fonction longue en asynchrone
         QFuture<void> future = QtConcurrent::run([this]() {
             this->initParks();
@@ -343,6 +345,10 @@ void MapWidget::wheelEvent(QWheelEvent *event)
             d_scale_factor *= (1.0 / scaleFactor);
             scale(1.0 / scaleFactor, 1.0 / scaleFactor);
         }
+        else
+        {
+            fitInView(d_scene->sceneRect(), Qt::KeepAspectRatio);
+        }
     }
 }
 
@@ -399,14 +405,20 @@ QPointF MapWidget::pairLatLonToXY(std::pair<double, double>& coord)
 }
 
 QPointF MapWidget::latLonToXY(double lon, double lat) {
-    double width = this->width();
-    double height = this->height();
+    double width = d_scene->sceneRect().width();
+    double height = d_scene->sceneRect().height();
+
+//    double x = (lon - d_minCoord.first) / (d_maxCoord.first - d_minCoord.first) * width;
+//    double y = height - (lat - d_minCoord.second) / (d_maxCoord.second - d_minCoord.second) * height;
+
+//    double scaleFactor = 2.0; // Agrandir 2 fois
 
     double x = (lon - d_minCoord.first) / (d_maxCoord.first - d_minCoord.first) * width;
     double y = height - (lat - d_minCoord.second) / (d_maxCoord.second - d_minCoord.second) * height;
+    return {x, y};
 
 //    return {x, y * d_perspective_offset};
-    return {x, y};
+//    return {x, y};
 }
 
 
