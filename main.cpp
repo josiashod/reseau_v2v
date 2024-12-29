@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
     w.show();
 
     return a.exec();
-    OsmReader::readOSMFile(":/lib/carte_5.osm");
+//    OsmReader::readOSMFile(":/lib/carte_5.osm");
 //    qDebug() << "Affichage";
     return 0;
 }

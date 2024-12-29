@@ -7,9 +7,10 @@
 #include <QGraphicsPixmapItem>
 // #include <QGraphicsPolygonItem>
 
- class Car
- {
+class Car
+{
  public:
+    static constexpr double d_power_threshold = 5.0;
     Car();
      /**
       * @brief Car avec paramètre
@@ -17,8 +18,9 @@
       * @param vitesse: la vitesse de la voiture
       * @param frequence: la fréquence de la voiture
       */
-    Car(std::vector<osm::Node*>& path, double vitesse = 30.9, double frequence = 60, double intensity = 10);
+    Car(std::vector<osm::Node*>& path, double vitesse = 50.0, double frequence = 60, double intensity = 25);
 
+    size_t id() const;
     /**
      * @brief pos
      * @return
@@ -63,6 +65,13 @@
 
     bool hasReachedEndOfPath() const;
 
+    double receivedPower(const QPointF& pos) const;
+
+    void update_coverage();
+
+//    void partiallySelected();
+//    void selected();
+//    void removeSelection();
 
     /**
      * @brief update mettre à jour la position de la voiture selon un interval
@@ -71,6 +80,9 @@
     void update(double interval);
 
     QString toString() const;
+
+    bool operator==(int id) const;
+
  signals:
     void endPathReach(long long currentPos);
  private:
@@ -101,6 +113,9 @@
 
 //     // cercle pour représenter la fréquence de la voiture
     QGraphicsEllipseItem* d_ellipse = nullptr;
+    static size_t d_compteur_instance;
+    size_t d_id;
+    QColor d_color;
  };
 
 #endif // CAR_H

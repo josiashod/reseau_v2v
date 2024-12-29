@@ -15,6 +15,7 @@
 //#include "./../../core/water.h"
 #include "./../../core/park.h"
 #include "./../../utils/dbmanager.h"
+#include <vector>
 
 namespace osm
 {
@@ -31,8 +32,12 @@ public:
     void setShowPark(bool);
     void setShowBuilding(bool);
     void setShowRoad(bool);
-    void setShowWater(bool);
-    void addCarSymbols(QGraphicsPixmapItem*, QGraphicsEllipseItem*);
+    void setShowFreq(bool);
+    void setShowHex(bool);
+    void addCarImage(QGraphicsPixmapItem*);
+    void addCarEllipse(QGraphicsEllipseItem*);
+
+    static QPointF observation_point;
 private slots :
     void isLoadingFinished();
     /**
@@ -53,25 +58,36 @@ signals :
     void parksDataReady(const QVector<Park>& parks);
 //    void watersDataReady(const QVector<Water>& waters);
     void roadsDataReady(const QVector<Way>& roads);
+    // emet l'id du car avec la selection partielle
+//    void addElementToPartialSelection(int id);
+//    void removeElementFromPartialSelection(int id);
+//    void deletePartialSelection();
+//    void persistPartialSelection();
+//    void deleteSelectedElement();
 
 private:
     // lon, lat coord
     std::pair<double, double> d_maxCoord, d_minCoord;
 
-//    QVector<QPolygonF> d_meshs;
+    QVector<QPolygonF> d_meshs;
+    void drawMeshLayer();
+
+    // stocke les elements de la vue qui ont été partiellement selectionné
+//    std::vector<int> d_partially_selected_elements = std::vector<int>(0);
+//    std::vector<int> d_selected_elements = std::vector<int>(0);
 
     double d_scale_factor = 1.15;
     qreal d_perspective_offset = 0.6;
 
     // Permet d'afficher les différentes scenes
     bool d_showPark         = true;
-    bool d_showWater        = true;
+//    bool d_showWater        = true;
     bool d_showBuilding     = true;
     bool d_showWay          = true;
     bool d_showDescription  = true;
     bool d_showCar          = true;
     bool d_showCarFreq      = true;
-//    bool d_showMesh  = true;
+    bool d_showMesh         = false;
 
     // permet de savoir si les elements de la carte on été chargés
     bool d_elementsHasBeenLoaded = false;
@@ -114,15 +130,19 @@ private:
     QGraphicsItemGroup* d_carsLayer;
 
 
-//    /**
-//     * @brief d_meshLayer couche d'affichage des mailles
-//     */
-//    QGraphicsItemGroup* d_meshLayer;
+    /**
+     * @brief d_meshLayer couche d'affichage des mailles
+     */
+    QGraphicsItemGroup* d_meshLayer;
 
     void creerInterface();
     void resizeEvent(QResizeEvent *event) override;
     // zoom et deplacement sur la carte
     void wheelEvent(QWheelEvent *event) override;
+//    void mousePressEvent(QMouseEvent *event) override;
+//    void keyPressEvent(QKeyEvent *event) override;
+//    void keyReleaseEvent(QKeyEvent *event) override;
+//    void contextMenuEvent(QContextMenuEvent *event) override;
 
 
 //    /**
@@ -156,7 +176,7 @@ private:
     void initParks();
 //    void initWaters();
     void initRoads();
-//    void initMeshs();
+    void initMeshs();
 };
 
 #endif // MAPWIDGET_H
