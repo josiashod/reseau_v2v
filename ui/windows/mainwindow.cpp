@@ -125,7 +125,7 @@ void MainWindow::creerInterface()
 
     createVComboBox();
     selectSpeed();
-    connect(d_speedSelector, &QComboBox::currentIndexChanged, this, &MainWindow::updateSpeedSelector);
+    connect(d_speedSelector, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &MainWindow::updateSpeedSelector);
 
     //connections aux évènements de la map
     connect(d_mapView, &MapWidget::isLoading, this, &MainWindow::onMapLoading);
