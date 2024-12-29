@@ -15,6 +15,7 @@
 //#include "./../../core/water.h"
 #include "./../../core/park.h"
 #include "./../../utils/dbmanager.h"
+#include <vector>
 
 namespace osm
 {
@@ -32,9 +33,9 @@ public:
     void setShowBuilding(bool);
     void setShowRoad(bool);
     void setShowFreq(bool);
+    void setShowHex(bool);
     void addCarImage(QGraphicsPixmapItem*);
     void addCarEllipse(QGraphicsEllipseItem*);
-    void drawMeshLayer();
 
     static QPointF observation_point;
 private slots :
@@ -57,12 +58,23 @@ signals :
     void parksDataReady(const QVector<Park>& parks);
 //    void watersDataReady(const QVector<Water>& waters);
     void roadsDataReady(const QVector<Way>& roads);
+    // emet l'id du car avec la selection partielle
+//    void addElementToPartialSelection(int id);
+//    void removeElementFromPartialSelection(int id);
+//    void deletePartialSelection();
+//    void persistPartialSelection();
+//    void deleteSelectedElement();
 
 private:
     // lon, lat coord
     std::pair<double, double> d_maxCoord, d_minCoord;
 
     QVector<QPolygonF> d_meshs;
+    void drawMeshLayer();
+
+    // stocke les elements de la vue qui ont été partiellement selectionné
+//    std::vector<int> d_partially_selected_elements = std::vector<int>(0);
+//    std::vector<int> d_selected_elements = std::vector<int>(0);
 
     double d_scale_factor = 1.15;
     qreal d_perspective_offset = 0.6;
@@ -75,7 +87,7 @@ private:
     bool d_showDescription  = true;
     bool d_showCar          = true;
     bool d_showCarFreq      = true;
-    bool d_showMesh  = true;
+    bool d_showMesh         = false;
 
     // permet de savoir si les elements de la carte on été chargés
     bool d_elementsHasBeenLoaded = false;
@@ -127,6 +139,10 @@ private:
     void resizeEvent(QResizeEvent *event) override;
     // zoom et deplacement sur la carte
     void wheelEvent(QWheelEvent *event) override;
+//    void mousePressEvent(QMouseEvent *event) override;
+//    void keyPressEvent(QKeyEvent *event) override;
+//    void keyReleaseEvent(QKeyEvent *event) override;
+//    void contextMenuEvent(QContextMenuEvent *event) override;
 
 
 //    /**

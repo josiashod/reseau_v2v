@@ -20,6 +20,7 @@ class Car
       */
     Car(std::vector<osm::Node*>& path, double vitesse = 50.0, double frequence = 60, double intensity = 25);
 
+    size_t id() const;
     /**
      * @brief pos
      * @return
@@ -68,6 +69,10 @@ class Car
 
     void update_coverage();
 
+//    void partiallySelected();
+//    void selected();
+//    void removeSelection();
+
     /**
      * @brief update mettre à jour la position de la voiture selon un interval
      * @param interval
@@ -75,6 +80,9 @@ class Car
     void update(double interval);
 
     QString toString() const;
+
+    bool operator==(int id) const;
+
  signals:
     void endPathReach(long long currentPos);
  private:

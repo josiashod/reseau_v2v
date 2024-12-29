@@ -11,6 +11,13 @@
 #include <QtConcurrent>
 #include "../dialog/addcardialog.h"
 
+
+// retourne le libelle à mettre dans le menu
+QString menu_libelle(bool etat, const QString& libelle)
+{
+    return QString("%1 %2").arg((etat ? "Cacher" : "Afficher"), libelle);
+}
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), d_graph{}
 {
@@ -30,20 +37,23 @@ void MainWindow::creerInterface()
     auto viewMenu = menuBar()->addMenu("Vue");
 //    auto logMenu = menuBar()->addMenu("Logs");
 
-    QAction *showRoadAct = new QAction{"Show/hide roads", viewMenu};
+    QAction *showRoadAct = new QAction{menu_libelle(d_showRoads, "les routes")};
     viewMenu->addAction(showRoadAct);
 
-    QAction *showBuildindAct = new QAction{"Show/hide buildings", viewMenu};
+    QAction *showBuildindAct = new QAction{menu_libelle(d_showBuildings, "les immeubles")};
     viewMenu->addAction(showBuildindAct);
 
-    QAction *showParcAct = new QAction{"Show/hide green spaces", viewMenu};
+    QAction *showParcAct = new QAction{menu_libelle(d_showParks, "les parcs")};
     viewMenu->addAction(showParcAct);
 
-    QAction *showFrequenceAct = new QAction{"Show/hide car frequences", viewMenu};
+    QAction *showFrequenceAct = new QAction{menu_libelle(d_showRoads, "les couvertures radio")};
     viewMenu->addAction(showFrequenceAct);
 
-    QAction *showLogsAct = new QAction{"Show/hide sidebar", viewMenu};
-    viewMenu->addAction(showLogsAct);
+    QAction *showHexAct = new QAction{menu_libelle(d_showMesh, "le decoupage territorial")};
+    viewMenu->addAction(showHexAct);
+
+    QAction *showSidebarAct = new QAction{menu_libelle(d_showSidebar, "la barre latérale")};
+    viewMenu->addAction(showSidebarAct);
 
     // creation du main widget pour l'application
     auto mainWidget {new QWidget{this}};
@@ -65,14 +75,14 @@ void MainWindow::creerInterface()
 
     mainLayout->addWidget(d_mapView, 1);
     rightSidebarLayout->addWidget(d_logsView, 1);
-    d_addCarButton = new QPushButton{"Add cars"};
+    d_addCarButton = new QPushButton{"Ajouter des voitures"};
     rightSidebarLayout->addWidget(d_addCarButton);
     d_addCarButton->setEnabled(false);
 
-    auto clearLogButton = new QPushButton{"Clear logs"};
+    auto clearLogButton = new QPushButton{"Effacer les logs"};
     rightSidebarLayout->addWidget(clearLogButton);
     rightSidebarLayout->addLayout(simulationControlLayout);
-    d_playButton = new QPushButton{"play"};
+    d_playButton = new QPushButton{"Lancer la simulation"};
     d_speedSelector = new QComboBox{};
 
     d_playButton->setEnabled(false);
@@ -98,8 +108,9 @@ void MainWindow::creerInterface()
     connect(showRoadAct, &QAction::triggered, this, &MainWindow::onShowHideRoads);
     connect(showBuildindAct, &QAction::triggered, this, &MainWindow::onShowHideBuildings);
     connect(showParcAct, &QAction::triggered, this, &MainWindow::onShowHideParks);
-    connect(showLogsAct, &QAction::triggered, this, &MainWindow::onShowHideSidebar);
+    connect(showSidebarAct, &QAction::triggered, this, &MainWindow::onShowHideSidebar);
     connect(showFrequenceAct, &QAction::triggered, this, &MainWindow::onShowHideFreq);
+    connect(showHexAct, &QAction::triggered, this, &MainWindow::onShowHideMesh);
 
     // buttons control for the simulation connects
     connect(d_playButton, &QPushButton::clicked, this, &MainWindow::onPlay);
@@ -110,10 +121,13 @@ void MainWindow::creerInterface()
     selectSpeed();
     connect(d_speedSelector, &QComboBox::currentIndexChanged, this, &MainWindow::updateSpeedSelector);
 
-    //connects
+    //connections aux évènements de la map
     connect(d_mapView, &MapWidget::isLoading, this, &MainWindow::onMapLoading);
     connect(d_mapView, &MapWidget::isLoaded, this, &MainWindow::onMapLoaded);
-
+//    connect(d_mapView, &MapWidget::addElementToPartialSelection, this, &MainWindow::onAddCarToPartialSelection);
+//    connect(d_mapView, &MapWidget::removeElementFromPartialSelection, this, &MainWindow::onRemoveCarFromPartialSelection);
+//    connect(d_mapView, &MapWidget::deletePartialSelection, this, &MainWindow::onDeletePartialSelection);
+//    connect(d_mapView, &MapWidget::persistPartialSelection, this, &MainWindow::onPersistSelection);
 
     d_timer = new QTimer(this);
     // Mettre l'interval de rafraichissement de l'affichage
@@ -126,56 +140,75 @@ void MainWindow::creerInterface()
 
 void MainWindow::onShowHideBuildings(bool)
 {
+    QAction* action = qobject_cast<QAction*>(sender());
     d_showBuildings = !d_showBuildings;
+    action->setText(menu_libelle(d_showBuildings, "les immeubles"));
     d_mapView->setShowBuilding(d_showBuildings);
 }
 
 void MainWindow::onShowHideRoads(bool)
 {
+    QAction* action = qobject_cast<QAction*>(sender());
     d_showRoads = !d_showRoads;
     d_mapView->setShowRoad(d_showRoads);
+    action->setText(menu_libelle(d_showRoads, "les routes"));
 }
 
 void MainWindow::onShowHideFreq(bool)
 {
+    QAction* action = qobject_cast<QAction*>(sender());
     d_showCarFreq = !d_showCarFreq;
     d_mapView->setShowFreq(d_showCarFreq);
+    action->setText(menu_libelle(d_showRoads, "les couvertures radio"));
 }
 
 void MainWindow::onShowHideParks(bool)
 {
+    QAction* action = qobject_cast<QAction*>(sender());
     d_showParks = !d_showParks;
     d_mapView->setShowPark(d_showParks);
+    action->setText(menu_libelle(d_showParks, "les parcs"));
+}
+
+void MainWindow::onShowHideMesh(bool)
+{
+    QAction* action = qobject_cast<QAction*>(sender());
+    d_showMesh = !d_showMesh;
+    d_mapView->setShowHex(d_showMesh);
+    action->setText(menu_libelle(d_showMesh, "le decoupage territorial"));
 }
 
 void MainWindow::onShowHideSidebar(bool)
 {
+    QAction* action = qobject_cast<QAction*>(sender());
     d_showSidebar = !d_showSidebar;
 
     if(d_showSidebar)
         d_rightSidebar->show();
     else
         d_rightSidebar->hide();
+
+    action->setText(menu_libelle(d_showSidebar, "la barre latérale"));
 }
 
 void MainWindow::onMapLoading(bool)
 {
-    d_logsView->addLog("The map is loading...............", LogWidget::WARNING);
+    d_logsView->addLog("Chargement de la carte...............", LogWidget::WARNING);
 }
 
 void MainWindow::onMapLoaded(bool)
 {
     d_addCarButton->setEnabled(true);
 
-    d_logsView->addLog("The map has been loaded", LogWidget::SUCCESS);
+    d_logsView->addLog("La carte a été chargée !!!", LogWidget::SUCCESS);
 }
 
 void  MainWindow::updatePlayButtonLabel()
 {
     if(d_isPlaying)
-        d_playButton->setText("Pause");
+        d_playButton->setText("Mettre en pause");
     else
-        d_playButton->setText("Play");
+        d_playButton->setText("Lancer la simulation");
 
     playOrPause();
 }
@@ -259,8 +292,9 @@ void MainWindow::updateCarsPosition()
         });
 
         if((i % 2) == (frameCounter++ % 2))
+        {
             d_cars[i].get()->update(interval);
-
+        }
 //        frameCounter++;
     }
 }
@@ -286,22 +320,102 @@ void MainWindow::addCar(int nb, double speed, double freq, double intensity)
 {
     for(int i = 0; i < nb; i++)
     {
-        osm::Node*  n1 = d_graph.getRandomNode(), *n2 = d_graph.getRandomNode();
+        std::vector<osm::Node*> path(0);
+        osm::Node* n1 = nullptr;
+        osm::Node* n2;
 
-        auto v = d_graph.dijkstraPath(n1->id(), n2->id());
-        if(!v.empty() && v.size() > 1)
+        while(path.empty() && path.size() < 2)
         {
-            d_cars.push_back(std::make_unique<Car>(v, speed, freq, intensity));
-            d_mapView->addCarImage(d_cars.back()->pixmap());
-            d_mapView->addCarEllipse(d_cars.back()->ellipse());
-            d_cars.back()->accelerate(d_speeds[d_selectedSpeed]);
+            n1 = d_graph.getRandomNode();
+            n2 = d_graph.getRandomNode();
+
+            path = d_graph.dijkstraPath(n1->id(), n2->id());
         }
+
+        d_cars.push_back(std::make_unique<Car>(path, speed, freq, intensity));
+        d_mapView->addCarImage(d_cars.back()->pixmap());
+        d_mapView->addCarEllipse(d_cars.back()->ellipse());
+        d_cars.back()->accelerate(d_speeds[d_selectedSpeed]);
     }
 
     // on active les boutons de play et vitesse
     d_playButton->setEnabled(true);
     d_speedSelector->setEnabled(true);
 }
+
+//void MainWindow::onAddCarToPartialSelection(int id)
+//{
+//    d_car_partially_selected.push_back(id);
+//    auto it = std::find_if( d_cars.begin(), d_cars.end(),
+//        [id](const auto& car) {
+//            return *car == id;
+//        });
+
+//    if (it != d_cars.end()) {
+//        auto car = (*it).get();
+//        car->partiallySelected();
+//    }
+//}
+
+//void MainWindow::onRemoveCarFromPartialSelection(int id)
+//{
+//    // on supprime l'id de la voiture des voitures partiellement selectionné
+//    auto i = std::find(d_car_partially_selected.begin(), d_car_partially_selected.end(), id);
+//    if (i != d_car_partially_selected.end())
+//    {
+//        d_car_partially_selected.erase(i);
+//    }
+
+//    // on la selection de la voiture
+//    auto it = std::find_if(d_cars.begin(), d_cars.end(),
+//        [id](const auto& car) {
+//            return *car == id;
+//        });
+
+//    if (it != d_cars.end()) {
+//        auto car = (*it).get();
+//        car->removeSelection();
+//    }
+//}
+
+//void MainWindow::onPersistSelection()
+//{
+//    for(const int& id: d_car_partially_selected)
+//    {
+//        auto it = std::find_if( d_cars.begin(), d_cars.end(),
+//            [id](const auto& car) {
+//                return *car == id;
+//            });
+
+//        if (it != d_cars.end())
+//        {
+//            auto car = (*it).get();
+//            car->selected();
+//        }
+
+//        d_car_selection.push_back(id);
+//    }
+
+//    std::sort(d_car_selection.begin(), d_car_selection.end());
+//    d_car_partially_selected.clear();
+//}
+
+//void MainWindow::onDeletePartialSelection()
+//{
+//    for(const int& id: d_car_partially_selected)
+//    {
+//        auto it = std::find_if( d_cars.begin(), d_cars.end(),
+//            [id](const auto& car) {
+//                return *car == id;
+//            });
+
+//        if (it != d_cars.end()) {
+//            auto car = (*it).get();
+//            car->removeSelection();
+//        }
+//    }
+//    d_car_partially_selected.clear();
+//}
 
 MainWindow::~MainWindow()
 {

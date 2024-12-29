@@ -4,6 +4,7 @@
 #include <QtConcurrent>
 #include <QFuture>
 #include <QFutureWatcher>
+#include <QMenu>
 #include "logwidget.h"
 #include "../../core/graph.h"
 
@@ -15,7 +16,6 @@ MapWidget::MapWidget(QWidget *parent, osm::Graph* graph)
 {
     d_dbmanager = DBManager::getInstance();
     creerInterface();
-//    initMeshs();
     initBounds();
 }
 
@@ -48,6 +48,7 @@ void MapWidget::creerInterface()
     d_scene = new QGraphicsScene(this);
     d_scene->setBackgroundBrush(QColor("#F2EFE9")); // Gris clair
     setScene(d_scene);
+
     show();
 
 //    d_waterLayer = new QGraphicsItemGroup();
@@ -56,28 +57,35 @@ void MapWidget::creerInterface()
 
     d_parkLayer = new QGraphicsItemGroup();
     d_parkLayer->setVisible(d_showPark);
+    d_parkLayer->setAcceptedMouseButtons(Qt::NoButton);
     d_scene->addItem(d_parkLayer);
 
     d_wayLayer = new QGraphicsItemGroup();
     d_wayLayer->setVisible(d_showWay);
+    d_wayLayer->setAcceptedMouseButtons(Qt::NoButton);
     d_scene->addItem(d_wayLayer);
 
     d_buildingLayer = new QGraphicsItemGroup();
     d_buildingLayer->setVisible(d_showBuilding);
+    d_buildingLayer->setAcceptedMouseButtons(Qt::NoButton);
     d_scene->addItem(d_buildingLayer);
 
     d_freqCarsLayer = new QGraphicsItemGroup();
     d_freqCarsLayer->setVisible(d_showCarFreq);
+    d_freqCarsLayer->setAcceptedMouseButtons(Qt::AllButtons);
     d_scene->addItem(d_freqCarsLayer);
 
     d_carsLayer = new QGraphicsItemGroup();
     d_carsLayer->setVisible(d_showCar);
+    d_carsLayer->setAcceptedMouseButtons(Qt::AllButtons);
     d_scene->addItem(d_carsLayer);
 
     d_meshLayer = new QGraphicsItemGroup();
     d_meshLayer->setVisible(d_showMesh);
+    d_meshLayer->setAcceptedMouseButtons(Qt::NoButton);
     d_scene->addItem(d_meshLayer);
 
+//    d_carsLayer->setZValue(1);
 //    layout->addWidget(d_view);
 
     connect(this, &MapWidget::buildingsDataReady, this, &MapWidget::drawBuildingLayer);
@@ -96,7 +104,7 @@ void MapWidget::drawBuildingLayer(const QVector<Building>& buildings)
         // if(d_logger)
         //     d_logger->addLog(log);
         // else
-            qDebug() << log;
+//            qDebug() << log;
     }
 }
 
@@ -124,7 +132,7 @@ void MapWidget::drawParkLayer(const QVector<Park>& parks)
         // if(d_logger)
         //     d_logger->addLog(log);
         // else
-            qDebug() << log;
+//            qDebug() << log;
     }
 }
 
@@ -164,16 +172,13 @@ void MapWidget::resizeEvent(QResizeEvent *event)
         emit isLoading(d_elementsHasBeenLoaded);
 
         setRenderHint(QPainter::Antialiasing);
-        //initMeshs();
-        drawMeshLayer();
 //        observation_point = QPointF(event->size().width() / 2, event->size().height() / 2);
-    //    d_scene->setSceneRect(0, 0, event->size().width() * 2, event->size().height() * 2);
         fitInView(d_scene->sceneRect(), Qt::KeepAspectRatio);
         // Lancer la fonction longue en asynchrone
         QFuture<void> future = QtConcurrent::run([this]() {
             this->initParks();
             this->initRoads();
-//            this->initBuildings();
+            this->initBuildings();
         });
 
         // Configurer la vue (taille et centrage)
@@ -182,10 +187,139 @@ void MapWidget::resizeEvent(QResizeEvent *event)
         auto watcher = new QFutureWatcher<void>(this);
         connect(watcher, &QFutureWatcher<void>::finished, this, &MapWidget::isLoadingFinished);
 
+        connect(watcher, &QFutureWatcher<void>::finished, this, [this](){
+            initMeshs();
+            drawMeshLayer();
+        });
+
         // Associe le watcher au future
         watcher->setFuture(future);
     }
 }
+
+
+//void MapWidget::mousePressEvent(QMouseEvent *event)
+//{
+//    if (event->modifiers() == (Qt::ControlModifier | Qt::ShiftModifier))
+//    {
+//        QGraphicsItem *item = itemAt(event->pos());
+//        if (d_carsLayer->isAncestorOf(item) || d_freqCarsLayer->isAncestorOf(item))
+//        {
+//            int id = item->data(0).toString().toInt();
+//            auto it = std::find(d_partially_selected_elements.begin(), d_partially_selected_elements.end(), id);
+
+//            // element n'est pas selectionné
+//            if (it == d_partially_selected_elements.end())
+//            {
+//                emit addElementToPartialSelection(id);
+//                d_partially_selected_elements.push_back(id);
+//            }
+//            else
+//            {
+//                emit removeElementFromPartialSelection(id);
+//                d_partially_selected_elements.erase(it);
+//            }
+//        }
+//    }
+//    else if(event->modifiers() & Qt::ControlModifier)
+//    {
+//        if(event->buttons() == Qt::LeftButton)
+//        {
+//            QGraphicsItem *item = itemAt(event->pos());
+//            if (d_carsLayer->isAncestorOf(item) || d_freqCarsLayer->isAncestorOf(item))
+//            {
+//                int id = item->data(0).toString().toInt();
+//                auto it = std::find(d_partially_selected_elements.begin(), d_partially_selected_elements.end(), id);
+
+//                // element n'est pas selectionné
+//                if (it == d_partially_selected_elements.end())
+//                {
+//                    d_partially_selected_elements.clear();
+//                    emit deletePartialSelection();
+
+//                    emit addElementToPartialSelection(id);
+//                    d_partially_selected_elements.push_back(id);
+//                }
+//            }
+//            else
+//            {
+//                d_partially_selected_elements.clear();
+//                emit deletePartialSelection();
+//            }
+//        }
+//    }
+//    else
+//    {
+//        if(event->buttons() == Qt::LeftButton)
+//        {
+//            d_partially_selected_elements.clear();
+//            emit deletePartialSelection();
+//        }
+//        else
+//        {
+//            QMenu menu(this);
+
+//            if(!d_partially_selected_elements.empty())
+//            {
+//                QString elt = (d_partially_selected_elements.size() == 1) ? "l'élément" : "les éléments";
+
+//                QAction *infoAction = menu.addAction("Ajouter " + elt +" à la selection");
+//                QAction *deleteAction = menu.addAction("Supprimer " + elt + " selectionnée" + ((d_partially_selected_elements.size() > 1) ? "s" : ""));
+
+//                QAction *selectedAction = menu.exec(event->globalPos());
+//                if (selectedAction == infoAction) {
+//                    emit persistPartialSelection();
+//                    for(const int& id: d_partially_selected_elements)
+//                    {
+//                        d_selected_elements.push_back(id);
+//                    }
+//                    d_partially_selected_elements.clear();
+//                } else if (selectedAction == deleteAction) {
+//                    emit deleteSelectedElement();
+//                    d_partially_selected_elements.clear();
+//                }
+//            }
+
+
+//    //        if (item) {
+//    //            QAction *infoAction = menu.addAction("Afficher les informations");
+//    //            QAction *deleteAction = menu.addAction("Supprimer l'élément");
+
+//    //            QAction *selectedAction = menu.exec(event->globalPos());
+//    //            if (selectedAction == infoAction) {
+//    //                qDebug() << "Afficher les informations de l'élément à la position:" << item->pos();
+//    //            } else if (selectedAction == deleteAction) {
+//    //                qDebug() << "Supprimer l'élément";
+//    //                delete item;  // Supprime l'élément
+//    //            }
+//    //        } else {
+//    //            QAction *resetAction = menu.addAction("Réinitialiser la vue");
+//    //            if (menu.exec(event->globalPos()) == resetAction) {
+//    //                qDebug() << "Vue réinitialisée";
+//    //                resetTransform();  // Réinitialise la transformation
+//    //            }
+//    //        }
+//        }
+//    }
+
+
+//    QGraphicsView::mousePressEvent(event);
+//}
+
+//void MapWidget::keyPressEvent(QKeyEvent *event)
+//{
+//    if (event->modifiers() == Qt::ControlModifier || (event->modifiers() == (Qt::ControlModifier | Qt::ShiftModifier)))
+//        setDragMode(QGraphicsView::NoDrag);  // Permettre la sélection
+//    else
+//        setDragMode(QGraphicsView::ScrollHandDrag);  // Rester en mode défilement
+//    QGraphicsView::keyPressEvent(event);
+//}
+
+//void MapWidget::keyReleaseEvent(QKeyEvent *event)
+//{
+//    setDragMode(QGraphicsView::ScrollHandDrag);  // Rester en mode défilement
+//    QGraphicsView::keyPressEvent(event);
+//}
 
 void MapWidget::isLoadingFinished()
 {
@@ -373,6 +507,7 @@ void MapWidget::initBuildings()
     emit buildingsDataReady(buildings);
 }
 
+
 void MapWidget::initParks()
 {
     QVector<Park> parks;
@@ -543,7 +678,7 @@ void MapWidget::initRoads()
                         }
                         start = end;
                     }
-                    qDebug() << QString("[SUCCESS] Road n°: %1.").arg(id);
+//                    qDebug() << QString("[SUCCESS] Road n°: %1.").arg(id);
                 }
                 ways.push_back(w);
             }
@@ -584,42 +719,40 @@ void MapWidget::setShowRoad(bool show)
 void MapWidget::setShowFreq(bool show)
 {
     d_showCarFreq = show;
-    d_freqCarsLayer->setVisible(show);
+    d_freqCarsLayer->setVisible(d_showCarFreq);
 }
 
-//void MapWidget::loadCars()
-//{
-//    for(int i = 0; i < 1; i++)
-//    {
-////        osm::Node*  n = d_graph.getRandomNode();
-
-////        if(n)
-////        {
-////            d_cars.push_back(std::make_unique<Car>(Car{n}));
-////            d_freqCarsLayer->addToGroup(d_cars.back()->ellipse());
-////            d_carsLayer->addToGroup(d_cars.back()->pixmap());
-////        }
-//    }
-//}
+void MapWidget::setShowHex(bool show)
+{
+    d_showMesh = show;
+    d_meshLayer->setVisible(d_showMesh);
+}
 
 void MapWidget::initMeshs()
 {
-    qreal hexRadius = 70.0;  // Ajuster la taille au besoin
+    qreal hexRadius = 55.0;  // Ajuster la taille au besoin
     qreal dx = 1.5 * hexRadius;  // Décalage horizontal (distance entre centres des hexagones)
     qreal dy = sqrt(3) * hexRadius;  // Décalage vertical (distance entre centres des hexagones)
 
-    int rows = height() / dy;  // Calcul du nombre de rangées en fonction de la hauteur de la scène
-    int cols = width() / dx;   // Calcul du nombre de colonnes en fonction de la largeur de la scène
 
-    // Ajuster légèrement la taille des hexagones pour combler toute la scène
-    qreal adjustedHexRadius = std::min(width() / (cols * 1.5), height() / (rows * sqrt(3)));
-    dx = 1.5 * adjustedHexRadius;
-    dy = sqrt(3) * adjustedHexRadius;
+    QRectF scene_rect = d_scene->sceneRect();
+    QPointF topLeft = scene_rect.topLeft();    // Coin supérieur gauche
+    QPointF bottomRight = scene_rect.bottomRight();  // Coin inférieur droit
+
+    qreal startX = topLeft.x();
+    qreal startY = topLeft.y();
+    qreal endX = bottomRight.x();
+    qreal endY = bottomRight.y();
+
+    int rows = std::ceil((endY - startY) / dy);  // Nombre de rangées
+    int cols = std::ceil((endX - startX) / dx);  // Nombre de colonnes
+
 
     for (int i = 0; i < rows; ++i) {
         for (int j = 0; j < cols; ++j) {
-            qreal x = j * dx;
-            qreal y = i * dy;
+            qreal x = startX + j * dx;
+            qreal y = startY + i * dy;
+
 
             // Décalage pour les rangées impaires
             if (j % 2 == 1) {
@@ -631,8 +764,8 @@ void MapWidget::initMeshs()
             // Créer les sommets de l'hexagone
             for (int k = 0; k < 6; ++k) {
                 qreal angle = 2 * M_PI * k / 6.0;
-                qreal vertexX = x + adjustedHexRadius * cos(angle);
-                qreal vertexY = y + adjustedHexRadius * sin(angle);
+                qreal vertexX = x + hexRadius * cos(angle);
+                qreal vertexY = y + hexRadius * sin(angle);
                 polygon << QPointF(vertexX, vertexY);
             }
 

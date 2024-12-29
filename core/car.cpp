@@ -5,7 +5,7 @@
 #include <QColor>
 
 QString colors[] = {"black", "blue", "red", "green", "yellow"};
-size_t Car::d_compteur_instance = 1;
+size_t Car::d_compteur_instance = 0;
 
 QPixmap getRandomImage()
 {
@@ -94,8 +94,10 @@ Car::Car( std::vector<osm::Node*>& path, double vitesse, double frequence, doubl
     }
     d_pos = d_from->pos();
     d_pixmap = new QGraphicsPixmapItem(getRandomImage());
+    d_pixmap->setFlags(QGraphicsItem::ItemIsSelectable);
     d_color = randomColor();
     d_ellipse = new QGraphicsEllipseItem(0, 0, d_freq, d_freq);
+    d_ellipse->setFlags(QGraphicsItem::ItemIsSelectable);
 
     updateItem();
 
@@ -106,6 +108,9 @@ Car::Car( std::vector<osm::Node*>& path, double vitesse, double frequence, doubl
     d_ellipse->setBrush(brush);
     d_ellipse->setPen(pen);
     update_coverage();
+    d_pixmap->setData(0, QString::number(d_id));
+    d_ellipse->setData(0, QString::number(d_id));
+    d_pixmap->setData(1, toString());
 }
 
 //Car::Car(const Car &c): d_v{c.d_v}, d_freq{c.d_freq}, d_intensity{c.d_intensity},
@@ -118,6 +123,7 @@ Car::Car( std::vector<osm::Node*>& path, double vitesse, double frequence, doubl
 ////        d_ellipse = new QGraphicsEllipseItem(d_pos.x(), d_pos.y(), d_freq, d_freq);
 //    }
 //}
+size_t Car::id() const { return d_id; }
 
 QPointF Car::pos() const
 {
@@ -217,6 +223,9 @@ void Car::update_coverage()
 
 void Car::update(double interval)
 {
+    if(hasReachedEndOfPath())
+        return;
+
     d_elapsed += interval / 1000.0;  // Convertir l'intervalle en secondes
 
     double time = duree(distance(d_from->pos(), d_to->pos()), d_v);
@@ -237,6 +246,8 @@ void Car::update(double interval)
         updateItem();
         update_coverage();
     }
+
+    d_pixmap->setData(1, toString());
 }
 
 osm::Node* Car::from() const
@@ -278,6 +289,34 @@ double Car::receivedPower(const QPointF& pos) const
     return d_intensity - fspl(dist, d_freq);
 }
 
+//void Car::partiallySelected()
+//{
+//    auto pen = d_ellipse->pen();
+//    pen.setStyle(Qt::SolidLine);
+//    d_ellipse->setPen(pen);
+//}
+
+//void Car::removeSelection()
+//{
+//    auto pen = d_ellipse->pen();
+//    pen.setStyle(Qt::NoPen);
+//    d_ellipse->setPen(pen);
+//}
+
+//void Car::selected()
+//{
+//    auto pen = d_ellipse->pen();
+//    pen.setStyle(Qt::SolidLine);
+//    pen.setWidth(3);
+//    d_ellipse->setPen(pen);
+//}
+
+bool Car::operator==(int id) const
+{
+    return d_id == id;
+}
+
+
 QString Car::toString() const
 {
 //        result += "\n\tConnected Cars:";
@@ -285,13 +324,13 @@ QString Car::toString() const
 //            result += " " + QString::number(connectedCar->getId());
 //        }
 //        return result;
-    QString str = QString("Car N°%1: posistion:(%2, %3), speed: (%4)km/h, frequence: %5 Hz, puissance r: %6")
+    QString str = QString("Car N°%1: pos(%2, %3), speed: %4 Km/h, frequence: %5 Hz, puissance reçue: %6")
             .arg(d_id)
             .arg(d_pos.x())
             .arg(d_pos.y())
             .arg(d_v)
             .arg(d_freq)
-            .arg(receivedPower(d_pos));
+            .arg(receivedPower({0, 0}));
 
     return str;
 }

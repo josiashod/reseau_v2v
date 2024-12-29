@@ -27,6 +27,7 @@ private slots:
     void onShowHideFreq(bool);
     void onShowHideParks(bool);
     void onShowHideSidebar(bool);
+    void onShowHideMesh(bool);
     void onMapLoading(bool);
     void onMapLoaded(bool);
     void onPlay(bool);
@@ -48,6 +49,11 @@ private slots:
      */
     void updateCarsPosition();
 
+//    void onAddCarToPartialSelection(int id);
+//    void onRemoveCarFromPartialSelection(int id);
+//    void onDeletePartialSelection();
+//    void onPersistSelection();
+
 private:
     void creerInterface();
     void createVComboBox();
@@ -67,12 +73,17 @@ private:
 
     osm::Graph d_graph;
     std::vector<std::unique_ptr<Car>> d_cars;
+    // les voitures partiellement selectionnées par l'utilisateur
+//    std::vector<int> d_car_partially_selected = std::vector<int>(0);
+    // les voitures dont la selection a été validé
+//    std::vector<int> d_car_selection = std::vector<int>(0);
 
-    bool d_showRoads = true;
-    bool d_showCarFreq = true;
-    bool d_showBuildings = true;
-    bool d_showParks = true;
-    bool d_showSidebar = true;
+    bool d_showRoads        = true;
+    bool d_showCarFreq      = true;
+    bool d_showBuildings    = true;
+    bool d_showParks        = true;
+    bool d_showMesh         = false;
+    bool d_showSidebar      = true;
 
     bool d_isPlaying = false;
     double d_v = 1.0;
