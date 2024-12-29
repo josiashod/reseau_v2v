@@ -38,7 +38,8 @@ void OsmReader::readOSMFile(const QString& filePath) {
 
     file.close();
 
-    DBManager::closeDatabase();
+    auto db = DBManager::getInstance();
+    db->closeDatabase();
     DBManager::destroyInstance();
 }
 

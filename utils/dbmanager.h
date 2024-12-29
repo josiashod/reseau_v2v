@@ -25,7 +25,7 @@ public:
      * @brief destroyInstance Suppression de l'instance
      */
     static void destroyInstance();
-    static void closeDatabase();
+    void closeDatabase();
     /**
      * @brief getBounds: retourne la requete pour avoir les coordonnes max et min
      * @return {{MaxLon, MaxLat}, {MinLon, MinLat}}
@@ -72,7 +72,7 @@ public:
 private:
     DBManager();
     static DBManager* d_instance;
-    static QSqlDatabase d_db;
+    QSqlDatabase d_db;
 };
 
 #endif // DBMANAGER_H

@@ -15,12 +15,12 @@ int main(int argc, char *argv[])
     qRegisterMetaType<QVector<Building>>("QVector<Building>");
 
 
-    // Démarrer la fenêtre principale
+//     Démarrer la fenêtre principale
     MainWindow w;
     w.show();
 
     return a.exec();
-//    OsmReader::readOSMFile(":/lib/carte_5.osm");
+//    OsmReader::readOSMFile("/home/josh/Téléchargements/data");
 //    qDebug() << "Affichage";
-    return 0;
+//    return 0;
 }
