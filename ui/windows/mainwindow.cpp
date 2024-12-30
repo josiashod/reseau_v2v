@@ -56,7 +56,7 @@ void MainWindow::creerInterface()
     viewMenu->addAction(showSidebarAct);
 
     // creation du main widget pour l'application
-    auto mainWidget {new QWidget{this}};
+    auto mainWidget{new QWidget{this}};
     auto *mainLayout = new QHBoxLayout();
 
 //    mainLayout->setContentsMargins(20, 20, 20, 20);
@@ -65,12 +65,12 @@ void MainWindow::creerInterface()
     setCentralWidget(mainWidget);
 
     // creation des differents layout
-    d_rightSidebar = new QWidget{this};
+    d_rightSidebar = new QWidget{};
     auto rightSidebarLayout = new QVBoxLayout{d_rightSidebar};
 //    d_rightSidebar->setContentsMargins(0, 0, 10, 0);
-    auto *simulationControlLayout = new QHBoxLayout{this};
+    auto *simulationControlLayout = new QHBoxLayout{};
 
-    d_logsView = new LogWidget{this};
+    d_logsView = new LogWidget{};
     d_mapView = new MapWidget{this, &d_graph};
 
     mainLayout->addWidget(d_mapView, 1);
@@ -276,7 +276,7 @@ void MainWindow::updateCarsPosition()
     {
         auto currentPos = d_cars[i].get()->to()->id();
 
-        QtConcurrent::run([this, currentPos, i]() {
+//        QtConcurrent::run([this, currentPos, i]() {
             if(d_cars[i].get()->hasReachedEndOfPath())
             {
                 osm::Node* newnode;
@@ -289,7 +289,7 @@ void MainWindow::updateCarsPosition()
                 auto path = d_graph.dijkstraPath(currentPos, newnode->id());
                 d_cars[i].get()->updatePath(path);
             }
-        });
+//        });
 
         if((i % 2) == (frameCounter++ % 2))
         {
