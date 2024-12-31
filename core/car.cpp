@@ -107,7 +107,7 @@ Car::Car( std::vector<osm::Node*>& path, double vitesse, double frequence, doubl
     QPen pen(Qt::NoPen);
     d_ellipse->setBrush(brush);
     d_ellipse->setPen(pen);
-    update_coverage();
+    updateCoverage();
     d_pixmap->setData(0, QString::number(d_id));
     d_ellipse->setData(0, QString::number(d_id));
     d_pixmap->setData(1, toString());
@@ -201,7 +201,7 @@ void Car::updateItem()
     d_pixmap->setPos(carPos);
 }
 
-void Car::update_coverage()
+void Car::updateCoverage()
 {
     double received_intensity = receivedPower({0, 0});
     if (received_intensity < d_power_threshold)
@@ -244,7 +244,7 @@ void Car::update(double interval)
 
         d_pos = d_from->pos() + ((d_to->pos() - d_from->pos()) * progress);
         updateItem();
-        update_coverage();
+        updateCoverage();
     }
 
     d_pixmap->setData(1, toString());
@@ -296,35 +296,62 @@ double Car::receivedPower(const QPointF& pos) const
 //    d_ellipse->setPen(pen);
 //}
 
-//void Car::removeSelection()
-//{
-//    auto pen = d_ellipse->pen();
-//    pen.setStyle(Qt::NoPen);
-//    d_ellipse->setPen(pen);
-//}
+void Car::removeSelection()
+{
+    auto pen = d_ellipse->pen();
+    pen.setStyle(Qt::NoPen);
+    d_ellipse->setPen(pen);
+}
 
-//void Car::selected()
-//{
-//    auto pen = d_ellipse->pen();
-//    pen.setStyle(Qt::SolidLine);
-//    pen.setWidth(3);
-//    d_ellipse->setPen(pen);
-//}
+void Car::selected()
+{
+    auto pen = d_ellipse->pen();
+    pen.setStyle(Qt::SolidLine);
+    pen.setWidth(3);
+    d_ellipse->setPen(pen);
+}
 
 bool Car::operator==(int id) const
 {
     return d_id == id;
 }
 
+bool Car::hasConnectedCars() const
+{
+    return !d_connected_cars.empty();
+}
+
+bool Car::isConnectedTo(const Car* other) const
+{
+    // Distance entre les deux voitures
+    double dist =  distance(d_pos, other->d_pos);
+
+    // Rayon de chaque voiture
+    double radiusA = std::sqrt(std::pow(d_ellipse->rect().width(), 2) + std::pow(d_ellipse->rect().height(), 2)) / 2;
+    double radiusB = std::sqrt(std::pow(other->d_ellipse->rect().width(), 2) + std::pow(other->d_ellipse->rect().height(), 2)) / 2;
+
+    // Vérifie si les couvertures se chevauchent
+    return dist <= radiusA || dist <= radiusB;
+}
+
+void Car::updateConnectedCars(const std::vector<std::unique_ptr<Car>>& cars)
+{
+    d_connected_cars.clear();
+    removeSelection();
+
+    for(const auto& car: cars)
+    {
+        if(car.get() != this && isConnectedTo(car.get()))
+        {
+            d_connected_cars.push_back(car.get());
+            selected();
+        }
+    }
+}
 
 QString Car::toString() const
 {
-//        result += "\n\tConnected Cars:";
-//        for (const Car* connectedCar : connectedCars) {
-//            result += " " + QString::number(connectedCar->getId());
-//        }
-//        return result;
-    QString str = QString("Car N°%1: pos(%2, %3), speed: %4 Km/h, frequence: %5 Hz, puissance reçue: %6")
+    QString str = QString("<p>Car N°%1: pos(%2, %3), speed: %4 Km/h, frequence: %5 Hz, puissance reçue: %6")
             .arg(d_id)
             .arg(d_pos.x())
             .arg(d_pos.y())
@@ -332,5 +359,14 @@ QString Car::toString() const
             .arg(d_freq)
             .arg(receivedPower({0, 0}));
 
-    return str;
+    if(hasConnectedCars())
+    {
+        str += "<br>Connected to cars: ";
+        for (const Car* car : d_connected_cars)
+        {
+            str += "N° " + QString::number(car->id()) + ",";
+        }
+    }
+    str.chop(1);
+    return str + "</p>";
 }

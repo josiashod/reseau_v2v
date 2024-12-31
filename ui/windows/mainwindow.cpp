@@ -76,6 +76,8 @@ void MainWindow::creerInterface()
     mainLayout->addWidget(d_mapView, 1);
     rightSidebarLayout->addWidget(d_logsView, 1);
     d_addCarButton = new QPushButton{"Ajouter des voitures"};
+    d_timeLabel = new QLabel{"Temps écoulé: "+(QTime(0, 0, 0).addSecs(d_elapsed_time)).toString("hh:mm:ss")};
+    rightSidebarLayout->addWidget(d_timeLabel, 0, Qt::AlignCenter);
     rightSidebarLayout->addWidget(d_addCarButton);
     d_addCarButton->setEnabled(false);
 
@@ -235,6 +237,9 @@ void MainWindow::updateSpeedSelector(int i)
     d_selectedSpeed = i;
     selectSpeed();
     accelerate();
+    d_timer->setInterval(1000 / (FPS * d_speeds[d_selectedSpeed]));
+    if(d_isPlaying)
+        d_timer->start(1000 / (FPS * d_speeds[d_selectedSpeed]));
 }
 
 //void MainWindow::onCarReachEndRoad(long long currentPos)
@@ -254,7 +259,7 @@ void MainWindow::updateSpeedSelector(int i)
 void MainWindow::playOrPause()
 {
     if(d_isPlaying)
-        d_timer->start();
+        d_timer->start(1000 / (FPS * d_speeds[d_selectedSpeed]));
     else
         d_timer->stop();
 }
@@ -271,6 +276,9 @@ void MainWindow::updateCarsPosition()
 {
     double interval = 1000 / FPS;
     static size_t frameCounter = 0;
+    ++d_elapsed_time;
+    QString time = (QTime(0, 0, 0).addSecs(d_elapsed_time)).toString("hh:mm:ss");
+    d_timeLabel->setText("Temps écoulé: " + time);
 
     for(size_t i = 0; i < d_cars.size(); i++)
     {
@@ -294,6 +302,14 @@ void MainWindow::updateCarsPosition()
         if((i % 2) == (frameCounter++ % 2))
         {
             d_cars[i].get()->update(interval);
+            d_cars[i].get()->updateConnectedCars(d_cars);
+
+            if(d_cars[i].get()->hasConnectedCars())
+            {
+                d_logsView->addLog("À " + time);
+                d_logsView->addLog(d_cars[i].get()->toString());
+                d_logsView->addLog("-------------------------------------------------------------");
+            }
         }
 //        frameCounter++;
     }

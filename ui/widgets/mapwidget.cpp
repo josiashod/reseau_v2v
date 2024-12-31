@@ -180,7 +180,7 @@ void MapWidget::resizeEvent(QResizeEvent *event)
         QFuture<void> future = QtConcurrent::run([this]() {
             this->initParks();
             this->initRoads();
-            this->initBuildings();
+//            this->initBuildings();
         });
 
         // Configurer la vue (taille et centrage)

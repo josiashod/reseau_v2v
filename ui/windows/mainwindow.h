@@ -12,6 +12,7 @@ class QPushButton;
 class QComboBox;
 class QVBoxLayout;
 class QTimer;
+class QLabel;
 
 class MainWindow : public QMainWindow
 {
@@ -67,6 +68,7 @@ private:
     QPushButton* d_playButton;
     QPushButton* d_addCarButton;
     QComboBox* d_speedSelector;
+    QLabel* d_timeLabel;
 
     int FPS = 120;
     QTimer *d_timer;
@@ -91,5 +93,6 @@ private:
     QStringList d_listOfSpeeds = {"0.25", "0.5" ,"0.75", "Normale", "1.25", "1.5", "1.75", "2"};
     double d_speeds[8] = {0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2};
     int d_selectedSpeed = 3;
+    int d_elapsed_time = 0;
 };
 #endif // MAINWINDOW_H

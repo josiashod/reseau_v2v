@@ -55,23 +55,61 @@ class Car
     osm::Node* from() const;
     osm::Node* to() const;
 
+    /**
+     * @brief randomDestination generate a new destination for the car
+     */
     void randomDestination();
 
+    /**
+     * @brief nextMove move to the next segment of the path
+     */
     void nextMove();
 
+    /**
+     * @brief updateItem update the graphic item of the car
+     */
     void updateItem();
+    /**
+     * @brief updateOrientation update the direction of the car
+     */
     void updateOrientation();
+    /**
+     * @brief updatePath updae the current path ha the car should follow
+     * @param path
+     */
     void updatePath(std::vector<osm::Node*>& path);
 
+    /**
+     * @brief hasReachedEndOfPath check if the car has reached the end of the path
+     * @return
+     */
     bool hasReachedEndOfPath() const;
 
+    /**
+     * @brief receivedPower calculae the power received by the car
+     * @param pos the observaion point position
+     * @return
+     */
     double receivedPower(const QPointF& pos) const;
 
-    void update_coverage();
+    /**
+     * @brief updateCoverage update the radio coverage of the cars
+     */
+    void updateCoverage();
+
+    /**
+     * @brief updateConnectedCar
+     */
+    void updateConnectedCars(const std::vector<std::unique_ptr<Car>>& cars);
+    /**
+     * @brief hasConnectedCars return true if the car is connected to another cars
+     * @return
+     */
+    bool hasConnectedCars() const;
 
 //    void partiallySelected();
-//    void selected();
-//    void removeSelection();
+    void selected();
+    void removeSelection();
 
     /**
      * @brief update mettre à jour la position de la voiture selon un interval
@@ -82,6 +120,8 @@ class Car
     QString toString() const;
 
     bool operator==(int id) const;
+
+    bool isConnectedTo(const Car* other) const;
 
  signals:
     void endPathReach(long long currentPos);
@@ -116,6 +156,8 @@ class Car
     static size_t d_compteur_instance;
     size_t d_id;
     QColor d_color;
+
+    std::vector<Car*> d_connected_cars = std::vector<Car*>(0);
  };
 
 #endif // CAR_H
