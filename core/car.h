@@ -77,7 +77,7 @@ class Car
      * @brief updatePath updae the current path ha the car should follow
      * @param path
      */
-    void updatePath(std::vector<osm::Node*>& path);
+    void updatePath(const std::vector<osm::Node*>& path);
 
     /**
      * @brief hasReachedEndOfPath check if the car has reached the end of the path
@@ -119,12 +119,13 @@ class Car
 
     QString toString() const;
 
-    bool operator==(int id) const;
+    bool operator==(size_t id) const;
 
     bool isConnectedTo(const Car* other) const;
 
- signals:
-    void endPathReach(long long currentPos);
+// signals:
+//    void endPathReach(long long currentPos);
+    static size_t d_compteur_instance;
  private:
     // vitesse de la voiture
     double d_v;
@@ -153,7 +154,6 @@ class Car
 
 //     // cercle pour représenter la fréquence de la voiture
     QGraphicsEllipseItem* d_ellipse = nullptr;
-    static size_t d_compteur_instance;
     size_t d_id;
     QColor d_color;
 

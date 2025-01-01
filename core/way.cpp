@@ -87,7 +87,7 @@ void Way::draw(QGraphicsItemGroup* group) const {
         // Créer un chemin à partir du polygone
         QPainterPath path;
         path.addPolygon(polygon);
-        QGraphicsPathItem* road = new QGraphicsPathItem(path);
+        QGraphicsPathItem* road = new QGraphicsPathItem(path, group);
         road->setPen(pen);
         group->addToGroup(road);
     }

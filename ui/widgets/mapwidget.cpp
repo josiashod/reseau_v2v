@@ -14,17 +14,22 @@
 MapWidget::MapWidget(QWidget *parent, osm::Graph* graph)
     : QGraphicsView{parent}, d_graph{graph}
 {
-    d_dbmanager = DBManager::getInstance();
     creerInterface();
     initBounds();
 }
 
 MapWidget::~MapWidget()
 {
-    auto db = DBManager::getInstance();
-    db->closeDatabase();
-    DBManager::destroyInstance();
+//    delete d_parkLayer;
+//    delete d_wayLayer;
+//    delete d_buildingLayer;
+//    delete d_freqCarsLayer;
+//    delete d_carsLayer;
+    for (auto *item : d_scene->items()) {
+        delete item; // Libère chaque élément
+    }
     d_scene->clear();
+    delete d_scene;
 }
 
 void MapWidget::creerInterface()
@@ -87,80 +92,6 @@ void MapWidget::creerInterface()
     d_scene->addItem(d_meshLayer);
 
 //    d_carsLayer->setZValue(1);
-//    layout->addWidget(d_view);
-
-    connect(this, &MapWidget::buildingsDataReady, this, &MapWidget::drawBuildingLayer);
-    connect(this, &MapWidget::parksDataReady, this, &MapWidget::drawParkLayer);
-//    connect(this, &MapWidget::watersDataReady, this, &MapWidget::drawWaterLayer);
-    connect(this, &MapWidget::roadsDataReady, this, &MapWidget::drawRoadLayer);
-}
-
-void MapWidget::drawBuildingLayer(const QVector<Building>& buildings)
-{
-    QString log;
-    for (const Building& b : buildings)
-    {
-        b.draw(d_buildingLayer); // Dessine dans le thread principal
-        log = QString("[INFO] Drawing building n°: %1.").arg(b.id());
-        // if(d_logger)
-        //     d_logger->addLog(log);
-        // else
-//            qDebug() << log;
-    }
-}
-
-/*void MapWidget::drawWaterLayer(const QVector<Water>& waters)
-{
-    QString log;
-    for (const Water& w : waters)
-    {
-        w.draw(d_waterLayer); // Dessine dans le thread principal
-        log = QString("[INFO] Drawing water n°: %1.").arg(w.id());
-        // if(d_logger)
-        //     d_logger->addLog(log);
-        // else
-            qDebug() << log;
-    }
-}*/
-
-void MapWidget::drawParkLayer(const QVector<Park>& parks)
-{
-    QString log;
-    for (const Park& p : parks)
-    {
-        p.draw(d_parkLayer); // Dessine dans le thread principal
-        log = QString("[INFO] Drawing park n°: %1.").arg(p.id());
-        // if(d_logger)
-        //     d_logger->addLog(log);
-        // else
-//            qDebug() << log;
-    }
-}
-
-void MapWidget::drawRoadLayer(const QVector<Way>& ways)
-{
-    QString log;
-    for (const Way& w : ways)
-    {
-        w.draw(d_wayLayer); // Dessine dans le thread principal
-        log = QString("[INFO] Drawing road n°: %1.").arg(w.id());
-        // if(d_logger)
-        //     d_logger->addLog(log);
-        // else
-//            qDebug() << log;
-    }
-}
-
-void MapWidget::drawMeshLayer()
-{
-    for (QPolygonF& hexagon : d_meshs)
-    {
-        // Créer un nouvel élément texte
-        QGraphicsPolygonItem *polygon = new QGraphicsPolygonItem();
-        polygon->setPolygon(hexagon);
-
-        d_meshLayer->addToGroup(polygon);
-    }
 }
 
 void MapWidget::resizeEvent(QResizeEvent *event)
@@ -175,27 +106,49 @@ void MapWidget::resizeEvent(QResizeEvent *event)
         setRenderHint(QPainter::Antialiasing);
         d_scene->setSceneRect(0, 0, event->size().width() * 2.5, event->size().height() * 2.5);
 //        observation_point = QPointF(event->size().width() / 2, event->size().height() / 2);
-//        fitInView(d_scene->sceneRect(), Qt::KeepAspectRatio);
-        // Lancer la fonction longue en asynchrone
-        QFuture<void> future = QtConcurrent::run([this]() {
-            this->initParks();
-            this->initRoads();
-//            this->initBuildings();
-        });
+        fitInView(d_scene->sceneRect(), Qt::KeepAspectRatio);
+
+        auto cleanWatcher = [](QFutureWatcher<void>* watcher) {
+            watcher->deleteLater();
+        };
 
         // Configurer la vue (taille et centrage)
         setAlignment(Qt::AlignCenter);
 
-        auto watcher = new QFutureWatcher<void>(this);
-        connect(watcher, &QFutureWatcher<void>::finished, this, &MapWidget::isLoadingFinished);
+        auto roadWatcher = new QFutureWatcher<void>(this);
+        auto parkWatcher = new QFutureWatcher<void>(this);
+//        auto buildingWatcher = new QFutureWatcher<void>(this);
+        auto meshWatcher = new QFutureWatcher<void>(this);
 
-        connect(watcher, &QFutureWatcher<void>::finished, this, [this](){
-            initMeshs();
-            drawMeshLayer();
+        connect(roadWatcher, &QFutureWatcher<void>::finished, this, [this, cleanWatcher, roadWatcher](){
+            isLoadingFinished();
+            cleanWatcher(roadWatcher);
+        });
+
+        connect(parkWatcher, &QFutureWatcher<void>::finished, this, [this, cleanWatcher, parkWatcher](){
+            cleanWatcher(parkWatcher);
+        });
+
+//        connect(buildingWatcher, &QFutureWatcher<void>::finished, this, [this, cleanWatcher, buildingWatcher](){
+//            cleanWatcher(buildingWatcher);
+//        });
+        connect(meshWatcher, &QFutureWatcher<void>::finished, this, [this, cleanWatcher, meshWatcher](){
+            cleanWatcher(meshWatcher);
         });
 
         // Associe le watcher au future
-        watcher->setFuture(future);
+        parkWatcher->setFuture(QtConcurrent::run([this]() {
+            initParks();
+        }));
+        roadWatcher->setFuture(QtConcurrent::run([this]() {
+            initRoads();
+        }));
+//        buildingWatcher->setFuture(QtConcurrent::run([this]() {
+//            initBuildings();
+//        }));
+        meshWatcher->setFuture(QtConcurrent::run([this]() {
+            initMeshs();
+        }));
     }
 }
 
@@ -340,14 +293,10 @@ void MapWidget::wheelEvent(QWheelEvent *event)
         scale(scaleFactor, scaleFactor);
     } else {
         // Zoom arrière
-        if(d_scale_factor > 1.0)
+        if(d_scale_factor > 0.7)
         {
             d_scale_factor *= (1.0 / scaleFactor);
             scale(1.0 / scaleFactor, 1.0 / scaleFactor);
-        }
-        else
-        {
-            fitInView(d_scene->sceneRect(), Qt::KeepAspectRatio);
         }
     }
 }
@@ -424,7 +373,8 @@ QPointF MapWidget::latLonToXY(double lon, double lat) {
 
 void MapWidget::initBounds()
 {
-    QSqlQuery query = d_dbmanager->getBounds(d_dbmanager->getDatabase());
+    auto d_dbmanager = DBManager();
+    QSqlQuery query = d_dbmanager.getBounds(d_dbmanager.getDatabase());
     double minLat = 0.0, maxLat = 0.0, minLon = 0.0, maxLon = 0.0;
     bool success = false;
     QString log;
@@ -463,13 +413,14 @@ void MapWidget::initBounds()
         // else
             qDebug() << log;
     }
-    query.clear();
+    query.finish();
 }
 
 void MapWidget::initBuildings()
 {
-    QVector<Building> buildings;
-    auto query = d_dbmanager->getBuildings(d_dbmanager->getDatabase());
+//    QVector<Building> buildings;
+    auto d_dbmanager = DBManager();
+    auto query = d_dbmanager.getBuildings(d_dbmanager.getDatabase());
     bool success = false;
 
     success = query.exec();
@@ -483,7 +434,7 @@ void MapWidget::initBuildings()
 
             Building b{id};
 
-            auto q = d_dbmanager->getWayNodes(d_dbmanager->getDatabase(), id);
+            auto q = d_dbmanager.getWayNodes(d_dbmanager.getDatabase(), id);
             success = q.exec();
             if(success)
             {
@@ -502,11 +453,14 @@ void MapWidget::initBuildings()
 //                    qDebug() << QString("[SUCCESS] Building n°: %1.").arg(id);
                 }
             }
-            buildings.push_back(b);
+//            buildings.push_back(b);
+            QMetaObject::invokeMethod(this, [this, b]() {
+               b.draw(d_buildingLayer);
+            }, Qt::QueuedConnection);
             // if(d_logger)
             //     d_logger->addLog(QString("[SUCCESS] Building n°: %1.").arg(id), LogWidget::SUCCESS);
         }
-        query.clear();
+        query.finish();
     }
     // else
     // {
@@ -516,14 +470,14 @@ void MapWidget::initBuildings()
 
     // if(d_logger)
     //     d_logger->addLog("[INFO] Emission des buildings pour affichage.");
-    emit buildingsDataReady(buildings);
+//    emit buildingsDataReady(buildings);
 }
-
 
 void MapWidget::initParks()
 {
-    QVector<Park> parks;
-    auto query = d_dbmanager->getParks(d_dbmanager->getDatabase());
+//    QVector<Park> parks;
+    auto d_dbmanager = DBManager();
+    auto query = d_dbmanager.getParks(d_dbmanager.getDatabase());
     bool success = false;
 
     success = query.exec();
@@ -537,7 +491,7 @@ void MapWidget::initParks()
 
             Park park{id};
 
-            auto q = d_dbmanager->getWayNodes(d_dbmanager->getDatabase(), id);
+            auto q = d_dbmanager.getWayNodes(d_dbmanager.getDatabase(), id);
             success = q.exec();
             if(success)
             {
@@ -557,11 +511,14 @@ void MapWidget::initParks()
                     park.addPoint(p);
                 }
             }
-            parks.push_back(park);
+//            parks.push_back(park);
+            QMetaObject::invokeMethod(this, [this, park]() {
+               park.draw(d_parkLayer);
+            }, Qt::QueuedConnection);
             // if(d_logger)
             // d_logger->addLog(QString("[SUCCESS] Park n°: %1.").arg(id), LogWidget::SUCCESS);
         }
-        query.clear();
+        query.finish();
     }
     // else
     // {
@@ -570,13 +527,14 @@ void MapWidget::initParks()
     // }
     // if(d_logger)
     // d_logger->addLog("[INFO] Emission des parks pour affichage.");
-    emit parksDataReady(parks);
+//    emit parksDataReady(parks);
 }
 
 /*void MapWidget::initWaters()
 {
     QVector<Water> waters;
-    auto query = d_dbmanager->getWaters(d_dbmanager->getDatabase());
+    auto d_dbmanager = DBManager();
+    auto query = d_dbmanager.getWaters(d_dbmanager.getDatabase());
     bool success = false;
 
     success = query.exec();
@@ -590,7 +548,7 @@ void MapWidget::initParks()
 
             Water w{id};
 
-            auto q = d_dbmanager->getWayNodes(d_dbmanager->getDatabase(), id);
+            auto q = d_dbmanager.getWayNodes(d_dbmanager.getDatabase(), id);
             success = q.exec();
             if(success)
             {
@@ -614,7 +572,7 @@ void MapWidget::initParks()
             // if(d_logger)
             // d_logger->addLog(QString("[SUCCESS] Water n°: %1.").arg(id), LogWidget::SUCCESS);
         }
-        query.clear();
+        query.finish();
     }
     // else
     // {
@@ -626,8 +584,9 @@ void MapWidget::initParks()
 
 void MapWidget::initRoads()
 {
-    QVector<Way> ways;
-    auto query = d_dbmanager->getRoads(d_dbmanager->getDatabase());
+//    QVector<Way> ways;
+    auto d_dbmanager = DBManager();
+    auto query = d_dbmanager.getRoads(d_dbmanager.getDatabase());
     bool success = false;
 
     success = query.exec();
@@ -644,7 +603,7 @@ void MapWidget::initRoads()
             QString value = query.value(4).toString();
             w.addTag(key, value);
 
-            auto q = d_dbmanager->getWayNodes(d_dbmanager->getDatabase(), id);
+            auto q = d_dbmanager.getWayNodes(d_dbmanager.getDatabase(), id);
             success = q.exec();
             if(success)
             {
@@ -692,12 +651,15 @@ void MapWidget::initRoads()
                     }
 //                    qDebug() << QString("[SUCCESS] Road n°: %1.").arg(id);
                 }
-                ways.push_back(w);
+//                ways.push_back(w);
+                QMetaObject::invokeMethod(this, [this, w]() {
+                   w.draw(d_wayLayer);
+                }, Qt::QueuedConnection);
             }
             // if(d_logger)
             // d_logger->addLog(QString("[SUCCESS] Road n°: %1.").arg(id), LogWidget::SUCCESS);
         }
-        query.clear();
+        query.finish();
     }
     // else
     // {
@@ -707,7 +669,61 @@ void MapWidget::initRoads()
 
     // if(d_logger)
     //     d_logger->addLog("[INFO] Emission des roads pour affichage.");
-    emit roadsDataReady(ways);
+//    emit roadsDataReady(ways);
+}
+
+void MapWidget::initMeshs()
+{
+    qreal hexRadius = 100.0;  // Ajuster la taille au besoin
+    qreal dx = 1.5 * hexRadius;  // Décalage horizontal (distance entre centres des hexagones)
+    qreal dy = sqrt(3) * hexRadius;  // Décalage vertical (distance entre centres des hexagones)
+
+
+    QRectF scene_rect = d_scene->sceneRect();
+    QPointF topLeft = scene_rect.topLeft();    // Coin supérieur gauche
+    QPointF bottomRight = scene_rect.bottomRight();  // Coin inférieur droit
+
+    qreal startX = topLeft.x();
+    qreal startY = topLeft.y();
+    qreal endX = bottomRight.x();
+    qreal endY = bottomRight.y();
+
+    int rows = std::ceil((endY - startY) / dy);  // Nombre de rangées
+    int cols = std::ceil((endX - startX) / dx);  // Nombre de colonnes
+
+
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            qreal x = startX + j * dx;
+            qreal y = startY + i * dy;
+
+
+            // Décalage pour les rangées impaires
+            if (j % 2 == 1) {
+                y += dy / 2;
+            }
+
+            QPolygonF hexagon;
+
+            // Créer les sommets de l'hexagone
+            for (int k = 0; k < 6; ++k) {
+                qreal angle = 2 * M_PI * k / 6.0;
+                qreal vertexX = x + hexRadius * cos(angle);
+                qreal vertexY = y + hexRadius * sin(angle);
+                hexagon << QPointF(vertexX, vertexY);
+            }
+
+            // Ajouter l'hexagone à la collection
+//            d_meshs.push_back(polygon);
+
+            QMetaObject::invokeMethod(this, [this, hexagon]() {
+                QGraphicsPolygonItem *polygon = new QGraphicsPolygonItem();
+                polygon->setPolygon(hexagon);
+
+                d_meshLayer->addToGroup(polygon);
+            }, Qt::QueuedConnection);
+        }
+    }
 }
 
 void MapWidget::setShowPark(bool show)
@@ -738,51 +754,4 @@ void MapWidget::setShowHex(bool show)
 {
     d_showMesh = show;
     d_meshLayer->setVisible(d_showMesh);
-}
-
-void MapWidget::initMeshs()
-{
-    qreal hexRadius = 55.0;  // Ajuster la taille au besoin
-    qreal dx = 1.5 * hexRadius;  // Décalage horizontal (distance entre centres des hexagones)
-    qreal dy = sqrt(3) * hexRadius;  // Décalage vertical (distance entre centres des hexagones)
-
-
-    QRectF scene_rect = d_scene->sceneRect();
-    QPointF topLeft = scene_rect.topLeft();    // Coin supérieur gauche
-    QPointF bottomRight = scene_rect.bottomRight();  // Coin inférieur droit
-
-    qreal startX = topLeft.x();
-    qreal startY = topLeft.y();
-    qreal endX = bottomRight.x();
-    qreal endY = bottomRight.y();
-
-    int rows = std::ceil((endY - startY) / dy);  // Nombre de rangées
-    int cols = std::ceil((endX - startX) / dx);  // Nombre de colonnes
-
-
-    for (int i = 0; i < rows; ++i) {
-        for (int j = 0; j < cols; ++j) {
-            qreal x = startX + j * dx;
-            qreal y = startY + i * dy;
-
-
-            // Décalage pour les rangées impaires
-            if (j % 2 == 1) {
-                y += dy / 2;
-            }
-
-            QPolygonF polygon;
-
-            // Créer les sommets de l'hexagone
-            for (int k = 0; k < 6; ++k) {
-                qreal angle = 2 * M_PI * k / 6.0;
-                qreal vertexX = x + hexRadius * cos(angle);
-                qreal vertexY = y + hexRadius * sin(angle);
-                polygon << QPointF(vertexX, vertexY);
-            }
-
-            // Ajouter l'hexagone à la collection
-            d_meshs.push_back(polygon);
-        }
-    }
 }

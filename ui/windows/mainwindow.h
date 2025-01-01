@@ -70,7 +70,7 @@ private:
     QComboBox* d_speedSelector;
     QLabel* d_timeLabel;
 
-    int FPS = 120;
+    int FPS = 80;
     QTimer *d_timer;
 
     osm::Graph d_graph;
@@ -80,19 +80,19 @@ private:
     // les voitures dont la selection a été validé
 //    std::vector<int> d_car_selection = std::vector<int>(0);
 
-    bool d_showRoads        = true;
-    bool d_showCarFreq      = true;
-    bool d_showBuildings    = true;
-    bool d_showParks        = true;
-    bool d_showMesh         = false;
-    bool d_showSidebar      = true;
+    bool d_showRoads;
+    bool d_showCarFreq;
+    bool d_showBuildings;
+    bool d_showParks;
+    bool d_showMesh;
+    bool d_showSidebar;
 
-    bool d_isPlaying = false;
-    double d_v = 1.0;
+    bool d_isPlaying;
+    double d_v;
 
     QStringList d_listOfSpeeds = {"0.25", "0.5" ,"0.75", "Normale", "1.25", "1.5", "1.75", "2"};
     double d_speeds[8] = {0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2};
-    int d_selectedSpeed = 3;
-    int d_elapsed_time = 0;
+    int d_selectedSpeed;
+    int d_elapsed_time;
 };
 #endif // MAINWINDOW_H

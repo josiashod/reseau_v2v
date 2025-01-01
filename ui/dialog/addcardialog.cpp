@@ -23,7 +23,7 @@ void AddCarDialog::create_interface()
     main_layout->addWidget(new QLabel{"Nombre de voitures à ajouter"});
     d_nm_car_edit= new QLineEdit();
 
-    d_nm_car_edit->setValidator(new QIntValidator(0, 30, d_nm_car_edit));  // Integer range [-9999, 9999]
+    d_nm_car_edit->setValidator(new QIntValidator(0, 99, d_nm_car_edit));
     d_nm_car_edit->setPlaceholderText("Enter the number of car to add");
 
     main_layout->addWidget(d_nm_car_edit);
@@ -43,17 +43,17 @@ void AddCarDialog::create_interface()
 
     // créations des molette de frequence et de puissance
     // avec une valeur par defaut à 20
-    d_speed_dial = new QDial();
+    d_speed_dial = new QDial(this);
     d_speed_dial->setMinimum(50.0);
     d_speed_dial->setMaximum(170.0);
     d_speed_dial->setNotchesVisible(true);
 
-    d_freq_dial = new QDial();
-    d_freq_dial->setMinimum(30.0);
-    d_freq_dial->setMaximum(100.0);
+    d_freq_dial = new QDial(this);
+    d_freq_dial->setMinimum(45.0);
+    d_freq_dial->setMaximum(180.0);
     d_freq_dial->setNotchesVisible(true);
 
-    d_intensity_dial = new QDial();
+    d_intensity_dial = new QDial(this);
     d_intensity_dial->setMinimum(35.0);
     d_intensity_dial->setMaximum(100.0);
     d_intensity_dial->setNotchesVisible(true);
@@ -84,14 +84,14 @@ void AddCarDialog::create_interface()
         d_intensity_label->setText(QString::number(value));
     });
 
-    auto vline1 {new QFrame{}};
+    auto vline1 {new QFrame{this}};
     vline1->setFrameStyle(QFrame::VLine|QFrame::Sunken);
 
     dial_layout->addLayout(speed_dial_layout);
     dial_layout->addWidget(vline1);
     dial_layout->addLayout(freq_dial_layout);
 
-    auto vline2 {new QFrame{}};
+    auto vline2 {new QFrame{this}};
     vline2->setFrameStyle(QFrame::VLine|QFrame::Sunken);
 
     dial_layout->addWidget(vline2);
@@ -99,7 +99,7 @@ void AddCarDialog::create_interface()
 
     main_layout->addLayout(dial_layout);
 
-    auto hline {new QFrame{}};
+    auto hline {new QFrame{this}};
     hline->setFrameStyle(QFrame::HLine|QFrame::Sunken);
     main_layout->addWidget(hline);
 

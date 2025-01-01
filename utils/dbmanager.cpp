@@ -14,11 +14,13 @@ const QString _TAGS_TABLE_ = "tags";
 const QString _BOUNDS_TABLE_ = "bounds";
 
 // Initialisation des attributs static
-DBManager* DBManager::d_instance = nullptr;
+//DBManager* DBManager::d_instance = nullptr;
+size_t DBManager::d_compteur_instance = 0;
 
 DBManager::DBManager()
 {
-    d_db = QSqlDatabase::addDatabase(env::DB_CONNECTION);
+
+    d_db = QSqlDatabase::addDatabase(env::DB_CONNECTION, QString("opening_database_%1").arg(d_compteur_instance++));
 
     if(env::DB_CONNECTION == "QSQLITE")
     {
@@ -45,6 +47,13 @@ DBManager::DBManager()
 
 DBManager::~DBManager()
 {
+    if (d_db.isOpen())
+    {
+        d_db.close();
+        qDebug() << "Database: connection closed";
+    }
+    QSqlDatabase::removeDatabase(d_db.connectionName());
+
 //    QString threadId = QString::number(reinterpret_cast<quintptr>(QThread::currentThreadId()));
 //    if (QSqlDatabase::contains(threadId)) {
 //        qDebug() << threadId;
@@ -57,29 +66,29 @@ DBManager::~DBManager()
 //    }
 }
 
-DBManager* DBManager::getInstance()
-{
-    if (d_instance == nullptr) {
-        d_instance = new DBManager();
-    }
-    return d_instance;
-}
+//DBManager* DBManager::getInstance()
+//{
+//    if (d_instance == nullptr) {
+//        d_instance = new DBManager();
+//    }
+//    return d_instance;
+//}
 
-void DBManager::destroyInstance()
-{
-    if(d_instance)
-        delete d_instance;
-    d_instance = nullptr;
-}
+//void DBManager::destroyInstance()
+//{
+//    if(d_instance)
+//        delete d_instance;
+//    d_instance = nullptr;
+//}
 
-void DBManager::closeDatabase()
-{
-    if (d_db.isOpen())
-    {
-        d_db.close();
-        qDebug() << "Database: connection closed";
-    }
-}
+//void DBManager::closeDatabase()
+//{
+//    if (d_db.isOpen())
+//    {
+//        d_db.close();
+//        qDebug() << "Database: connection closed";
+//    }
+//}
 
 QSqlDatabase DBManager::getDatabase()
 {

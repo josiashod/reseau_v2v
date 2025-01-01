@@ -37,10 +37,6 @@ void OsmReader::readOSMFile(const QString& filePath) {
     }
 
     file.close();
-
-    auto db = DBManager::getInstance();
-    db->closeDatabase();
-    DBManager::destroyInstance();
 }
 
 void OsmReader::readBounds(QXmlStreamReader& xml) {
@@ -49,7 +45,7 @@ void OsmReader::readBounds(QXmlStreamReader& xml) {
     double maxlat = xml.attributes().value("maxlat").toDouble();
     double maxlon = xml.attributes().value("maxlon").toDouble();
 
-    auto db = DBManager::getInstance()->getDatabase();
+    auto db = DBManager().getDatabase();
     QSqlQuery query(db);
     query.prepare("INSERT INTO bounds(minlat, minlon, maxlat, maxlon) VALUES(:minlat, :minlon, :maxlat, :maxlon)");
     query.bindValue(":minlat", minlat);
@@ -74,7 +70,7 @@ void OsmReader::readNode(QXmlStreamReader& xml) {
     double lon = xml.attributes().value("lon").toDouble();
     long long id = xml.attributes().value("id").toString().toLongLong();
 
-    auto db = DBManager::getInstance()->getDatabase();
+    auto db = DBManager().getDatabase();
     QSqlQuery query(db);
     query.prepare("INSERT INTO nodes(id, lat, lon) VALUES(:id, :lat, :lon)");
     query.bindValue(":id", id);
@@ -119,7 +115,7 @@ void OsmReader::readWay(QXmlStreamReader& xml)
 {
     long long wayId = xml.attributes().value("id").toString().toLongLong();
     std::vector<long long> node_ids;
-    auto db = DBManager::getInstance()->getDatabase();
+    auto db = DBManager().getDatabase();
     QSqlQuery query(db);
 
     // Parcourir les nœuds du chemin

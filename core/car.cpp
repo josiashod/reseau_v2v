@@ -55,8 +55,9 @@ QColor randomColor()
 //    */
 double distance(QPointF s, QPointF e)
 {
-    QPointF d = e - s;
-    return std::sqrt((d.x() * d.x()) + (d.y() * d.y()));
+    return std::hypot(s.x() - e.x(), s.y() - e.y());
+//    QPointF d = e - s;
+//    return std::sqrt((d.x() * d.x()) + (d.y() * d.y()));
 }
 
 double duree(double distance, double vitesse)
@@ -199,6 +200,7 @@ void Car::updateItem()
 
     auto carPos = d_pos - QPointF{pixWidth / 2, pixHeight / 2};
     d_pixmap->setPos(carPos);
+    d_ellipse->setPos(d_pos - QPointF(d_freq / 2, d_freq / 2));
 }
 
 void Car::updateCoverage()
@@ -211,14 +213,14 @@ void Car::updateCoverage()
         return;
     }
 
-    double scaling_factor = d_freq / 10.0;
-    double rad = std::sqrt(received_intensity / d_power_threshold) * 4 * scaling_factor;
+//    double scaling_factor = d_freq / 10.0;
+//    double rad = std::sqrt(received_intensity / d_power_threshold) * 4 * scaling_factor;
 //    rad = std::clamp(rad, 10.0, 200.0);
 
     d_color.setAlphaF(std::clamp(received_intensity / 100, 0.1, 0.55));
-    d_ellipse->setRect(0, 0, rad, rad);
+//    d_ellipse->setRect(0, 0, rad, rad);
     d_ellipse->setBrush(d_color);
-    d_ellipse->setPos(d_pos - QPointF(rad / 2, rad / 2));
+//    d_ellipse->setPos(d_pos - QPointF(rad / 2, rad / 2));
 }
 
 void Car::update(double interval)
@@ -246,8 +248,6 @@ void Car::update(double interval)
         updateItem();
         updateCoverage();
     }
-
-    d_pixmap->setData(1, toString());
 }
 
 osm::Node* Car::from() const
@@ -260,7 +260,7 @@ osm::Node* Car::to() const
     return d_to;
 }
 
-void Car::updatePath(std::vector<osm::Node*>& path)
+void Car::updatePath(const std::vector<osm::Node*>& path)
 {
     i = 1;
     d_path = path;
@@ -311,7 +311,7 @@ void Car::selected()
     d_ellipse->setPen(pen);
 }
 
-bool Car::operator==(int id) const
+bool Car::operator==(size_t id) const
 {
     return d_id == id;
 }
@@ -325,13 +325,9 @@ bool Car::isConnectedTo(const Car* other) const
 {
     // Distance entre les deux voitures
     double dist =  distance(d_pos, other->d_pos);
+    double radius = std::max((d_freq * 0.5), (other->d_freq * 0.5));
 
-    // Rayon de chaque voiture
-    double radiusA = std::sqrt(std::pow(d_ellipse->rect().width(), 2) + std::pow(d_ellipse->rect().height(), 2)) / 2;
-    double radiusB = std::sqrt(std::pow(other->d_ellipse->rect().width(), 2) + std::pow(other->d_ellipse->rect().height(), 2)) / 2;
-
-    // Vérifie si les couvertures se chevauchent
-    return dist <= radiusA || dist <= radiusB;
+    return dist <= radius;
 }
 
 void Car::updateConnectedCars(const std::vector<std::unique_ptr<Car>>& cars)
