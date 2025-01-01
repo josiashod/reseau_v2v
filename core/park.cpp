@@ -18,8 +18,8 @@ void Park::draw(QGraphicsItemGroup* group) const
         polygon << p;
     }
 
-    auto park = new QGraphicsPolygonItem();
-    park->setPolygon(polygon);
+    auto park = new QGraphicsPolygonItem(polygon, group);
+//    park->setPolygon(polygon);
     QBrush brush{QColor(205, 235, 176)};
     QPen pen{QColor(172, 225, 120), 1}; // Noir, épaisseur 1 pixel
     park->setPen(pen);

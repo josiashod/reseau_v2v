@@ -10,6 +10,9 @@
 #include <QTimer>
 #include <QtConcurrent>
 #include "../dialog/addcardialog.h"
+#include <QMessageBox>
+
+size_t MAX_CAR = 50;
 
 
 // retourne le libelle à mettre dans le menu
@@ -19,7 +22,17 @@ QString menu_libelle(bool etat, const QString& libelle)
 }
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), d_graph{}
+    : QMainWindow(parent),
+    d_graph{},
+    d_showRoads(true),
+    d_showCarFreq(true),
+    d_showBuildings(true),
+    d_showParks(true),
+    d_showMesh(false),
+    d_showSidebar(true),
+    d_isPlaying(false),
+    d_selectedSpeed(3),
+    d_elapsed_time(0)
 {
     creerInterface();
 }
@@ -37,53 +50,53 @@ void MainWindow::creerInterface()
     auto viewMenu = menuBar()->addMenu("Vue");
 //    auto logMenu = menuBar()->addMenu("Logs");
 
-    QAction *showRoadAct = new QAction{menu_libelle(d_showRoads, "les routes")};
+    QAction *showRoadAct = new QAction{menu_libelle(d_showRoads, "les routes"), viewMenu};
     viewMenu->addAction(showRoadAct);
 
-    QAction *showBuildindAct = new QAction{menu_libelle(d_showBuildings, "les immeubles")};
+    QAction *showBuildindAct = new QAction{menu_libelle(d_showBuildings, "les immeubles"), viewMenu};
     viewMenu->addAction(showBuildindAct);
 
-    QAction *showParcAct = new QAction{menu_libelle(d_showParks, "les parcs")};
+    QAction *showParcAct = new QAction{menu_libelle(d_showParks, "les parcs"), viewMenu};
     viewMenu->addAction(showParcAct);
 
-    QAction *showFrequenceAct = new QAction{menu_libelle(d_showRoads, "les couvertures radio")};
+    QAction *showFrequenceAct = new QAction{menu_libelle(d_showRoads, "les couvertures radio"), viewMenu};
     viewMenu->addAction(showFrequenceAct);
 
-    QAction *showHexAct = new QAction{menu_libelle(d_showMesh, "le decoupage territorial")};
+    QAction *showHexAct = new QAction{menu_libelle(d_showMesh, "le decoupage territorial"), viewMenu};
     viewMenu->addAction(showHexAct);
 
-    QAction *showSidebarAct = new QAction{menu_libelle(d_showSidebar, "la barre latérale")};
+    QAction *showSidebarAct = new QAction{menu_libelle(d_showSidebar, "la barre latérale"), viewMenu};
     viewMenu->addAction(showSidebarAct);
 
     // creation du main widget pour l'application
-    auto mainWidget {new QWidget{this}};
-    auto *mainLayout = new QHBoxLayout();
+    QWidget* mainWidget = new QWidget{this};
+    QHBoxLayout* mainLayout = new QHBoxLayout(mainWidget);
 
-//    mainLayout->setContentsMargins(20, 20, 20, 20);
-    mainWidget->setLayout(mainLayout);
     mainWidget->setContentsMargins(0, 0, 0, 0);
     setCentralWidget(mainWidget);
-
-    // creation des differents layout
-    d_rightSidebar = new QWidget{this};
-    auto rightSidebarLayout = new QVBoxLayout{d_rightSidebar};
-//    d_rightSidebar->setContentsMargins(0, 0, 10, 0);
-    auto *simulationControlLayout = new QHBoxLayout{this};
 
     d_logsView = new LogWidget{this};
     d_mapView = new MapWidget{this, &d_graph};
 
     mainLayout->addWidget(d_mapView, 1);
+    // creation des differents layout
+    d_rightSidebar = new QWidget();
+    QVBoxLayout *rightSidebarLayout = new QVBoxLayout(d_rightSidebar);
+    auto *simulationControlLayout = new QHBoxLayout(d_rightSidebar);
+
+    mainLayout->addWidget(d_rightSidebar);
     rightSidebarLayout->addWidget(d_logsView, 1);
-    d_addCarButton = new QPushButton{"Ajouter des voitures"};
+    d_addCarButton = new QPushButton{"Ajouter des voitures", this};
+    d_timeLabel = new QLabel{"Temps écoulé: "+(QTime(0, 0, 0).addSecs(d_elapsed_time)).toString("hh:mm:ss"), this};
+    rightSidebarLayout->addWidget(d_timeLabel, 0, Qt::AlignCenter);
     rightSidebarLayout->addWidget(d_addCarButton);
     d_addCarButton->setEnabled(false);
 
-    auto clearLogButton = new QPushButton{"Effacer les logs"};
+    auto clearLogButton = new QPushButton{"Effacer les logs", this};
     rightSidebarLayout->addWidget(clearLogButton);
     rightSidebarLayout->addLayout(simulationControlLayout);
-    d_playButton = new QPushButton{"Lancer la simulation"};
-    d_speedSelector = new QComboBox{};
+    d_playButton = new QPushButton{"Lancer la simulation", this};
+    d_speedSelector = new QComboBox{this};
 
     d_playButton->setEnabled(false);
     d_speedSelector->setEnabled(false);
@@ -92,15 +105,8 @@ void MainWindow::creerInterface()
 
     simulationControlLayout->addWidget(d_playButton);
     simulationControlLayout->addWidget(d_speedSelector);
-//    simulationControlLayout->setContentsMargins(0,0,1000,0);
-//    simulationControlLayout->addWidget(new QPushButton{"test"}, 0, Qt::AlignHCenter);
-//    vLayout->addLayout(simulationControlLayout);
-//    mainLayout->addLayout(vLayout, 1);
 
-//    d_rightSidebar->hide();
-    d_rightSidebar->setLayout(rightSidebarLayout);
     d_rightSidebar->setContentsMargins(0, 0, 0, 0);
-    mainLayout->addWidget(d_rightSidebar);
     mainLayout->setContentsMargins(0, 0, 0, 0);
 
 
@@ -159,7 +165,7 @@ void MainWindow::onShowHideFreq(bool)
     QAction* action = qobject_cast<QAction*>(sender());
     d_showCarFreq = !d_showCarFreq;
     d_mapView->setShowFreq(d_showCarFreq);
-    action->setText(menu_libelle(d_showRoads, "les couvertures radio"));
+    action->setText(menu_libelle(d_showCarFreq, "les couvertures radio"));
 }
 
 void MainWindow::onShowHideParks(bool)
@@ -235,6 +241,8 @@ void MainWindow::updateSpeedSelector(int i)
     d_selectedSpeed = i;
     selectSpeed();
     accelerate();
+    d_timer->setInterval(1000 / (FPS * d_speeds[d_selectedSpeed]));
+    playOrPause();
 }
 
 //void MainWindow::onCarReachEndRoad(long long currentPos)
@@ -254,7 +262,7 @@ void MainWindow::updateSpeedSelector(int i)
 void MainWindow::playOrPause()
 {
     if(d_isPlaying)
-        d_timer->start();
+        d_timer->start(1000 / (FPS * d_speeds[d_selectedSpeed]));
     else
         d_timer->stop();
 }
@@ -271,6 +279,9 @@ void MainWindow::updateCarsPosition()
 {
     double interval = 1000 / FPS;
     static size_t frameCounter = 0;
+    ++d_elapsed_time;
+    QString time = (QTime(0, 0, 0).addSecs(d_elapsed_time)).toString("hh:mm:ss");
+    d_timeLabel->setText("Temps écoulé: " + time);
 
     for(size_t i = 0; i < d_cars.size(); i++)
     {
@@ -280,20 +291,31 @@ void MainWindow::updateCarsPosition()
             if(d_cars[i].get()->hasReachedEndOfPath())
             {
                 osm::Node* newnode;
-                do
-                {
-                    newnode = d_graph.getRandomNode();
-                }
-                while(!newnode || newnode->id() == currentPos);
+                std::vector<osm::Node*> path(0);
+                newnode = d_graph.getRandomNode();
+                if(newnode)
+                    path = d_graph.dijkstraPath(currentPos, newnode->id());
 
-                auto path = d_graph.dijkstraPath(currentPos, newnode->id());
-                d_cars[i].get()->updatePath(path);
+                if(!path.empty() && path.size() > 2)
+                {
+                    QMetaObject::invokeMethod(this, [this, path, i]() {
+                       d_cars[i].get()->updatePath(path);
+                    }, Qt::QueuedConnection);
+                }
             }
         });
 
         if((i % 2) == (frameCounter++ % 2))
         {
             d_cars[i].get()->update(interval);
+            d_cars[i].get()->updateConnectedCars(d_cars);
+
+            if(d_cars[i].get()->hasConnectedCars())
+            {
+                d_logsView->addLog("À " + time);
+                d_logsView->addLog(d_cars[i].get()->toString());
+                d_logsView->addLog("-------------------------------------------------------------");
+            }
         }
 //        frameCounter++;
     }
@@ -318,19 +340,36 @@ void MainWindow::onAddCar()
 
 void MainWindow::addCar(int nb, double speed, double freq, double intensity)
 {
+    if(d_cars.size() + nb > MAX_CAR)
+    {
+        int remaining = MAX_CAR - d_cars.size(); // Calcul du nombre de voitures restantes
+        QMessageBox::warning(
+            this,
+            "Limite atteinte : Ajout de véhicules restreint",
+            QString("Pour des raisons de performance, il est impossible d'ajouter plus de %1 véhicules.\n"
+                    "Vous ne pouvez ajouter que %2 véhicule(s) supplémentaire(s).")
+                .arg(MAX_CAR)
+                .arg(remaining)
+        );
+        return;
+    }
+
+
     for(int i = 0; i < nb; i++)
     {
         std::vector<osm::Node*> path(0);
         osm::Node* n1 = nullptr;
-        osm::Node* n2;
+//        osm::Node* n2;
 
-        while(path.empty() && path.size() < 2)
-        {
-            n1 = d_graph.getRandomNode();
-            n2 = d_graph.getRandomNode();
+        n1 = d_graph.getRandomNode();
+        path.push_back(n1);
+        path.push_back(n1);
+//        while(path.empty() && path.size() <= 2)
+//        {
+//            n2 = d_graph.getRandomNode();
 
-            path = d_graph.dijkstraPath(n1->id(), n2->id());
-        }
+//            path = d_graph.dijkstraPath(n1->id(), n2->id());
+//        }
 
         d_cars.push_back(std::make_unique<Car>(path, speed, freq, intensity));
         d_mapView->addCarImage(d_cars.back()->pixmap());
@@ -421,4 +460,8 @@ MainWindow::~MainWindow()
 {
     delete d_mapView;
     delete d_logsView;
+    delete d_rightSidebar;
+    delete d_timer;
+    for(auto* child: menuBar()->children())
+        delete child;
 }

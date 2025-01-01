@@ -18,7 +18,7 @@ void LogWidget::createInterface()
     // Ajouter un layout avec un bouton comme contenu du widget
     QVBoxLayout *layout = new QVBoxLayout(this);
 
-    d_logtext = new QTextEdit{};
+    d_logtext = new QTextEdit{this};
     d_logtext->setReadOnly(true);
     d_logtext->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
     d_logtext->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -65,5 +65,5 @@ void LogWidget::clearLog()
 
 LogWidget::~LogWidget()
 {
-delete d_logtext;
+    delete d_logtext;
 }

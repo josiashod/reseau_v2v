@@ -10,12 +10,13 @@
 class DBManager
 {
 public:
+    DBManager();
     ~DBManager();
     /**
      * @brief getInstance retourne l'instance unique d'utilisation de la bd
      * @return
      */
-    static DBManager* getInstance();
+//    static DBManager* getInstance();
     /**
      * @brief getDatabase retourne la base de donnée du thread en cours
      * @return
@@ -24,8 +25,8 @@ public:
     /**
      * @brief destroyInstance Suppression de l'instance
      */
-    static void destroyInstance();
-    void closeDatabase();
+//    static void destroyInstance();
+//    void closeDatabase();
     /**
      * @brief getBounds: retourne la requete pour avoir les coordonnes max et min
      * @return {{MaxLon, MaxLat}, {MinLon, MinLat}}
@@ -70,9 +71,9 @@ public:
     QSqlQuery getWayNodes(QSqlDatabase db, long long id) const;
 
 private:
-    DBManager();
-    static DBManager* d_instance;
+//    static DBManager* d_instance;
     QSqlDatabase d_db;
+    static size_t d_compteur_instance;
 };
 
 #endif // DBMANAGER_H

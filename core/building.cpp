@@ -18,8 +18,8 @@ void Building::draw(QGraphicsItemGroup* group) const
         polygon << p;
     }
 
-    auto building = new QGraphicsPolygonItem();
-    building->setPolygon(polygon);
+    auto building = new QGraphicsPolygonItem(polygon, group);
+//    building->setPolygon(polygon);
     QBrush brush{QColor(216, 208, 201)};
 //    QBrush brush{QColor(0, 0, 0)};
     building->setBrush(brush);

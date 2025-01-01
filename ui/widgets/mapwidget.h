@@ -43,21 +43,17 @@ private slots :
     /**
      * Dessiner la couche des bâtiments
      */
-    void drawBuildingLayer(const QVector<Building>& buildings);
+//    void drawBuildingLayer(const QVector<Building>& buildings);
 //    void drawWaterLayer(const QVector<Water>& waters);
-    void drawParkLayer(const QVector<Park>& parks);
+//    void drawParkLayer(const QVector<Park>& parks);
     /**
      * @brief Dessiner la couche de
      */
-    void drawRoadLayer(const QVector<Way>& roads);
+//    void drawRoadLayer(const QVector<Way>& roads);
 
 signals :
     void isLoading(bool);
     void isLoaded(bool);
-    void buildingsDataReady(const QVector<Building>& buildings);
-    void parksDataReady(const QVector<Park>& parks);
-//    void watersDataReady(const QVector<Water>& waters);
-    void roadsDataReady(const QVector<Way>& roads);
     // emet l'id du car avec la selection partielle
 //    void addElementToPartialSelection(int id);
 //    void removeElementFromPartialSelection(int id);
@@ -69,8 +65,8 @@ private:
     // lon, lat coord
     std::pair<double, double> d_maxCoord, d_minCoord;
 
-    QVector<QPolygonF> d_meshs;
-    void drawMeshLayer();
+//    QVector<QPolygonF> d_meshs;
+//    void drawMeshLayer();
 
     // stocke les elements de la vue qui ont été partiellement selectionné
 //    std::vector<int> d_partially_selected_elements = std::vector<int>(0);
@@ -91,8 +87,6 @@ private:
 
     // permet de savoir si les elements de la carte on été chargés
     bool d_elementsHasBeenLoaded = false;
-
-    DBManager* d_dbmanager;
 
     osm::Graph* d_graph;
 
@@ -143,12 +137,6 @@ private:
 //    void keyPressEvent(QKeyEvent *event) override;
 //    void keyReleaseEvent(QKeyEvent *event) override;
 //    void contextMenuEvent(QContextMenuEvent *event) override;
-
-
-//    /**
-//     * Dessiner la couche des mailles
-//     */
-//    void drawMeshLayer();
 
 //    /**
 //     * @brief lambert93 Convertis les coordonnees WSG84 en lambert93

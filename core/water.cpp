@@ -26,7 +26,7 @@ void Water::draw(QGraphicsItemGroup* group) const
 //    QPainterPath p;
 //    p.addPolygon(polygon);
 
-    auto water = new QGraphicsPolygonItem(polygon);
+    auto water = new QGraphicsPolygonItem(polygon, group);
     QBrush brush{QColor(0, 191, 255)};
     water->setBrush(brush);
     QPen pen{QColor(0, 191, 255), 1}; // Noir, épaisseur 1 pixel
