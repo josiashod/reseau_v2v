@@ -17,7 +17,6 @@ SOURCES += \
     core/water.cpp \
     core/way.cpp \
     env.cpp \
-    env.cpp \
     main.cpp \
     ui/dialog/addcardialog.cpp \
     ui/widgets/logwidget.cpp \
