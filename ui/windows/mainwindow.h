@@ -90,8 +90,8 @@ private:
     bool d_isPlaying;
     double d_v;
 
-    QStringList d_listOfSpeeds = {"0.25", "0.5" ,"0.75", "Normale", "1.25", "1.5", "1.75", "2"};
-    double d_speeds[8] = {0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2};
+    QStringList d_listOfSpeeds = {"0.25", "0.5" ,"0.75", "Normale", "1.25", "1.5", "1.75", "2", "2.25", "2.5", "2.75", "3"};
+    double d_speeds[12] = {0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3};
     int d_selectedSpeed;
     int d_elapsed_time;
 };
