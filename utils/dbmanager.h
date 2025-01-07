@@ -73,7 +73,7 @@ public:
 private:
 //    static DBManager* d_instance;
     QSqlDatabase d_db;
-    static size_t d_compteur_instance;
+    static size_t d_instance_counter;
 };
 
 #endif // DBMANAGER_H

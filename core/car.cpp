@@ -5,7 +5,7 @@
 #include <QColor>
 
 QString colors[] = {"black", "blue", "red", "green", "yellow"};
-size_t Car::d_compteur_instance = 0;
+size_t Car::d_instance_counter = 0;
 
 QPixmap getRandomImage()
 {
@@ -56,8 +56,6 @@ QColor randomColor()
 double distance(QPointF s, QPointF e)
 {
     return std::hypot(s.x() - e.x(), s.y() - e.y());
-//    QPointF d = e - s;
-//    return std::sqrt((d.x() * d.x()) + (d.y() * d.y()));
 }
 
 double duree(double distance, double vitesse)
@@ -72,28 +70,44 @@ double fspl(double dist, double freq)
 }
 
 Car::Car(): d_v{20.0}, d_freq{10.5}, d_intensity{10}, d_acceleration{1.0}
-  , d_pos{0,0}, d_from{nullptr}, d_to{nullptr}
+  , d_pos{0,0}, d_from{0}, d_to{0}, d_path{std::vector<osm::Node*>(0)}
 {
-    d_id = ++d_compteur_instance;
+    d_id = ++d_instance_counter;
+
+    d_pixmap = new QGraphicsPixmapItem(getRandomImage());
+    d_pixmap->setFlags(QGraphicsItem::ItemIsSelectable);
+    d_color = randomColor();
+    d_ellipse = new QGraphicsEllipseItem(0, 0, d_freq, d_freq);
+    d_ellipse->setFlags(QGraphicsItem::ItemIsSelectable);
+
+    updateItem();
+
+    d_color.setAlphaF(0.5);
+
+    QBrush brush(d_color);
+    QPen pen(Qt::NoPen);
+    d_ellipse->setBrush(brush);
+    d_ellipse->setPen(pen);
+    updateCoverage();
+    d_pixmap->setData(0, QString::number(d_id));
+    d_ellipse->setData(0, QString::number(d_id));
+    d_pixmap->setData(1, toString());
 }
 
 // // Constructeur avec position, vitesse et fréquence
 Car::Car( std::vector<osm::Node*>& path, double vitesse, double frequence, double intensity):
-    d_v{vitesse}, d_freq{frequence}, d_intensity{intensity}, d_acceleration{1.0}, d_path{path}
+    d_v{vitesse}, d_freq{frequence}, d_intensity{intensity}, d_acceleration{1.0}, d_path{path}, d_from{0}, d_to{1}
 {
-    d_id = ++d_compteur_instance;
+    d_id = ++d_instance_counter;
 
-    if(d_path.size() >= 2)
+    if(d_path.size() == 1)
     {
-        d_from = d_path[0];
-        d_to = d_path[1];
+        d_to = 0;
     }
-    else if(d_path.size() == 1)
-    {
-        d_from = d_path[0];
-        d_to = d_from;
-    }
-    d_pos = d_from->pos();
+
+    if(!d_path.empty())
+        d_pos = d_path[d_from]->pos();
+
     d_pixmap = new QGraphicsPixmapItem(getRandomImage());
     d_pixmap->setFlags(QGraphicsItem::ItemIsSelectable);
     d_color = randomColor();
@@ -162,20 +176,10 @@ QGraphicsEllipseItem* Car::ellipse() const
     return d_ellipse;
 }
 
-void Car::randomDestination()
-{
-    osm::Node* destination = d_from->getRandomNeighbor();
-    if(destination)
-        d_to = destination;
-    else
-        d_to = d_from;
-}
-
-
 void Car::updateOrientation()
 {
     d_pixmap->setTransformOriginPoint(d_pixmap->pixmap().width() / 2, d_pixmap->pixmap().height() / 2);
-    QPointF d = d_to->pos() - d_from->pos();
+    QPointF d = d_path[d_to]->pos() - d_path[d_from]->pos();
     qreal angle = std::atan2(d.y(), d.x()) * 180 / M_PI;
     d_pixmap->setRotation(angle + 90);
 }
@@ -186,9 +190,9 @@ void Car::nextMove()
     d_from = d_to;
     if((++i) < d_path.size())
     {
-        d_to = d_path[i];
+        d_to = i;
     }
-    d_pos = d_from->pos();
+    d_pos = d_path[d_from]->pos();
 }
 
 void Car::updateItem()
@@ -230,7 +234,7 @@ void Car::update(double interval)
 
     d_elapsed += interval / 1000.0;  // Convertir l'intervalle en secondes
 
-    double time = duree(distance(d_from->pos(), d_to->pos()), d_v);
+    double time = duree(distance(d_path[d_from]->pos(), d_path[d_to]->pos()), d_v);
 
     // Vérifier si on est arrivée à destination
     if (d_elapsed > time)
@@ -244,7 +248,7 @@ void Car::update(double interval)
     {
         double progress = d_elapsed / time;
 
-        d_pos = d_from->pos() + ((d_to->pos() - d_from->pos()) * progress);
+        d_pos = d_path[d_from]->pos() + ((d_path[d_to]->pos() - d_path[d_from]->pos()) * progress);
         updateItem();
         updateCoverage();
     }
@@ -252,26 +256,26 @@ void Car::update(double interval)
 
 osm::Node* Car::from() const
 {
-    return d_from;
+    return d_path[d_from];
 }
 
 osm::Node* Car::to() const
 {
-    return d_to;
+    return d_path[d_to];
 }
 
 void Car::updatePath(const std::vector<osm::Node*>& path)
 {
     i = 1;
     d_path = path;
-    d_to = d_path[1];
+    d_to = i;
     d_elapsed = 0.0;
     updateOrientation();
 }
 
 bool Car::hasReachedEndOfPath() const
 {
-    return d_to == d_from;
+    return d_path[d_to] == d_path[d_from];
 }
 
 //QGraphicsEllipseItem* coverage = new QGraphicsEllipseItem(d_pos.x() - 50, d_pos.y() - 50, 100, 100);  // Ajuster la taille du cercle

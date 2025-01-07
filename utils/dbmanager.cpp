@@ -15,12 +15,12 @@ const QString _BOUNDS_TABLE_ = "bounds";
 
 // Initialisation des attributs static
 //DBManager* DBManager::d_instance = nullptr;
-size_t DBManager::d_compteur_instance = 0;
+size_t DBManager::d_instance_counter = 0;
 
 DBManager::DBManager()
 {
 
-    d_db = QSqlDatabase::addDatabase(env::DB_CONNECTION, QString("opening_database_%1").arg(d_compteur_instance++));
+    d_db = QSqlDatabase::addDatabase(env::DB_CONNECTION, QString("opening_database_%1").arg(d_instance_counter++));
 
     if(env::DB_CONNECTION == "QSQLITE")
     {
