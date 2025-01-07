@@ -17,6 +17,7 @@ void AddCarDialog::create_interface()
 {
     setWindowTitle("Ajouter des voitures");
     setMinimumSize(450, 100);
+    setAttribute(Qt::WA_DeleteOnClose);
 
     auto main_layout = new QVBoxLayout(this);
 

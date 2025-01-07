@@ -240,8 +240,7 @@ void MainWindow::updateSpeedSelector(int i)
 {
     d_selectedSpeed = i;
     selectSpeed();
-    accelerate();
-    d_timer->setInterval(1000 / (FPS * d_speeds[d_selectedSpeed]));
+//    accelerate();
     playOrPause();
 }
 
@@ -262,7 +261,7 @@ void MainWindow::updateSpeedSelector(int i)
 void MainWindow::playOrPause()
 {
     if(d_isPlaying)
-        d_timer->start(1000 / (FPS * d_speeds[d_selectedSpeed]));
+        d_timer->start(1000 / FPS);
     else
         d_timer->stop();
 }
@@ -279,8 +278,8 @@ void MainWindow::updateCarsPosition()
 {
     double interval = 1000 / FPS;
     static size_t frameCounter = 0;
-    ++d_elapsed_time;
-    QString time = (QTime(0, 0, 0).addSecs(d_elapsed_time)).toString("hh:mm:ss");
+    d_elapsed_time += interval * d_speeds[d_selectedSpeed];
+    QString time = (QTime(0, 0, 0).addSecs(d_elapsed_time / 1000)).toString("hh:mm:ss");
     d_timeLabel->setText("Temps écoulé: " + time);
 
     for(size_t i = 0; i < d_cars.size(); i++)
@@ -307,7 +306,7 @@ void MainWindow::updateCarsPosition()
 
         if((i % 2) == (frameCounter++ % 2))
         {
-            d_cars[i].get()->update(interval);
+            d_cars[i].get()->update(interval * d_speeds[d_selectedSpeed]);
             d_cars[i].get()->updateConnectedCars(d_cars);
 
             if(d_cars[i].get()->hasConnectedCars())
@@ -374,7 +373,7 @@ void MainWindow::addCar(int nb, double speed, double freq, double intensity)
         d_cars.push_back(std::make_unique<Car>(path, speed, freq, intensity));
         d_mapView->addCarImage(d_cars.back()->pixmap());
         d_mapView->addCarEllipse(d_cars.back()->ellipse());
-        d_cars.back()->accelerate(d_speeds[d_selectedSpeed]);
+//        d_cars.back()->accelerate(d_speeds[d_selectedSpeed]);
     }
 
     // on active les boutons de play et vitesse
