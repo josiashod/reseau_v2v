@@ -300,14 +300,14 @@ double Car::receivedPower(const QPointF& pos) const
 //    d_ellipse->setPen(pen);
 //}
 
-void Car::removeSelection()
+void Car::removeMark()
 {
     auto pen = d_ellipse->pen();
     pen.setStyle(Qt::NoPen);
     d_ellipse->setPen(pen);
 }
 
-void Car::selected()
+void Car::mark()
 {
     auto pen = d_ellipse->pen();
     pen.setStyle(Qt::SolidLine);
@@ -337,14 +337,14 @@ bool Car::isConnectedTo(const Car* other) const
 void Car::updateConnectedCars(const std::vector<std::unique_ptr<Car>>& cars)
 {
     d_connected_cars.clear();
-    removeSelection();
+    removeMark();
 
     for(const auto& car: cars)
     {
         if(car.get() != this && isConnectedTo(car.get()))
         {
             d_connected_cars.push_back(car.get());
-            selected();
+            mark();
         }
     }
 }

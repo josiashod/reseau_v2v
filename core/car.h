@@ -101,9 +101,9 @@ class Car
      */
     bool hasConnectedCars() const;
 
-//    void partiallySelected();
-    void selected();
-    void removeSelection();
+//    void partiallymark();
+    void mark();
+    void removeMark();
 
     /**
      * @brief update mettre à jour la position de la voiture selon un interval
