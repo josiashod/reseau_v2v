@@ -55,4 +55,5 @@ Pour charger le fichier osm:
     // decommenter osmreader
     OsmReader::readOSMFile("lien_vers_le_fichier_osm_a_lire");
 ```
-> NB: Charger tout le fichier osm peut prendre du temps donc asseyez vous sur votre canapé, prenez une petite boisson et regarder un film 😉
+> NB: Charger tout le fichier osm peut prendre du temps
+> Prenez une chaise, une boisson, du popcorn puis regarder un film 😉
