@@ -5,7 +5,7 @@ Avant toute compilation
 
 Creer le fichier `env.cpp` en vous basant sur le contenu de `env.exemple`
 
-Enssuite en fonction de la base de donné utilisé, executer ce script de la bd
+Ensuite en fonction de la base de donné utilisé, executer ce script de la bd
 ```sql
 -- Table des limites géographiques du fichier OSM
 CREATE TABLE bounds (
@@ -40,7 +40,7 @@ CREATE TABLE way_node (
 -- Table des tags (attributs associés aux nœuds ou chemins)
 CREATE TABLE tags (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    element_type TEXT NOT NULL CHECK (element_type IN ('node', 'way')),
+    element_type TEXT NOT NULL,
     element_id INTEGER NOT NULL,
     t_key TEXT NOT NULL,
     t_value TEXT NOT NULL
