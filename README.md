@@ -46,3 +46,13 @@ CREATE TABLE tags (
     t_value TEXT NOT NULL
 );
 ```
+
+
+Pour charger le fichier osm:
+```cpp
+    // Commanter le code d'affichage de la fenetre principale
+
+    // decommenter osmreader
+    OsmReader::readOSMFile("lien_vers_le_fichier_osm_a_lire");
+```
+> NB: Charger tout le fichier osm peut prendre du temps donc asseyez vous sur votre canapé, prenez une petite boisson et regarder un film 😉
