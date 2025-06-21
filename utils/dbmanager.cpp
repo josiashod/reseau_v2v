@@ -47,12 +47,18 @@ DBManager::DBManager()
 
 DBManager::~DBManager()
 {
-    if (d_db.isOpen())
-    {
+    // if (d_db.isOpen())
+    // {
+    //     d_db.close();
+    //     qDebug() << "Database: connection closed";
+    // }
+    // QSqlDatabase::removeDatabase(d_db.connectionName());
+
+    if (!QSqlDatabase::database(d_db.connectionName(), false).isOpen()) {
         d_db.close();
+        QSqlDatabase::removeDatabase(d_db.connectionName());
         qDebug() << "Database: connection closed";
     }
-    QSqlDatabase::removeDatabase(d_db.connectionName());
 
 //    QString threadId = QString::number(reinterpret_cast<quintptr>(QThread::currentThreadId()));
 //    if (QSqlDatabase::contains(threadId)) {
