@@ -1,4 +1,5 @@
 #include "osmreader.h"
+#include "dbmanager.h"
 
 #include <QSqlQuery>
 #include <vector>
@@ -45,7 +46,7 @@ void OsmReader::readBounds(QXmlStreamReader& xml) {
     double maxlat = xml.attributes().value("maxlat").toDouble();
     double maxlon = xml.attributes().value("maxlon").toDouble();
 
-    auto db = DBManager().getDatabase();
+    auto db = DBManager::instance().database();
     QSqlQuery query(db);
     query.prepare("INSERT INTO bounds(minlat, minlon, maxlat, maxlon) VALUES(:minlat, :minlon, :maxlat, :maxlon)");
     query.bindValue(":minlat", minlat);
@@ -53,13 +54,13 @@ void OsmReader::readBounds(QXmlStreamReader& xml) {
     query.bindValue(":maxlat", maxlat);
     query.bindValue(":maxlon", maxlon);
     if(query.exec())
-       {
-           qDebug() << "add bounds success";
-       }
-       else
-       {
-            qDebug() << "add bounds error " << db.lastError().text();;
-       }
+    {
+       qDebug() << "add bounds success";
+    }
+    else
+    {
+        qDebug() << "add bounds error " << db.lastError().text();;
+    }
 
     query.finish();
     query.clear();
@@ -70,20 +71,20 @@ void OsmReader::readNode(QXmlStreamReader& xml) {
     double lon = xml.attributes().value("lon").toDouble();
     long long id = xml.attributes().value("id").toString().toLongLong();
 
-    auto db = DBManager().getDatabase();
+    auto db = DBManager::instance().database();
     QSqlQuery query(db);
     query.prepare("INSERT INTO nodes(id, lat, lon) VALUES(:id, :lat, :lon)");
     query.bindValue(":id", id);
     query.bindValue(":lat", lat);
     query.bindValue(":lon", lon);
     if(query.exec())
-       {
-           qDebug() << "add node success";
-       }
-       else
-       {
-            qDebug() << "add node error " << db.lastError().text();;
-       }
+    {
+       qDebug() << "add node success";
+    }
+    else
+    {
+        qDebug() << "add node error " << db.lastError().text();;
+    }
 
     // Parcourir les nœuds du chemin
     while (!(xml.tokenType() == QXmlStreamReader::EndElement && xml.name().toString() == "node"))
@@ -115,7 +116,7 @@ void OsmReader::readWay(QXmlStreamReader& xml)
 {
     long long wayId = xml.attributes().value("id").toString().toLongLong();
     std::vector<long long> node_ids;
-    auto db = DBManager().getDatabase();
+    auto db = DBManager::instance().database();
     QSqlQuery query(db);
 
     // Parcourir les nœuds du chemin
@@ -164,24 +165,24 @@ void OsmReader::readWay(QXmlStreamReader& xml)
     query.clear();
 }
 
-//void OsmReader::readRelation(QXmlStreamReader& xml) {
-//    QString relationId = xml.attributes().value("id").toString();
-//    qDebug() << "Relation ID:" << relationId;
+void OsmReader::readRelation(QXmlStreamReader& xml) {
+   QString relationId = xml.attributes().value("id").toString();
+   qDebug() << "Relation ID:" << relationId;
 
-//    // Parcourir les membres de la relation
-//    while (!(xml.tokenType() == QXmlStreamReader::EndElement && xml.name() == "relation")) {
-//        xml.readNext();
-//        if (xml.tokenType() == QXmlStreamReader::StartElement && xml.name() == "member") {
-//            QString type = xml.attributes().value("type").toString();
-//            QString ref = xml.attributes().value("ref").toString();
-//            qDebug() << "  Member type:" << type << "Reference:" << ref;
-//        }
+   // Parcourir les membres de la relation
+   while (!(xml.tokenType() == QXmlStreamReader::EndElement && xml.name() == "relation")) {
+       xml.readNext();
+       if (xml.tokenType() == QXmlStreamReader::StartElement && xml.name() == "member") {
+           QString type = xml.attributes().value("type").toString();
+           QString ref = xml.attributes().value("ref").toString();
+           qDebug() << "  Member type:" << type << "Reference:" << ref;
+       }
 
-//        // Gérer les tags pour identifier le type de relation (par exemple, pour les bâtiments)
-//        if (xml.tokenType() == QXmlStreamReader::StartElement && xml.name() == "tag") {
-//            QString key = xml.attributes().value("k").toString();
-//            QString value = xml.attributes().value("v").toString();
-//            qDebug() << "  Tag:" << key << "Value:" << value;
-//        }
-//    }
-//}
+       // Gérer les tags pour identifier le type de relation (par exemple, pour les bâtiments)
+       if (xml.tokenType() == QXmlStreamReader::StartElement && xml.name() == "tag") {
+           QString key = xml.attributes().value("k").toString();
+           QString value = xml.attributes().value("v").toString();
+           qDebug() << "  Tag:" << key << "Value:" << value;
+       }
+   }
+}

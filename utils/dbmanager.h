@@ -10,70 +10,78 @@
 class DBManager
 {
 public:
-    DBManager();
-    ~DBManager();
     /**
      * @brief getInstance retourne l'instance unique d'utilisation de la bd
      * @return
      */
-//    static DBManager* getInstance();
+   static DBManager& instance();
     /**
-     * @brief getDatabase retourne la base de donnée du thread en cours
+     * @brief retourne la base de donnée du thread en cours
      * @return
      */
-    QSqlDatabase getDatabase();
-    /**
-     * @brief destroyInstance Suppression de l'instance
-     */
+    QSqlDatabase& database();
+    // *
+    //  * @brief destroyInstance Suppression de l'instance
+
 //    static void destroyInstance();
-//    void closeDatabase();
+    /**
+     * @brief close database
+     */
+    void close();
     /**
      * @brief getBounds: retourne la requete pour avoir les coordonnes max et min
      * @return {{MaxLon, MaxLat}, {MinLon, MinLat}}
      */
-    QSqlQuery getBounds(QSqlDatabase db) const;
+    QSqlQuery getBounds() const;
 
     /**
      * @brief getNodes: retourne la requete pour recuperer les noeuds
      * @return la requete
      */
-    QSqlQuery getNodes(QSqlDatabase db) const;
+    QSqlQuery getNodes() const;
     /**
      * @brief getNodeDs: retourne la requete pour recuperer les noeud descriptifs
      * @return la requete
      */
-    QSqlQuery getNodeDs(QSqlDatabase db) const;
+    QSqlQuery getNodeDs() const;
     /**
      * @brief getRoads: retourne la requete pour recuperer routes
      * @return la requete
      */
-    QSqlQuery getRoads(QSqlDatabase db) const;
+    QSqlQuery getRoads() const;
     /**
      * @brief getWaters: retourne la requete pour recuperer les eaux
      * @return la requete
      */
-    QSqlQuery getWaters(QSqlDatabase db) const;
+    QSqlQuery getWaters() const;
     /**
      * @brief getBuildings: retourne la requete pour recuperer les immeubles
      * @return la requete
      */
-    QSqlQuery getBuildings(QSqlDatabase db) const;
+    QSqlQuery getBuildings() const;
     /**
      * @brief getParks: retourne la requete pour recuperer les espaces verts
      * @return la requete
      */
-    QSqlQuery getParks(QSqlDatabase db) const;
+    QSqlQuery getParks() const;
     /**
      * @brief getWayNodes: recuperer les noeuds d'un ways
      * @param id du noeuds
      * @return
      */
-    QSqlQuery getWayNodes(QSqlDatabase db, long long id) const;
+    QSqlQuery getWayNodes(long long id) const;
 
 private:
-//    static DBManager* d_instance;
+    DBManager();
+    ~DBManager();
     QSqlDatabase d_db;
-    static size_t d_compteur_instance;
+    /**
+     * @brief tel if database is open or not
+     */
+    bool d_open;
+    DBManager(const DBManager&) = delete;
+    DBManager& operator=(const DBManager&) = delete;
+    // static size_t d_compteur_instance;
 };
 
 #endif // DBMANAGER_H

@@ -4,7 +4,6 @@
 #include <QFile>
 #include <QXmlStreamReader>
 #include <QDebug>
-#include "dbmanager.h"
 
 class OsmReader
 {
@@ -14,10 +13,8 @@ public:
 private:
     static void readBounds(QXmlStreamReader& xml);
     static void readNode(QXmlStreamReader& xml);
-//    void readRelation(QXmlStreamReader& xml);
+    void readRelation(QXmlStreamReader& xml);
     static void readWay(QXmlStreamReader& xml);
-
-//    DBManager d_db;
 };
 
 #endif // OSMREADER_H
