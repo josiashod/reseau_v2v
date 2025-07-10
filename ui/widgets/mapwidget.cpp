@@ -423,13 +423,10 @@ void MapWidget::initBounds()
 
 void MapWidget::initBuildings()
 {
-//    QVector<Building> buildings;
-    // auto d_dbmanager = DBManager();
     auto query = DBManager::instance().getBuildings(DBManager::threadDatabase());
     bool success = false;
 
     success = query.exec();
-
     if(success)
     {
         while(query.next())
@@ -437,7 +434,7 @@ void MapWidget::initBuildings()
             long long id;
             id = query.value(0).toString().toLongLong();
 
-            Building b{id};
+            std::vector<QPointF> points;
 
             auto q = DBManager::instance().getWayNodes(DBManager::threadDatabase(), id);
             success = q.exec();
@@ -451,43 +448,31 @@ void MapWidget::initBuildings()
                     lat = q.value(1).toString().toDouble();
                     lon = q.value(2).toString().toDouble();
 
-                    //            coord = lambert93(lon, lat);
                     coord = std::make_pair(lon, lat);
-                    QPointF p = pairLatLonToXY(coord);
-                    b.addPoint(p);
-//                    qDebug() << QString("[SUCCESS] Building n°: %1.").arg(id);
+                    points.push_back(pairLatLonToXY(coord));
+
                 }
             }
-//            buildings.push_back(b);
-            QMetaObject::invokeMethod(this, [this, b]() {
-               b.draw(d_buildingLayer);
+            auto b = new Building{id, points};
+            QMetaObject::invokeMethod(this, [layer = d_buildingLayer, b]() {
+                layer->addToGroup(b);
             }, Qt::QueuedConnection);
-            // if(d_logger)
-            //     d_logger->addLog(QString("[SUCCESS] Building n°: %1.").arg(id), LogWidget::SUCCESS);
         }
         query.finish();
     }
-    // else
-    // {
-    //     if(d_logger)
-    //         d_logger->addLog("[ERREUR] Un problème est survenu lors de la récupération des buildings", LogWidget::DANGER);
-    // }
+    else
+    {
+        qWarning() << "Erreur lors de la lecture de la  base de donnée";
+    }
 
-    // if(d_logger)
-    //     d_logger->addLog("[INFO] Emission des buildings pour affichage.");
-//    emit buildingsDataReady(buildings);
-    // DBManager::instance().close();
 }
 
 void MapWidget::initParks()
 {
-//    QVector<Park> parks;
-    // auto d_dbmanager = DBManager();
     auto query = DBManager::instance().getParks(DBManager::threadDatabase());
     bool success = false;
 
     success = query.exec();
-
     if(success)
     {
         while(query.next())
@@ -510,16 +495,14 @@ void MapWidget::initParks()
 
                     //            coord = lambert93(lon, lat);
                     coord = std::make_pair(lon, lat);
-                    QPointF p = pairLatLonToXY(coord);
-                    points.push_back(p);
+                    // QPointF p = ;
+                    points.push_back(pairLatLonToXY(coord));
                 }
             }
             auto park = new Park{id, points};
             QMetaObject::invokeMethod(this, [layer = d_parkLayer, park]() {
                 layer->addToGroup(park);
             }, Qt::QueuedConnection);
-            // if(d_logger)
-            // d_logger->addLog(QString("[SUCCESS] Park n°: %1.").arg(id), LogWidget::SUCCESS);
         }
         query.finish();
     }
