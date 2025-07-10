@@ -20,10 +20,13 @@ public:
      * @return
      */
     QSqlDatabase& database();
-    // *
-    //  * @brief destroyInstance Suppression de l'instance
 
-//    static void destroyInstance();
+   /**
+     * @brief create database by threads
+     * @return
+     */
+   static QSqlDatabase threadDatabase();
+
     /**
      * @brief close database
      */
@@ -38,38 +41,38 @@ public:
      * @brief getNodes: retourne la requete pour recuperer les noeuds
      * @return la requete
      */
-    QSqlQuery getNodes() const;
+    QSqlQuery getNodes(QSqlDatabase db) const;
     /**
      * @brief getNodeDs: retourne la requete pour recuperer les noeud descriptifs
      * @return la requete
      */
-    QSqlQuery getNodeDs() const;
+    QSqlQuery getNodeDs(QSqlDatabase db) const;
     /**
      * @brief getRoads: retourne la requete pour recuperer routes
      * @return la requete
      */
-    QSqlQuery getRoads() const;
+    QSqlQuery getRoads(QSqlDatabase db) const;
     /**
      * @brief getWaters: retourne la requete pour recuperer les eaux
      * @return la requete
      */
-    QSqlQuery getWaters() const;
+    QSqlQuery getWaters(QSqlDatabase db) const;
     /**
      * @brief getBuildings: retourne la requete pour recuperer les immeubles
      * @return la requete
      */
-    QSqlQuery getBuildings() const;
+    QSqlQuery getBuildings(QSqlDatabase db) const;
     /**
      * @brief getParks: retourne la requete pour recuperer les espaces verts
      * @return la requete
      */
-    QSqlQuery getParks() const;
+    QSqlQuery getParks(QSqlDatabase db) const;
     /**
      * @brief getWayNodes: recuperer les noeuds d'un ways
      * @param id du noeuds
      * @return
      */
-    QSqlQuery getWayNodes(long long id) const;
+    QSqlQuery getWayNodes(QSqlDatabase db, long long id) const;
 
 private:
     DBManager();
@@ -81,7 +84,6 @@ private:
     bool d_open;
     DBManager(const DBManager&) = delete;
     DBManager& operator=(const DBManager&) = delete;
-    // static size_t d_compteur_instance;
 };
 
 #endif // DBMANAGER_H

@@ -5,8 +5,12 @@
 #include <QFuture>
 #include <QFutureWatcher>
 #include <QMenu>
-#include "logwidget.h"
 #include "../../core/graph.h"
+#include "./../../core/way.h"
+#include "./../../core/building.h"
+//#include "./../../core/water.h"
+#include "./../../core/park.h"
+#include "./../../utils/dbmanager.h"
 
 
 // CRÉATION DE L'INTERFACE
@@ -125,14 +129,14 @@ void MapWidget::resizeEvent(QResizeEvent *event)
             cleanWatcher(roadWatcher);
         });
 
-        connect(parkWatcher, &QFutureWatcher<void>::finished, this, [this, cleanWatcher, parkWatcher](){
+        connect(parkWatcher, &QFutureWatcher<void>::finished, this, [ cleanWatcher, parkWatcher](){
             cleanWatcher(parkWatcher);
         });
 
 //        connect(buildingWatcher, &QFutureWatcher<void>::finished, this, [this, cleanWatcher, buildingWatcher](){
 //            cleanWatcher(buildingWatcher);
 //        });
-        connect(meshWatcher, &QFutureWatcher<void>::finished, this, [this, cleanWatcher, meshWatcher](){
+        connect(meshWatcher, &QFutureWatcher<void>::finished, this, [ cleanWatcher, meshWatcher](){
             cleanWatcher(meshWatcher);
         });
 
@@ -373,8 +377,8 @@ QPointF MapWidget::latLonToXY(double lon, double lat) {
 
 void MapWidget::initBounds()
 {
-    auto d_dbmanager = DBManager();
-    QSqlQuery query = d_dbmanager.getBounds(d_dbmanager.getDatabase());
+    // auto d_dbmanager = DBManager();
+    QSqlQuery query = DBManager::instance().getBounds();
     double minLat = 0.0, maxLat = 0.0, minLon = 0.0, maxLon = 0.0;
     bool success = false;
     QString log;
@@ -414,13 +418,14 @@ void MapWidget::initBounds()
             qDebug() << log;
     }
     query.finish();
+    // DBManager::instance().close();
 }
 
 void MapWidget::initBuildings()
 {
 //    QVector<Building> buildings;
-    auto d_dbmanager = DBManager();
-    auto query = d_dbmanager.getBuildings(d_dbmanager.getDatabase());
+    // auto d_dbmanager = DBManager();
+    auto query = DBManager::instance().getBuildings(DBManager::threadDatabase());
     bool success = false;
 
     success = query.exec();
@@ -434,7 +439,7 @@ void MapWidget::initBuildings()
 
             Building b{id};
 
-            auto q = d_dbmanager.getWayNodes(d_dbmanager.getDatabase(), id);
+            auto q = DBManager::instance().getWayNodes(DBManager::threadDatabase(), id);
             success = q.exec();
             if(success)
             {
@@ -471,13 +476,14 @@ void MapWidget::initBuildings()
     // if(d_logger)
     //     d_logger->addLog("[INFO] Emission des buildings pour affichage.");
 //    emit buildingsDataReady(buildings);
+    // DBManager::instance().close();
 }
 
 void MapWidget::initParks()
 {
 //    QVector<Park> parks;
-    auto d_dbmanager = DBManager();
-    auto query = d_dbmanager.getParks(d_dbmanager.getDatabase());
+    // auto d_dbmanager = DBManager();
+    auto query = DBManager::instance().getParks(DBManager::threadDatabase());
     bool success = false;
 
     success = query.exec();
@@ -491,7 +497,7 @@ void MapWidget::initParks()
 
             Park park{id};
 
-            auto q = d_dbmanager.getWayNodes(d_dbmanager.getDatabase(), id);
+            auto q = DBManager::instance().getWayNodes(DBManager::threadDatabase(), id);
             success = q.exec();
             if(success)
             {
@@ -528,13 +534,14 @@ void MapWidget::initParks()
     // if(d_logger)
     // d_logger->addLog("[INFO] Emission des parks pour affichage.");
 //    emit parksDataReady(parks);
+    // DBManager::instance().close();
 }
 
 /*void MapWidget::initWaters()
 {
     QVector<Water> waters;
-    auto d_dbmanager = DBManager();
-    auto query = d_dbmanager.getWaters(d_dbmanager.getDatabase());
+    // auto d_dbmanager = DBManager();
+    auto query = DBManager::instance().getWaters();
     bool success = false;
 
     success = query.exec();
@@ -548,7 +555,7 @@ void MapWidget::initParks()
 
             Water w{id};
 
-            auto q = d_dbmanager.getWayNodes(d_dbmanager.getDatabase(), id);
+            auto q = DBManager::instance().getWayNodes(, id);
             success = q.exec();
             if(success)
             {
@@ -580,13 +587,14 @@ void MapWidget::initParks()
     // }
     // d_logger->addLog("[INFO] Emission des waters pour affichage.");
     emit watersDataReady(waters);
+// DBManager::instance().close();
 }*/
 
 void MapWidget::initRoads()
 {
 //    QVector<Way> ways;
-    auto d_dbmanager = DBManager();
-    auto query = d_dbmanager.getRoads(d_dbmanager.getDatabase());
+    // auto d_dbmanager = DBManager();
+    auto query = DBManager::instance().getRoads(DBManager::threadDatabase());
     bool success = false;
 
     success = query.exec();
@@ -603,7 +611,7 @@ void MapWidget::initRoads()
             QString value = query.value(4).toString();
             w.addTag(key, value);
 
-            auto q = d_dbmanager.getWayNodes(d_dbmanager.getDatabase(), id);
+            auto q = DBManager::instance().getWayNodes(DBManager::threadDatabase(), id);
             success = q.exec();
             if(success)
             {
@@ -670,6 +678,7 @@ void MapWidget::initRoads()
     // if(d_logger)
     //     d_logger->addLog("[INFO] Emission des roads pour affichage.");
 //    emit roadsDataReady(ways);
+    // DBManager::instance().close();
 }
 
 void MapWidget::initMeshs()

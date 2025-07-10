@@ -7,15 +7,8 @@
 #include <QResizeEvent>
 #include <QPoint>
 #include <QMap>
-#include <map>
 //#include <proj.h>
 
-#include "./../../core/way.h"
-#include "./../../core/building.h"
-//#include "./../../core/water.h"
-#include "./../../core/park.h"
-#include "./../../utils/dbmanager.h"
-#include <vector>
 
 namespace osm
 {
