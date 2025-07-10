@@ -5,6 +5,11 @@ MapItem::MapItem(long long id)
     : d_id{id}  
 {}
 
+MapItem::MapItem(long long id, const std::vector<QPointF>& points)
+    : d_id{id},
+    d_points{points}
+{}
+
 long long MapItem::id() const
 { return d_id; }
 
@@ -26,4 +31,9 @@ QString MapItem::tag(const QString& tag) const {
         return it->second;
     }
     return QString();
+}
+
+void MapItem::draw(QGraphicsItemGroup* group) const
+{
+
 }

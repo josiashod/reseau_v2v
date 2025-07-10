@@ -2,18 +2,18 @@
 #define PARK_H
 
 #include "mapitem.h"
+#include <QGraphicsObject>
 
-class Park : public MapItem
+class Park : public MapItem, public QGraphicsObject
 {
 public:
-    Park(long long id);
+    Park(long long id, const std::vector<QPointF>& points, QGraphicsItem* parent = nullptr);
 
-    /**
-     * @brief draw: dessine la route avec un scale_factor donné
-     * @param group le group ou doit etre l'instance
-     * @param scale_factor: le scale factor
-     */
-    void draw(QGraphicsItemGroup* group) const override;
+    QRectF boundingRect() const override;
+
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = nullptr) override;
+
+    QPolygonF d_polygon;
 };
 
 #endif // PARK_H

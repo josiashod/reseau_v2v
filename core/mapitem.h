@@ -15,6 +15,8 @@ public:
 
     MapItem(long long);
 
+    MapItem(long long, const std::vector<QPointF>&);
+
     /**
      * @brief id
      * @return retourne l'id du MapItem
@@ -49,7 +51,7 @@ public:
      * @param group le group ou doit etre l'instance
      * @param scale_factor: le scale factor
      */
-    virtual void draw(QGraphicsItemGroup* group) const = 0;
+    virtual void draw(QGraphicsItemGroup* group) const;
 protected:
     long long d_id;
     std::vector<QPointF> d_points;

@@ -494,8 +494,7 @@ void MapWidget::initParks()
         {
             long long id;
             id = query.value(0).toString().toLongLong();
-
-            Park park{id};
+            std::vector<QPointF> points;
 
             auto q = DBManager::instance().getWayNodes(DBManager::threadDatabase(), id);
             success = q.exec();
@@ -504,37 +503,30 @@ void MapWidget::initParks()
                 while(q.next())
                 {
                     std::pair<double, double> coord;
-//                    long long id;
                     double lat = 0.0, lon = 0.0;
 
-//                    id = q.value(0).toString().toLongLong();
                     lat = q.value(1).toString().toDouble();
                     lon = q.value(2).toString().toDouble();
 
                     //            coord = lambert93(lon, lat);
                     coord = std::make_pair(lon, lat);
                     QPointF p = pairLatLonToXY(coord);
-                    park.addPoint(p);
+                    points.push_back(p);
                 }
             }
-//            parks.push_back(park);
-            QMetaObject::invokeMethod(this, [this, park]() {
-               park.draw(d_parkLayer);
+            auto park = new Park{id, points};
+            QMetaObject::invokeMethod(this, [layer = d_parkLayer, park]() {
+                layer->addToGroup(park);
             }, Qt::QueuedConnection);
             // if(d_logger)
             // d_logger->addLog(QString("[SUCCESS] Park n°: %1.").arg(id), LogWidget::SUCCESS);
         }
         query.finish();
     }
-    // else
-    // {
-    //     if(d_logger)
-    //     d_logger->addLog("[ERREUR] Un problème est survenu lors de la récupération des parks", LogWidget::DANGER);
-    // }
-    // if(d_logger)
-    // d_logger->addLog("[INFO] Emission des parks pour affichage.");
-//    emit parksDataReady(parks);
-    // DBManager::instance().close();
+    else
+    {
+        qWarning() << "Erreur lors de la lecture de la  base de donnée";
+    }
 }
 
 /*void MapWidget::initWaters()
