@@ -10,7 +10,6 @@
 class Car
 {
  public:
-    static constexpr double d_power_threshold = 5.0;
     Car();
      /**
       * @brief Car avec paramètre
@@ -54,11 +53,6 @@ class Car
 
     osm::Node* from() const;
     osm::Node* to() const;
-
-    /**
-     * @brief randomDestination generate a new destination for the car
-     */
-    void randomDestination();
 
     /**
      * @brief nextMove move to the next segment of the path
@@ -107,9 +101,9 @@ class Car
      */
     bool hasConnectedCars() const;
 
-//    void partiallySelected();
-    void selected();
-    void removeSelection();
+//    void partiallymark();
+    void mark();
+    void removeMark();
 
     /**
      * @brief update mettre à jour la position de la voiture selon un interval
@@ -125,7 +119,8 @@ class Car
 
 // signals:
 //    void endPathReach(long long currentPos);
-    static size_t d_compteur_instance;
+    static size_t d_instance_counter;
+    static constexpr double d_power_threshold = 5.0;
  private:
     // vitesse de la voiture
     double d_v;
@@ -140,9 +135,9 @@ class Car
     QPointF d_pos;
 
     // position de depart de la voiture
-    osm::Node* d_from;
+    size_t d_from;
     // position de position d'arrivée
-    osm::Node* d_to;
+    size_t d_to;
 
     std::vector<osm::Node*> d_path;
 

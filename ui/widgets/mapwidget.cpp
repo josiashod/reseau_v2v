@@ -582,9 +582,10 @@ void MapWidget::initRoads()
             id = query.value(0).toString().toLongLong();
 
             Way w{id};
-            QString key = query.value(3).toString();
-            QString value = query.value(4).toString();
+            QString key = query.value(4).toString();
+            QString value = query.value(5).toString();
             w.addTag(key, value);
+
 
             auto q = DBManager::instance().getWayNodes(id);
             success = q.exec();

@@ -412,7 +412,7 @@ void MainWindow::addCar(int nb, double speed, double freq, double intensity)
 
 //    if (it != d_cars.end()) {
 //        auto car = (*it).get();
-//        car->removeSelection();
+//        car->removeMark();
 //    }
 //}
 
@@ -449,7 +449,7 @@ void MainWindow::addCar(int nb, double speed, double freq, double intensity)
 
 //        if (it != d_cars.end()) {
 //            auto car = (*it).get();
-//            car->removeSelection();
+//            car->removeMark();
 //        }
 //    }
 //    d_car_partially_selected.clear();
