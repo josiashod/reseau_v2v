@@ -41,38 +41,38 @@ public:
      * @brief getNodes: retourne la requete pour recuperer les noeuds
      * @return la requete
      */
-    QSqlQuery getNodes(QSqlDatabase db) const;
+    QSqlQuery getNodes() const;
     /**
      * @brief getNodeDs: retourne la requete pour recuperer les noeud descriptifs
      * @return la requete
      */
-    QSqlQuery getNodeDs(QSqlDatabase db) const;
+    QSqlQuery getNodeDs() const;
     /**
      * @brief getRoads: retourne la requete pour recuperer routes
      * @return la requete
      */
-    QSqlQuery getRoads(QSqlDatabase db) const;
+    QSqlQuery getRoads() const;
     /**
      * @brief getWaters: retourne la requete pour recuperer les eaux
      * @return la requete
      */
-    QSqlQuery getWaters(QSqlDatabase db) const;
+    QSqlQuery getWaters() const;
     /**
      * @brief getBuildings: retourne la requete pour recuperer les immeubles
      * @return la requete
      */
-    QSqlQuery getBuildings(QSqlDatabase db) const;
+    QSqlQuery getBuildings() const;
     /**
      * @brief getParks: retourne la requete pour recuperer les espaces verts
      * @return la requete
      */
-    QSqlQuery getParks(QSqlDatabase db) const;
+    QSqlQuery getParks() const;
     /**
      * @brief getWayNodes: recuperer les noeuds d'un ways
      * @param id du noeuds
      * @return
      */
-    QSqlQuery getWayNodes(QSqlDatabase db, long long id) const;
+    QSqlQuery getWayNodes(long long id) const;
 
 private:
     DBManager();

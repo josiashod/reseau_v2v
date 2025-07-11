@@ -1,9 +1,7 @@
 #include "mapwidget.h"
 #include <QGraphicsItemAnimation>
 #include <QVBoxLayout>
-#include <QtConcurrent>
-#include <QFuture>
-#include <QFutureWatcher>
+#include <QTimer>
 #include <QMenu>
 #include "../../core/graph.h"
 #include "./../../core/way.h"
@@ -24,11 +22,6 @@ MapWidget::MapWidget(QWidget *parent, osm::Graph* graph)
 
 MapWidget::~MapWidget()
 {
-//    delete d_parkLayer;
-//    delete d_wayLayer;
-//    delete d_buildingLayer;
-//    delete d_freqCarsLayer;
-//    delete d_carsLayer;
     for (auto *item : d_scene->items()) {
         delete item; // Libère chaque élément
     }
@@ -112,47 +105,29 @@ void MapWidget::resizeEvent(QResizeEvent *event)
 //        observation_point = QPointF(event->size().width() / 2, event->size().height() / 2);
         fitInView(d_scene->sceneRect(), Qt::KeepAspectRatio);
 
-        auto cleanWatcher = [](QFutureWatcher<void>* watcher) {
-            watcher->deleteLater();
-        };
-
         // Configurer la vue (taille et centrage)
         setAlignment(Qt::AlignCenter);
 
-        auto roadWatcher = new QFutureWatcher<void>(this);
-        auto parkWatcher = new QFutureWatcher<void>(this);
-//        auto buildingWatcher = new QFutureWatcher<void>(this);
-        auto meshWatcher = new QFutureWatcher<void>(this);
-
-        connect(roadWatcher, &QFutureWatcher<void>::finished, this, [this, cleanWatcher, roadWatcher](){
-            isLoadingFinished();
-            cleanWatcher(roadWatcher);
-        });
-
-        connect(parkWatcher, &QFutureWatcher<void>::finished, this, [ cleanWatcher, parkWatcher](){
-            cleanWatcher(parkWatcher);
-        });
-
-//        connect(buildingWatcher, &QFutureWatcher<void>::finished, this, [this, cleanWatcher, buildingWatcher](){
-//            cleanWatcher(buildingWatcher);
-//        });
-        connect(meshWatcher, &QFutureWatcher<void>::finished, this, [ cleanWatcher, meshWatcher](){
-            cleanWatcher(meshWatcher);
-        });
-
-        // Associe le watcher au future
-        parkWatcher->setFuture(QtConcurrent::run([this]() {
+        QTimer::singleShot(100, [this]() {
+            initMeshs();
             initParks();
-        }));
-        roadWatcher->setFuture(QtConcurrent::run([this]() {
+            initBuildings();
             initRoads();
-        }));
+            isLoadingFinished();
+        });
+        // Associe le watcher au future
+        // parkWatcher->setFuture(QtConcurrent::run([this]() {
+        //     initParks();
+        // }));
+        // roadWatcher->setFuture(QtConcurrent::run([this]() {
+        //     initRoads();
+        // }));
 //        buildingWatcher->setFuture(QtConcurrent::run([this]() {
 //            initBuildings();
 //        }));
-        meshWatcher->setFuture(QtConcurrent::run([this]() {
-            initMeshs();
-        }));
+        // meshWatcher->setFuture(QtConcurrent::run([this]() {
+        //     initMeshs();
+        // }));
     }
 }
 
@@ -423,7 +398,7 @@ void MapWidget::initBounds()
 
 void MapWidget::initBuildings()
 {
-    auto query = DBManager::instance().getBuildings(DBManager::threadDatabase());
+    auto query = DBManager::instance().getBuildings();
     bool success = false;
 
     success = query.exec();
@@ -436,7 +411,7 @@ void MapWidget::initBuildings()
 
             std::vector<QPointF> points;
 
-            auto q = DBManager::instance().getWayNodes(DBManager::threadDatabase(), id);
+            auto q = DBManager::instance().getWayNodes(id);
             success = q.exec();
             if(success)
             {
@@ -469,7 +444,7 @@ void MapWidget::initBuildings()
 
 void MapWidget::initParks()
 {
-    auto query = DBManager::instance().getParks(DBManager::threadDatabase());
+    auto query = DBManager::instance().getParks();
     bool success = false;
 
     success = query.exec();
@@ -481,7 +456,7 @@ void MapWidget::initParks()
             id = query.value(0).toString().toLongLong();
             std::vector<QPointF> points;
 
-            auto q = DBManager::instance().getWayNodes(DBManager::threadDatabase(), id);
+            auto q = DBManager::instance().getWayNodes(id);
             success = q.exec();
             if(success)
             {
@@ -530,7 +505,7 @@ void MapWidget::initParks()
 
             Water w{id};
 
-            auto q = DBManager::instance().getWayNodes(, id);
+            auto q = DBManager::instance().getWayNodes(id);
             success = q.exec();
             if(success)
             {
@@ -562,14 +537,13 @@ void MapWidget::initParks()
     // }
     // d_logger->addLog("[INFO] Emission des waters pour affichage.");
     emit watersDataReady(waters);
-// DBManager::instance().close();
 }*/
 
 void MapWidget::initRoads()
 {
 //    QVector<Way> ways;
     // auto d_dbmanager = DBManager();
-    auto query = DBManager::instance().getRoads(DBManager::threadDatabase());
+    auto query = DBManager::instance().getRoads();
     bool success = false;
 
     success = query.exec();
@@ -586,7 +560,7 @@ void MapWidget::initRoads()
             QString value = query.value(4).toString();
             w.addTag(key, value);
 
-            auto q = DBManager::instance().getWayNodes(DBManager::threadDatabase(), id);
+            auto q = DBManager::instance().getWayNodes(id);
             success = q.exec();
             if(success)
             {

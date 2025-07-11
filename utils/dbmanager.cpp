@@ -50,7 +50,7 @@ QSqlDatabase DBManager::threadDatabase()
 {
     QString connectionName = QString::number((quintptr)QThread::currentThreadId());
     if (!QSqlDatabase::contains(connectionName)) {
-        QSqlDatabase db = QSqlDatabase::addDatabase(env::DB_CONNECTION, connectionName);
+        auto db = QSqlDatabase::addDatabase(env::DB_CONNECTION, connectionName);
         if(env::DB_CONNECTION == "QSQLITE") {
             db.setDatabaseName(env::DB_DATABASE);
         } else {
@@ -101,14 +101,14 @@ QSqlQuery DBManager::getBounds() const
     return q;
 }
 
-QSqlQuery DBManager::getNodes(QSqlDatabase db) const
+QSqlQuery DBManager::getNodes() const
 {
     QString queryStr = QString("SELECT n.id, n.lat, n.lon "
     "FROM %1 AS n "
     "LEFT JOIN %2 AS wn ON wn.node_id = n.id "
     "LEFT JOIN %3 AS t ON t.element_id = n.id "
     "WHERE wn.way_id IS NOT NULL AND t.element_id IS NULL").arg(_NODES_TABLE_, _WAY_NODE_TABLE_, _TAGS_TABLE_);
-    QSqlQuery q(db);
+    QSqlQuery q(d_db);
     if (!q.prepare(queryStr)) {
         qDebug() << "Error preparing query: " << q.lastError().text();
     }
@@ -116,13 +116,13 @@ QSqlQuery DBManager::getNodes(QSqlDatabase db) const
     return q;
 }
 
-QSqlQuery DBManager::getNodeDs(QSqlDatabase db) const
+QSqlQuery DBManager::getNodeDs() const
 {
     QString queryStr = QString("SELECT  * "
         "FROM %1 "
         "LEFT JOIN %2 as t ON t.element_id = %1.id "
        "WHERE t.t_key = '%3'").arg(_NODES_TABLE_, _TAGS_TABLE_, "name");
-    QSqlQuery q(db);
+    QSqlQuery q(d_db);
     if (!q.prepare(queryStr)) {
         qDebug() << "Error preparing query: " << q.lastError().text();
     }
@@ -130,13 +130,13 @@ QSqlQuery DBManager::getNodeDs(QSqlDatabase db) const
     return q;
 }
 
-QSqlQuery DBManager::getRoads(QSqlDatabase db) const
+QSqlQuery DBManager::getRoads() const
 {
     QString queryStr = QString("SELECT  * "
         "FROM %1 "
         "LEFT JOIN %2 as t ON t.element_id = %1.id "
         "WHERE t.t_key = 'highway'").arg(_WAYS_TABLE_, _TAGS_TABLE_);
-    QSqlQuery q(db);
+    QSqlQuery q(d_db);
     if (!q.prepare(queryStr)) {
         qDebug() << "Error preparing query: " << q.lastError().text();
     }
@@ -144,13 +144,13 @@ QSqlQuery DBManager::getRoads(QSqlDatabase db) const
     return q;
 }
 
-QSqlQuery DBManager::getWaters(QSqlDatabase db) const
+QSqlQuery DBManager::getWaters() const
 {
     QString queryStr = QString("SELECT  * "
         "FROM %1 "
         "LEFT JOIN %2 as t ON t.element_id = %1.id "
         "WHERE t.t_key = 'waterway' and t.t_value IN ('river', 'stream', 'canal')").arg(_WAYS_TABLE_, _TAGS_TABLE_);
-    QSqlQuery q(db);
+    QSqlQuery q(d_db);
     if (!q.prepare(queryStr)) {
         qDebug() << "Error preparing query: " << q.lastError().text();
     }
@@ -158,14 +158,14 @@ QSqlQuery DBManager::getWaters(QSqlDatabase db) const
     return q;
 }
 
-QSqlQuery DBManager::getBuildings(QSqlDatabase db) const
+QSqlQuery DBManager::getBuildings() const
 {
     QString queryStr = QString("SELECT * "
         "FROM %1 "
         "LEFT JOIN %2 as t ON t.element_id = %1.id "
         "WHERE t.t_key = 'building'").arg(_WAYS_TABLE_, _TAGS_TABLE_);
 
-    QSqlQuery q(db);
+    QSqlQuery q(d_db);
     if (!q.prepare(queryStr)) {
         qDebug() << "Error preparing query: " << q.lastError().text();
     }
@@ -173,14 +173,14 @@ QSqlQuery DBManager::getBuildings(QSqlDatabase db) const
     return q;
 }
 
-QSqlQuery DBManager::getParks(QSqlDatabase db) const
+QSqlQuery DBManager::getParks() const
 {
     QString queryStr = QString("SELECT * "
         "FROM %1 "
         "LEFT JOIN %2 as t ON t.element_id = %1.id "
         "WHERE (t.t_key = 'leisure' AND t.t_value IN ('garden', 'nature_reserve', 'playground', 'nature_reserve')) "
         "OR (t.t_key = 'landuse' AND t.t_value = 'grass') ").arg(_WAYS_TABLE_, _TAGS_TABLE_);
-    QSqlQuery q(db);
+    QSqlQuery q(d_db);
     if (!q.prepare(queryStr)) {
         qDebug() << "Error preparing query: " << q.lastError().text();
     }
@@ -188,13 +188,13 @@ QSqlQuery DBManager::getParks(QSqlDatabase db) const
     return q;
 }
 
-QSqlQuery DBManager::getWayNodes(QSqlDatabase db, long long id) const
+QSqlQuery DBManager::getWayNodes(long long id) const
 {
     QString queryStr = QString("SELECT DISTINCT n.id, n.lat, n.lon "
         "FROM %1 as wn "
         "LEFT JOIN %2 as n ON wn.node_id = n.id "
         "WHERE way_id = %3").arg(_WAY_NODE_TABLE_, _NODES_TABLE_, QString::number(id));
-    QSqlQuery q(db);
+    QSqlQuery q(d_db);
     if (!q.prepare(queryStr)) {
         qDebug() << "Error preparing query: " << q.lastError().text();
     }
