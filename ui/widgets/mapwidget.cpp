@@ -1,7 +1,9 @@
 #include "mapwidget.h"
 #include <QGraphicsItemAnimation>
 #include <QVBoxLayout>
-#include <QTimer>
+#include <QtConcurrent>
+#include <QFuture>
+#include <QFutureWatcher>
 #include <QMenu>
 #include "../../core/graph.h"
 #include "./../../core/way.h"
@@ -22,6 +24,11 @@ MapWidget::MapWidget(QWidget *parent, osm::Graph* graph)
 
 MapWidget::~MapWidget()
 {
+//    delete d_parkLayer;
+//    delete d_wayLayer;
+//    delete d_buildingLayer;
+//    delete d_freqCarsLayer;
+//    delete d_carsLayer;
     for (auto *item : d_scene->items()) {
         delete item; // Libère chaque élément
     }
@@ -105,29 +112,47 @@ void MapWidget::resizeEvent(QResizeEvent *event)
 //        observation_point = QPointF(event->size().width() / 2, event->size().height() / 2);
         fitInView(d_scene->sceneRect(), Qt::KeepAspectRatio);
 
+        auto cleanWatcher = [](QFutureWatcher<void>* watcher) {
+            watcher->deleteLater();
+        };
+
         // Configurer la vue (taille et centrage)
         setAlignment(Qt::AlignCenter);
 
-        QTimer::singleShot(100, [this]() {
-            initMeshs();
-            initParks();
-            initBuildings();
-            initRoads();
+        auto roadWatcher = new QFutureWatcher<void>(this);
+        auto parkWatcher = new QFutureWatcher<void>(this);
+       auto buildingWatcher = new QFutureWatcher<void>(this);
+        auto meshWatcher = new QFutureWatcher<void>(this);
+
+        connect(roadWatcher, &QFutureWatcher<void>::finished, this, [this, cleanWatcher, roadWatcher](){
             isLoadingFinished();
+            cleanWatcher(roadWatcher);
         });
+
+        connect(parkWatcher, &QFutureWatcher<void>::finished, this, [ cleanWatcher, parkWatcher](){
+            cleanWatcher(parkWatcher);
+        });
+
+       connect(buildingWatcher, &QFutureWatcher<void>::finished, this, [this, cleanWatcher, buildingWatcher](){
+           cleanWatcher(buildingWatcher);
+       });
+        connect(meshWatcher, &QFutureWatcher<void>::finished, this, [ cleanWatcher, meshWatcher](){
+            cleanWatcher(meshWatcher);
+        });
+
         // Associe le watcher au future
-        // parkWatcher->setFuture(QtConcurrent::run([this]() {
-        //     initParks();
-        // }));
-        // roadWatcher->setFuture(QtConcurrent::run([this]() {
-        //     initRoads();
-        // }));
-//        buildingWatcher->setFuture(QtConcurrent::run([this]() {
-//            initBuildings();
-//        }));
-        // meshWatcher->setFuture(QtConcurrent::run([this]() {
-        //     initMeshs();
-        // }));
+        parkWatcher->setFuture(QtConcurrent::run([this]() {
+            initParks();
+        }));
+        roadWatcher->setFuture(QtConcurrent::run([this]() {
+            initRoads();
+        }));
+       buildingWatcher->setFuture(QtConcurrent::run([this]() {
+           initBuildings();
+       }));
+        meshWatcher->setFuture(QtConcurrent::run([this]() {
+            initMeshs();
+        }));
     }
 }
 
@@ -537,6 +562,7 @@ void MapWidget::initParks()
     // }
     // d_logger->addLog("[INFO] Emission des waters pour affichage.");
     emit watersDataReady(waters);
+// DBManager::instance().close();
 }*/
 
 void MapWidget::initRoads()

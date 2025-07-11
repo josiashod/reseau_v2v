@@ -108,7 +108,7 @@ QSqlQuery DBManager::getNodes() const
     "LEFT JOIN %2 AS wn ON wn.node_id = n.id "
     "LEFT JOIN %3 AS t ON t.element_id = n.id "
     "WHERE wn.way_id IS NOT NULL AND t.element_id IS NULL").arg(_NODES_TABLE_, _WAY_NODE_TABLE_, _TAGS_TABLE_);
-    QSqlQuery q(d_db);
+    QSqlQuery q(DBManager::threadDatabase());
     if (!q.prepare(queryStr)) {
         qDebug() << "Error preparing query: " << q.lastError().text();
     }
@@ -122,7 +122,7 @@ QSqlQuery DBManager::getNodeDs() const
         "FROM %1 "
         "LEFT JOIN %2 as t ON t.element_id = %1.id "
        "WHERE t.t_key = '%3'").arg(_NODES_TABLE_, _TAGS_TABLE_, "name");
-    QSqlQuery q(d_db);
+    QSqlQuery q(DBManager::threadDatabase());
     if (!q.prepare(queryStr)) {
         qDebug() << "Error preparing query: " << q.lastError().text();
     }
@@ -136,7 +136,7 @@ QSqlQuery DBManager::getRoads() const
         "FROM %1 "
         "LEFT JOIN %2 as t ON t.element_id = %1.id "
         "WHERE t.t_key = 'highway'").arg(_WAYS_TABLE_, _TAGS_TABLE_);
-    QSqlQuery q(d_db);
+    QSqlQuery q(DBManager::threadDatabase());
     if (!q.prepare(queryStr)) {
         qDebug() << "Error preparing query: " << q.lastError().text();
     }
@@ -150,7 +150,7 @@ QSqlQuery DBManager::getWaters() const
         "FROM %1 "
         "LEFT JOIN %2 as t ON t.element_id = %1.id "
         "WHERE t.t_key = 'waterway' and t.t_value IN ('river', 'stream', 'canal')").arg(_WAYS_TABLE_, _TAGS_TABLE_);
-    QSqlQuery q(d_db);
+    QSqlQuery q(DBManager::threadDatabase());
     if (!q.prepare(queryStr)) {
         qDebug() << "Error preparing query: " << q.lastError().text();
     }
@@ -165,7 +165,7 @@ QSqlQuery DBManager::getBuildings() const
         "LEFT JOIN %2 as t ON t.element_id = %1.id "
         "WHERE t.t_key = 'building'").arg(_WAYS_TABLE_, _TAGS_TABLE_);
 
-    QSqlQuery q(d_db);
+    QSqlQuery q(DBManager::threadDatabase());
     if (!q.prepare(queryStr)) {
         qDebug() << "Error preparing query: " << q.lastError().text();
     }
@@ -180,7 +180,7 @@ QSqlQuery DBManager::getParks() const
         "LEFT JOIN %2 as t ON t.element_id = %1.id "
         "WHERE (t.t_key = 'leisure' AND t.t_value IN ('garden', 'nature_reserve', 'playground', 'nature_reserve')) "
         "OR (t.t_key = 'landuse' AND t.t_value = 'grass') ").arg(_WAYS_TABLE_, _TAGS_TABLE_);
-    QSqlQuery q(d_db);
+    QSqlQuery q(DBManager::threadDatabase());
     if (!q.prepare(queryStr)) {
         qDebug() << "Error preparing query: " << q.lastError().text();
     }
@@ -194,7 +194,7 @@ QSqlQuery DBManager::getWayNodes(long long id) const
         "FROM %1 as wn "
         "LEFT JOIN %2 as n ON wn.node_id = n.id "
         "WHERE way_id = %3").arg(_WAY_NODE_TABLE_, _NODES_TABLE_, QString::number(id));
-    QSqlQuery q(d_db);
+    QSqlQuery q(DBManager::threadDatabase());
     if (!q.prepare(queryStr)) {
         qDebug() << "Error preparing query: " << q.lastError().text();
     }
