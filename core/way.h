@@ -20,7 +20,7 @@ public:
      * @param group le group ou doit etre l'instance
      * @param scale_factor: le scale factor
      */
-    void draw(QGraphicsItemGroup* group) const override;
+    //void draw(QGraphicsItemGroup* group) const override;
 
     QRectF boundingRect() const override;
 
