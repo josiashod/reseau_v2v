@@ -30,12 +30,12 @@ Way::Way(const std::vector<QPointF>& points, QGraphicsItem* parent)
     }
 }
 
-QRectF Park::boundingRect() const
+QRectF Way::boundingRect() const
 {
     return d_polygon.boundingRect();
 }
 
-QPainterPath Park::shape() const
+QPainterPath Way::shape() const
 {
     QPainterPath path;
     path.addRect(boundingRect());
