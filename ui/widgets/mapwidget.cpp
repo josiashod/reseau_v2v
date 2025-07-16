@@ -580,11 +580,11 @@ void MapWidget::initRoads()
         {
             long long id;
             id = query.value(0).toString().toLongLong();
-
-            Way w{id};
+            std::vector<QPointF> points;
+            /*Way w{id};
             QString key = query.value(4).toString();
             QString value = query.value(5).toString();
-            w.addTag(key, value);
+            w.addTag(key, value);*/
 
 
             auto q = DBManager::instance().getWayNodes(id);
@@ -606,7 +606,8 @@ void MapWidget::initRoads()
                         lon = q.value(2).toString().toDouble();
                         std::pair<double, double> c{lon, lat};
                         p = pairLatLonToXY(c);
-                        w.addPoint(p);
+                        points.push_back(p);
+                        //w.addPoint(p);
                         start = d_graph->addNode(id, p.x(), p.y());
                     }
                 }
@@ -620,7 +621,7 @@ void MapWidget::initRoads()
                     //            coord = lambert93(lon, lat);
                     std::pair<double, double> coord{lon, lat};
                     p = pairLatLonToXY(coord);
-                    w.addPoint(p);
+                    points.push_back(p);
 
                     // Ajouter un nœud au graphe et connecter l'arête
                     if (start) {
@@ -636,8 +637,10 @@ void MapWidget::initRoads()
 //                    qDebug() << QString("[SUCCESS] Road n°: %1.").arg(id);
                 }
 //                ways.push_back(w);
-                QMetaObject::invokeMethod(this, [this, w]() {
-                   w.draw(d_wayLayer);
+                Way w{id, points}
+                QMetaObject::invokeMethod(this, [layer = d_wayLayer, w]() {
+                   //w.draw(d_wayLayer);
+                    layer->addToGroup(w);
                 }, Qt::QueuedConnection);
             }
             // if(d_logger)
