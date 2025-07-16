@@ -14,7 +14,33 @@
 #include <QFont>
 
 // Constructeur de la classe Way
-Way::Way(long long id) : MapItem{id}, d_id{id} {}
+Way::Way(const std::vector<QPointF>& points, QGraphicsItem* parent)
+    : MapItem{id, points}, QGraphicsObject{parent}
+{
+    if(d_points.empty())
+    {
+        qDebug() << "No points available to draw the park.";
+    }
+    else
+    {
+        for(const QPointF& p: d_points)
+        {
+            d_polygon << p;
+        }
+    }
+}
+
+QRectF Park::boundingRect() const
+{
+    return d_polygon.boundingRect();
+}
+
+QPainterPath Park::shape() const
+{
+    QPainterPath path;
+    path.addRect(boundingRect());
+    return path;
+}
 
 bool Way::isCarWay() const
 {
@@ -26,7 +52,7 @@ bool Way::isCarWay() const
 
 
 // Méthode pour dessiner la route sur la carte
-void Way::draw(QGraphicsItemGroup* group) const {
+/*void Way::draw(QGraphicsItemGroup* group) const {
     if (d_points.empty()) {
         qDebug() << "No nodes available to draw the way.";
         return;
@@ -61,7 +87,7 @@ void Way::draw(QGraphicsItemGroup* group) const {
             return;
             pen.setColor(QColor{"#B5B5B6"});
             pen.setWidth(3);
-        }*/
+        }
     }
 
     // Si le type est "bus_stop", dessiner des marqueurs de bus
@@ -75,7 +101,7 @@ void Way::draw(QGraphicsItemGroup* group) const {
             textItem->setFont(font);
             group->addToGroup(textItem);
         }
-    } else*/
+    } else
     if(type != "bus_stop")
     {
         // Ajouter tous les nœuds au polygone pour dessiner la route
@@ -91,4 +117,43 @@ void Way::draw(QGraphicsItemGroup* group) const {
         road->setPen(pen);
         group->addToGroup(road);
     }
+}*/
+
+void Way::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
+{
+    auto originalPen    = painter->pen();
+
+    QPen pen{originalPen};
+    pen.setJoinStyle(Qt::RoundJoin);
+    pen.setCapStyle(Qt::RoundCap);
+
+    // Récupérer le type de la route via le tag "highway"
+    QString type = tag("highway");
+
+    // Configuration du style de la route en fonction du type
+    if (type == "footway" || type == "cycleway" || type == "steps") {
+        pen.setStyle(Qt::DotLine);
+        pen.setWidth(1);
+        pen.setColor(type == "cycleway" ? QColor{"#0080FF"} : QColor{"#FF7F00"});
+    }
+    else
+    {
+        pen.setWidth(4);
+        if(isCarWay())
+            pen.setColor(QColor{"#FED7A1"}); // Couleur par défaut pour les routes
+        else if (type == "pedestrian") {
+            pen.setColor(QColor{"#DDDDE9"});
+            pen.setWidth(2);
+        }
+        else
+            pen.setColor(QColor{"#F9C0CA"});
+    }
+    painter->setPen(pen);
+
+    if(type != "bus_stop")
+    {
+        painter->drawPolyline(d_polygon);
+    }
+
+    painter->setPen(originalPen);
 }
