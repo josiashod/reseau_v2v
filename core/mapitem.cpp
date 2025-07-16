@@ -33,6 +33,11 @@ QString MapItem::tag(const QString& tag) const {
     return QString();
 }
 
+ void MapItem::setTags(std::map<QString, QString> tags)
+{
+    d_tags = tags;
+}
+
 void MapItem::draw(QGraphicsItemGroup* group) const
 {
 
