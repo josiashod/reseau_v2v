@@ -11,7 +11,6 @@ Park::Park(long long id, const std::vector<QPointF>& points, QGraphicsItem* pare
     }
     else
     {
-
         for(const QPointF& p: d_points)
         {
             d_polygon << p;
