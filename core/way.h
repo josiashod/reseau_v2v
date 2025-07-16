@@ -2,14 +2,12 @@
 #define WAY_H
 
 #include "mapitem.h"
+#include <QGraphicsObject>
 
-class Way: public MapItem
+class Way: public MapItem, public QGraphicsObject
 {
 public:
-    Way(): MapItem{-1}
-    {}
-
-    Way(long long id);
+   Way(long long id, const std::vector<QPointF>& points, QGraphicsItem* parent = nullptr);
 
     /**
      * @brief isCarWay determine si un way est adapté au voiture
@@ -24,8 +22,17 @@ public:
      */
     void draw(QGraphicsItemGroup* group) const override;
 
+    QRectF boundingRect() const override;
+
+    QPainterPath shape() const override;
+
+    /**
+     * @brief draw: dessine la route
+     */
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = nullptr) override;
+
 private:
-    long long d_id;
+    QPolygonF d_polygon;
 };
 
 #endif // WAY_H
