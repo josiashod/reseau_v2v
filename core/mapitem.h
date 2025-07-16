@@ -47,6 +47,10 @@ public:
      */
     QString tag(const QString& tag) const;
     /**
+     * @brief tag: Update the tags
+     */
+    void setTags(std::map<QString, QString> tags);
+    /**
      * @brief draw: dessine la route avec un scale_factor donné
      * @param group le group ou doit etre l'instance
      * @param scale_factor: le scale factor
