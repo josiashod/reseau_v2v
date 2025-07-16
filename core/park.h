@@ -15,6 +15,7 @@ public:
 
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = nullptr) override;
 
+private:
     QPolygonF d_polygon;
 };
 
