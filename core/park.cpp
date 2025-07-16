@@ -24,6 +24,13 @@ QRectF Park::boundingRect() const
     return d_polygon.boundingRect();
 }
 
+QPainterPath Park::shape() const
+{
+    QPainterPath path;
+    path.addRect(boundingRect());
+    return path;
+}
+
 void Park::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
     auto originalBrush  = painter->brush();
