@@ -581,10 +581,12 @@ void MapWidget::initRoads()
             long long id;
             id = query.value(0).toString().toLongLong();
             std::vector<QPointF> points;
-            /*Way w{id};
+            std::map<QString, QString> tags;
+            
             QString key = query.value(4).toString();
             QString value = query.value(5).toString();
-            w.addTag(key, value);*/
+            
+            tags[key] = value;
 
 
             auto q = DBManager::instance().getWayNodes(id);
@@ -637,7 +639,8 @@ void MapWidget::initRoads()
 //                    qDebug() << QString("[SUCCESS] Road n°: %1.").arg(id);
                 }
 //                ways.push_back(w);
-                Way w{id, points}
+                auto w = new Way{id, points};
+                w->setTags(tags);
                 QMetaObject::invokeMethod(this, [layer = d_wayLayer, w]() {
                    //w.draw(d_wayLayer);
                     layer->addToGroup(w);
