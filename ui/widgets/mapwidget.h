@@ -7,7 +7,6 @@
 #include <QResizeEvent>
 #include <QPoint>
 #include <QMap>
-//#include <proj.h>
 
 
 namespace osm
@@ -33,16 +32,6 @@ public:
     static QPointF observation_point;
 private slots :
     void isLoadingFinished();
-    /**
-     * Dessiner la couche des bâtiments
-     */
-//    void drawBuildingLayer(const QVector<Building>& buildings);
-//    void drawWaterLayer(const QVector<Water>& waters);
-//    void drawParkLayer(const QVector<Park>& parks);
-    /**
-     * @brief Dessiner la couche de
-     */
-//    void drawRoadLayer(const QVector<Way>& roads);
 
 signals :
     void isLoading(bool);
@@ -59,7 +48,6 @@ private:
     std::pair<double, double> d_maxCoord, d_minCoord;
 
 //    QVector<QPolygonF> d_meshs;
-//    void drawMeshLayer();
 
     // stocke les elements de la vue qui ont été partiellement selectionné
 //    std::vector<int> d_partially_selected_elements = std::vector<int>(0);
@@ -131,11 +119,6 @@ private:
 //    void keyReleaseEvent(QKeyEvent *event) override;
 //    void contextMenuEvent(QContextMenuEvent *event) override;
 
-//    /**
-//     * @brief lambert93 Convertis les coordonnees WSG84 en lambert93
-//     * @return le couple {double lon, double lat}
-//     */
-//    std::pair<double, double> lambert93(double, double);
     /**
      * @brief pairLatLonToXY Convertit les coordonnées géographiques (latitude et longitude)
      *        en coordonnées X, Y pour un affichage sur une fenêtre.

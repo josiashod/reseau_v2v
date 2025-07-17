@@ -133,7 +133,7 @@ void MapWidget::resizeEvent(QResizeEvent *event)
             cleanWatcher(parkWatcher);
         });
 
-       connect(buildingWatcher, &QFutureWatcher<void>::finished, this, [this, cleanWatcher, buildingWatcher](){
+       connect(buildingWatcher, &QFutureWatcher<void>::finished, this, [cleanWatcher, buildingWatcher](){
            cleanWatcher(buildingWatcher);
        });
         connect(meshWatcher, &QFutureWatcher<void>::finished, this, [ cleanWatcher, meshWatcher](){
@@ -315,43 +315,6 @@ void MapWidget::addCarEllipse(QGraphicsEllipseItem* ellipse)
     d_freqCarsLayer->addToGroup(ellipse);
 }
 
-/*std::pair<double, double> MapWidget::lambert93(double longitude, double latitude)
-{
-    // Créer un contexte PROJ
-    PJ_CONTEXT *ctx = proj_context_create();
-    if (ctx == nullptr) {
-        throw std::runtime_error("Failed to create PROJ context.");
-    }
-
-    // Définir les systèmes de coordonnées avec des chaînes PROJ
-    const char* wgs84 = "+proj=longlat +datum=WGS84 +no_defs";
-    const char* lambert93 = "+proj=lcc +lat_1=49 +lat_2=44 +lat_0=46.5 +lon_0=3 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs";
-
-    // Créer la transformation CRS
-    PJ *P = proj_create_crs_to_crs(ctx, wgs84, lambert93, nullptr);
-    if (P == nullptr) {
-        proj_context_destroy(ctx);
-        throw std::runtime_error("Failed to create CRS transformation.");
-    }
-
-    // Convertir les coordonnées
-    PJ_COORD coord = proj_coord(longitude, latitude, 0, 0);
-    PJ_COORD result = proj_trans(P, PJ_FWD, coord);
-
-    // Vérifier si la transformation a échoué
-    if (result.xyzt.x == HUGE_VAL || result.xyzt.y == HUGE_VAL) {
-        proj_destroy(P);
-        proj_context_destroy(ctx);
-        throw std::runtime_error("Transformation failed.");
-    }
-
-    // Libérer les ressources
-    proj_destroy(P);
-    proj_context_destroy(ctx);
-
-    return {result.xyzt.x, result.xyzt.y}; // Retourner les coordonnées Lambert93
-}*/
-
 QPointF MapWidget::pairLatLonToXY(std::pair<double, double>& coord)
 {
     return latLonToXY(coord.first, coord.second);
@@ -392,9 +355,6 @@ void MapWidget::initBounds()
         minLon = query.value("minlon").toDouble();
         maxLon = query.value("maxlon").toDouble();
 
-        // Applique la transformation Lambert93 aux bornes
-//        d_maxCoord = lambert93(maxLon, maxLat);
-//        d_minCoord = lambert93(minLon, minLat);
         d_maxCoord = std::make_pair(maxLon, maxLat);
         d_minCoord = std::make_pair(minLon, minLat);
 
@@ -492,8 +452,6 @@ void MapWidget::initParks()
 
                     lat = q.value(1).toString().toDouble();
                     lon = q.value(2).toString().toDouble();
-
-                    //            coord = lambert93(lon, lat);
                     coord = std::make_pair(lon, lat);
                     // QPointF p = ;
                     points.push_back(pairLatLonToXY(coord));
@@ -543,8 +501,6 @@ void MapWidget::initParks()
 //                    id = q.value(0).toString().toLongLong();
                     lat = q.value(1).toString().toDouble();
                     lon = q.value(2).toString().toDouble();
-
-                    //            coord = lambert93(lon, lat);
                     coord = std::make_pair(lon, lat);
                     QPointF p = pairLatLonToXY(coord);
                     w.addPoint(p);
@@ -588,6 +544,8 @@ void MapWidget::initRoads()
             
             tags[key] = value;
 
+            Way defaultWay{0, {}};
+            defaultWay.addTag(key, value);
 
             auto q = DBManager::instance().getWayNodes(id);
             success = q.exec();
@@ -599,7 +557,7 @@ void MapWidget::initRoads()
                 osm::Node* start    = nullptr;
                 osm::Node* end      = nullptr;
 
-                if (d_graph &&  w.isCarWay())
+                if (d_graph &&  defaultWay.isCarWay())
                 {
                     if(q.next())
                     {
@@ -619,8 +577,6 @@ void MapWidget::initRoads()
                     id = q.value(0).toString().toLongLong();
                     lat = q.value(1).toString().toDouble();
                     lon = q.value(2).toString().toDouble();
-
-                    //            coord = lambert93(lon, lat);
                     std::pair<double, double> coord{lon, lat};
                     p = pairLatLonToXY(coord);
                     points.push_back(p);

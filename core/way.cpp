@@ -1,5 +1,4 @@
 #include "way.h"
-#include "utils/dbmanager.h" // Inclusion nécessaire pour DBManager
 
 #include <QGraphicsLineItem>
 #include <QGraphicsTextItem>
@@ -10,18 +9,14 @@
 #include <QDebug>
 #include <QPolygonF>
 #include <QPen>
-#include <QPainterPath>
+#include <QPainter>
 #include <QFont>
 
 // Constructeur de la classe Way
-Way::Way(const std::vector<QPointF>& points, QGraphicsItem* parent)
+Way::Way(long long id, const std::vector<QPointF>& points, QGraphicsItem* parent)
     : MapItem{id, points}, QGraphicsObject{parent}
 {
-    if(d_points.empty())
-    {
-        qDebug() << "No points available to draw the park.";
-    }
-    else
+    if(!d_points.empty())
     {
         for(const QPointF& p: d_points)
         {
@@ -83,7 +78,7 @@ bool Way::isCarWay() const
         if (type == "pedestrian") {
             pen.setColor(QColor{"#DDDDE9"});
         }
-        /*else if (type == "platform") {
+        else if (type == "platform") {
             return;
             pen.setColor(QColor{"#B5B5B6"});
             pen.setWidth(3);
@@ -91,7 +86,7 @@ bool Way::isCarWay() const
     }
 
     // Si le type est "bus_stop", dessiner des marqueurs de bus
-    /*if (type == "bus_stop") {
+    if (type == "bus_stop") {
         for(const QPointF& p: d_points)
         {
             QGraphicsTextItem* textItem = new QGraphicsTextItem("B");
