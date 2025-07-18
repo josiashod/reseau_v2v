@@ -12,6 +12,7 @@ SOURCES += \
     core/building.cpp \
     core/car.cpp \
     core/graph.cpp \
+    core/hexagon.cpp \
     core/mapitem.cpp \
     core/park.cpp \
     core/water.cpp \
@@ -29,6 +30,7 @@ HEADERS += \
     core/building.h \
     core/car.h \
     core/graph.h \
+    core/hexagon.h \
     core/mapitem.h \
     core/park.h \
     core/water.h \

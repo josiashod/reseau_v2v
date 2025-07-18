@@ -84,3 +84,6 @@ CMakeLists.txt.user*
 
 # env file
 env.cpp
+
+build
+build/*

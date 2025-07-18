@@ -14,6 +14,8 @@ namespace osm
     class Graph;
 }
 
+class Car;
+
 class MapWidget : public QGraphicsView
 {
     Q_OBJECT
@@ -24,9 +26,8 @@ public:
     void setShowPark(bool);
     void setShowBuilding(bool);
     void setShowRoad(bool);
-    void setShowFreq(bool);
     void setShowHex(bool);
-    void addCarImage(QGraphicsPixmapItem*);
+    void addCar(Car*);
     void addCarEllipse(QGraphicsEllipseItem*);
 
     static QPointF observation_point;
@@ -63,7 +64,6 @@ private:
     bool d_showWay          = true;
     bool d_showDescription  = true;
     bool d_showCar          = true;
-    bool d_showCarFreq      = true;
     bool d_showMesh         = false;
 
     // permet de savoir si les elements de la carte on été chargés
@@ -95,10 +95,6 @@ private:
      * @brief d_wayLayer couche d'affichage des routes
      */
     QGraphicsItemGroup* d_wayLayer;
-    /**
-     * @brief d_carsLayer couche d'affichage des frequences de voitures
-     */
-    QGraphicsItemGroup* d_freqCarsLayer;
     /**
      * @brief d_carsLayer couche d'affichage des voitures
      */

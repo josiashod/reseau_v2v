@@ -12,9 +12,6 @@
 #include "../dialog/addcardialog.h"
 #include <QMessageBox>
 
-size_t MAX_CAR = 50;
-
-
 // retourne le libelle à mettre dans le menu
 QString menu_libelle(bool etat, const QString& libelle)
 {
@@ -65,7 +62,7 @@ void MainWindow::creerInterface()
     QAction *showHexAct = new QAction{menu_libelle(d_showMesh, "le decoupage territorial"), viewMenu};
     viewMenu->addAction(showHexAct);
 
-    QAction *showSidebarAct = new QAction{menu_libelle(d_showSidebar, "la barre latérale"), viewMenu};
+    QAction *showSidebarAct = new QAction{menu_libelle(d_showSidebar, "la menu latérale"), viewMenu};
     viewMenu->addAction(showSidebarAct);
 
     // creation du main widget pour l'application
@@ -100,8 +97,6 @@ void MainWindow::creerInterface()
 
     d_playButton->setEnabled(false);
     d_speedSelector->setEnabled(false);
-//    simulationControlLayout->addSpacing(100);
-
 
     simulationControlLayout->addWidget(d_playButton);
     simulationControlLayout->addWidget(d_speedSelector);
@@ -139,7 +134,7 @@ void MainWindow::creerInterface()
     // Mettre l'interval de rafraichissement de l'affichage
     d_timer->setInterval(1000 / FPS);
     // ecoute chaque fois que le timer signal etre arrivé à la fin d'un interval
-    connect(d_timer, &QTimer::timeout, this, &MainWindow::updateCarsPosition);
+    connect(d_timer, &QTimer::timeout, this, &MainWindow::updateFrame);
 
     updatePlayButtonLabel();
 }
@@ -164,7 +159,7 @@ void MainWindow::onShowHideFreq(bool)
 {
     QAction* action = qobject_cast<QAction*>(sender());
     d_showCarFreq = !d_showCarFreq;
-    d_mapView->setShowFreq(d_showCarFreq);
+    emit freqVisibilityChanged(d_showCarFreq);
     action->setText(menu_libelle(d_showCarFreq, "les couvertures radio"));
 }
 
@@ -194,7 +189,7 @@ void MainWindow::onShowHideSidebar(bool)
     else
         d_rightSidebar->hide();
 
-    action->setText(menu_libelle(d_showSidebar, "la barre latérale"));
+    action->setText(menu_libelle(d_showSidebar, "la menu latérale"));
 }
 
 void MainWindow::onMapLoading(bool)
@@ -268,56 +263,20 @@ void MainWindow::playOrPause()
 
 void MainWindow::accelerate()
 {
-    for(size_t i = 0; i < d_cars.size(); i++)
-    {
-        d_cars[i].get()->accelerate(d_speeds[d_selectedSpeed]);
-    }
+    // for(size_t i = 0; i < d_cars.size(); i++)
+    // {
+    //     d_cars[i].get()->accelerate(d_speeds[d_selectedSpeed]);
+    // }
 }
 
-void MainWindow::updateCarsPosition()
+void MainWindow::updateFrame()
 {
     double interval = 1000 / FPS;
-    static size_t frameCounter = 0;
     d_elapsed_time += interval * d_speeds[d_selectedSpeed];
     QString time = (QTime(0, 0, 0).addSecs(d_elapsed_time / 1000)).toString("hh:mm:ss");
     d_timeLabel->setText("Temps écoulé: " + time);
 
-    for(size_t i = 0; i < d_cars.size(); i++)
-    {
-        auto currentPos = d_cars[i].get()->to()->id();
-
-        QtConcurrent::run([this, currentPos, i]() {
-            if(d_cars[i].get()->hasReachedEndOfPath())
-            {
-                osm::Node* newnode;
-                std::vector<osm::Node*> path(0);
-                newnode = d_graph.getRandomNode();
-                if(newnode)
-                    path = d_graph.dijkstraPath(currentPos, newnode->id());
-
-                if(!path.empty() && path.size() > 2)
-                {
-                    QMetaObject::invokeMethod(this, [this, path, i]() {
-                       d_cars[i].get()->updatePath(path);
-                    }, Qt::QueuedConnection);
-                }
-            }
-        });
-
-        if((i % 2) == (frameCounter++ % 2))
-        {
-            d_cars[i].get()->update(interval * d_speeds[d_selectedSpeed]);
-            d_cars[i].get()->updateConnectedCars(d_cars);
-
-            if(d_cars[i].get()->hasConnectedCars())
-            {
-                d_logsView->addLog("À " + time);
-                d_logsView->addLog(d_cars[i].get()->toString());
-                d_logsView->addLog("-------------------------------------------------------------");
-            }
-        }
-//        frameCounter++;
-    }
+    emit timeout(interval * d_speeds[d_selectedSpeed]);
 }
 
 void MainWindow::selectSpeed()
@@ -339,46 +298,45 @@ void MainWindow::onAddCar()
 
 void MainWindow::addCar(int nb, double speed, double freq, double intensity)
 {
-    if(d_cars.size() + nb > MAX_CAR)
-    {
-        int remaining = MAX_CAR - d_cars.size(); // Calcul du nombre de voitures restantes
-        QMessageBox::warning(
-            this,
-            "Limite atteinte : Ajout de véhicules restreint",
-            QString("Pour des raisons de performance, il est impossible d'ajouter plus de %1 véhicules.\n"
-                    "Vous ne pouvez ajouter que %2 véhicule(s) supplémentaire(s).")
-                .arg(MAX_CAR)
-                .arg(remaining)
-        );
-        return;
-    }
-
-
     for(int i = 0; i < nb; i++)
     {
         std::vector<osm::Node*> path(0);
         osm::Node* n1 = nullptr;
-//        osm::Node* n2;
 
         n1 = d_graph.getRandomNode();
         path.push_back(n1);
-        path.push_back(n1);
-//        while(path.empty() && path.size() <= 2)
-//        {
-//            n2 = d_graph.getRandomNode();
-
-//            path = d_graph.dijkstraPath(n1->id(), n2->id());
-//        }
 
         d_cars.push_back(std::make_unique<Car>(path, speed, freq, intensity));
-        d_mapView->addCarImage(d_cars.back()->pixmap());
-        d_mapView->addCarEllipse(d_cars.back()->ellipse());
-//        d_cars.back()->accelerate(d_speeds[d_selectedSpeed]);
+        auto* car = d_cars.back().get();
+
+        connect(this, &MainWindow::timeout, car, &Car::move);
+        connect(this, &MainWindow::freqVisibilityChanged, car, &Car::updateFrequenceVisibility);
+        connect(car, &Car::hasReachEndOfPath, this, &MainWindow::onCarHasReachEndOfPath);
+
+        d_mapView->addCar(car);
+        car->updateFrequenceVisibility(d_showCarFreq);
     }
 
     // on active les boutons de play et vitesse
     d_playButton->setEnabled(true);
     d_speedSelector->setEnabled(true);
+}
+
+void MainWindow::onCarHasReachEndOfPath()
+{
+    auto car = qobject_cast<Car*>(sender());
+
+    std::vector<osm::Node*> path(0);
+    auto* newnode = d_graph.getRandomNode();
+    if(newnode)
+        path = d_graph.dijkstraPath(car->to()->id(), newnode->id());
+
+    if(!path.empty() && path.size() > 2)
+    {
+        QMetaObject::invokeMethod(this, [c = car, path]() {
+           c->setPath(path);
+        }, Qt::QueuedConnection);
+    }
 }
 
 //void MainWindow::onAddCarToPartialSelection(int id)

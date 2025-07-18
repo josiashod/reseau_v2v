@@ -15,13 +15,6 @@ public:
      */
     bool isCarWay() const;
 
-    /**
-     * @brief draw: dessine la route avec un scale_factor donné
-     * @param group le group ou doit etre l'instance
-     * @param scale_factor: le scale factor
-     */
-    //void draw(QGraphicsItemGroup* group) const override;
-
     QRectF boundingRect() const override;
 
     QPainterPath shape() const override;

@@ -22,6 +22,11 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+signals:
+    // emit the new elapsed time
+    void timeout(double);
+    void freqVisibilityChanged(bool);
+
 private slots:
     void onShowHideRoads(bool);
     void onShowHideBuildings(bool);
@@ -35,6 +40,7 @@ private slots:
     void onClearLog();
     void onAddCar();
     void addCar(int nb, double speed, double freq, double intensity);
+    void onCarHasReachEndOfPath();
 
 
     /**
@@ -46,9 +52,9 @@ private slots:
 //    void addCar(int nb, double freq, double intensity);
 
     /**
-     * @brief updateCarsPosition: update cars position
+     * @brief updateFrame: update cars position
      */
-    void updateCarsPosition();
+    void updateFrame();
 
 //    void onAddCarToPartialSelection(int id);
 //    void onRemoveCarFromPartialSelection(int id);

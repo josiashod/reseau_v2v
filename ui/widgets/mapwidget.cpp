@@ -1,5 +1,4 @@
 #include "mapwidget.h"
-#include <QGraphicsItemAnimation>
 #include <QVBoxLayout>
 #include <QtConcurrent>
 #include <QFuture>
@@ -10,7 +9,9 @@
 #include "./../../core/building.h"
 //#include "./../../core/water.h"
 #include "./../../core/park.h"
+#include "./../../core/car.h"
 #include "./../../utils/dbmanager.h"
+#include "core/hexagon.h"
 
 
 // CRÉATION DE L'INTERFACE
@@ -80,11 +81,6 @@ void MapWidget::creerInterface()
     d_buildingLayer->setAcceptedMouseButtons(Qt::NoButton);
     d_scene->addItem(d_buildingLayer);
 
-    d_freqCarsLayer = new QGraphicsItemGroup();
-    d_freqCarsLayer->setVisible(d_showCarFreq);
-    d_freqCarsLayer->setAcceptedMouseButtons(Qt::AllButtons);
-    d_scene->addItem(d_freqCarsLayer);
-
     d_carsLayer = new QGraphicsItemGroup();
     d_carsLayer->setVisible(d_showCar);
     d_carsLayer->setAcceptedMouseButtons(Qt::AllButtons);
@@ -111,17 +107,16 @@ void MapWidget::resizeEvent(QResizeEvent *event)
         d_scene->setSceneRect(0, 0, event->size().width() * 2.5, event->size().height() * 2.5);
 //        observation_point = QPointF(event->size().width() / 2, event->size().height() / 2);
         fitInView(d_scene->sceneRect(), Qt::KeepAspectRatio);
+        // Configurer la vue (taille et centrage)
+        setAlignment(Qt::AlignCenter);
 
         auto cleanWatcher = [](QFutureWatcher<void>* watcher) {
             watcher->deleteLater();
         };
 
-        // Configurer la vue (taille et centrage)
-        setAlignment(Qt::AlignCenter);
-
         auto roadWatcher = new QFutureWatcher<void>(this);
         auto parkWatcher = new QFutureWatcher<void>(this);
-       auto buildingWatcher = new QFutureWatcher<void>(this);
+        auto buildingWatcher = new QFutureWatcher<void>(this);
         auto meshWatcher = new QFutureWatcher<void>(this);
 
         connect(roadWatcher, &QFutureWatcher<void>::finished, this, [this, cleanWatcher, roadWatcher](){
@@ -305,14 +300,9 @@ void MapWidget::wheelEvent(QWheelEvent *event)
     }
 }
 
-void MapWidget::addCarImage(QGraphicsPixmapItem* car)
+void MapWidget::addCar(Car* car)
 {
     d_carsLayer->addToGroup(car);
-}
-
-void MapWidget::addCarEllipse(QGraphicsEllipseItem* ellipse)
-{
-    d_freqCarsLayer->addToGroup(ellipse);
 }
 
 QPointF MapWidget::pairLatLonToXY(std::pair<double, double>& coord)
@@ -594,7 +584,6 @@ void MapWidget::initRoads()
                     }
 //                    qDebug() << QString("[SUCCESS] Road n°: %1.").arg(id);
                 }
-//                ways.push_back(w);
                 auto w = new Way{id, points};
                 w->setTags(tags);
                 QMetaObject::invokeMethod(this, [layer = d_wayLayer, w]() {
@@ -663,11 +652,9 @@ void MapWidget::initMeshs()
             // Ajouter l'hexagone à la collection
 //            d_meshs.push_back(polygon);
 
-            QMetaObject::invokeMethod(this, [this, hexagon]() {
-                QGraphicsPolygonItem *polygon = new QGraphicsPolygonItem();
-                polygon->setPolygon(hexagon);
-
-                d_meshLayer->addToGroup(polygon);
+            QMetaObject::invokeMethod(this, [layer = d_meshLayer, hexagon]() {
+                auto* hex = new Hexagon{hexagon, layer};
+                layer->addToGroup(hex);
             }, Qt::QueuedConnection);
         }
     }
@@ -689,12 +676,6 @@ void MapWidget::setShowRoad(bool show)
 {
     d_showWay = show;
     d_wayLayer->setVisible(d_showWay);
-}
-
-void MapWidget::setShowFreq(bool show)
-{
-    d_showCarFreq = show;
-    d_freqCarsLayer->setVisible(d_showCarFreq);
 }
 
 void MapWidget::setShowHex(bool show)

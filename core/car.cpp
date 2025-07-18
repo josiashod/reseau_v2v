@@ -1,4 +1,5 @@
 #include "car.h"
+#include "qpainter.h"
 #include <random>
 #include <QBrush>
 #include <QPen>
@@ -6,6 +7,7 @@
 
 QString colors[] = {"black", "blue", "red", "green", "yellow"};
 size_t Car::d_instance_counter = 0;
+const qreal PEN_WIDTH = 1;
 
 QPixmap getRandomImage()
 {
@@ -49,10 +51,10 @@ QColor randomColor()
     return QColor(r, g, b);
 }
 
-//    /**
-//    * @brief distance: calcule la distance entre la voiture et la position passée en paramètre
-//    * @return la distance obtenue
-//    */
+/**
+* @brief distance: calcule la distance entre la voiture et la position passée en paramètre
+* @return la distance obtenue
+*/
 double distance(QPointF s, QPointF e)
 {
     return std::hypot(s.x() - e.x(), s.y() - e.y());
@@ -69,34 +71,23 @@ double fspl(double dist, double freq)
     return (20 * std::log10(dist) + 20 * std::log10(freq) + C);
 }
 
-Car::Car(): d_v{20.0}, d_freq{10.5}, d_intensity{10}, d_acceleration{1.0}
-  , d_pos{0,0}, d_from{0}, d_to{0}, d_path{std::vector<osm::Node*>(0)}
+
+Car::Car(QGraphicsItem *parent):
+    QGraphicsObject{parent}, d_showFreq{true},
+    d_v{20.0}, d_freq{30.5}, d_intensity{10}, d_acceleration{1.0}
+    , d_from{0}, d_to{0}, d_path{std::vector<osm::Node*>(0)}, d_color{randomColor()}, d_pixmap{getRandomImage()}
 {
     d_id = ++d_instance_counter;
 
-    d_pixmap = new QGraphicsPixmapItem(getRandomImage());
-    d_pixmap->setFlags(QGraphicsItem::ItemIsSelectable);
-    d_color = randomColor();
-    d_ellipse = new QGraphicsEllipseItem(0, 0, d_freq, d_freq);
-    d_ellipse->setFlags(QGraphicsItem::ItemIsSelectable);
-
-    updateItem();
-
+    setData(0, QString::number(d_id));
+    setFlags(QGraphicsItem::ItemIsSelectable);
     d_color.setAlphaF(0.5);
-
-    QBrush brush(d_color);
-    QPen pen(Qt::NoPen);
-    d_ellipse->setBrush(brush);
-    d_ellipse->setPen(pen);
-    updateCoverage();
-    d_pixmap->setData(0, QString::number(d_id));
-    d_ellipse->setData(0, QString::number(d_id));
-    d_pixmap->setData(1, toString());
 }
 
 // // Constructeur avec position, vitesse et fréquence
-Car::Car( std::vector<osm::Node*>& path, double vitesse, double frequence, double intensity):
-    d_v{vitesse}, d_freq{frequence}, d_intensity{intensity}, d_acceleration{1.0}, d_path{path}, d_from{0}, d_to{1}
+Car::Car( std::vector<osm::Node*>& path, double vitesse, double frequence, double intensity, QGraphicsItem *parent):
+    QGraphicsObject{parent}, d_showFreq{true}, d_v{vitesse}, d_freq{frequence}, d_intensity{intensity}, d_acceleration{1.0}, d_from{0}, d_to{1}, d_path{path}
+    , d_color{randomColor()}, d_pixmap{getRandomImage()}
 {
     d_id = ++d_instance_counter;
 
@@ -104,45 +95,49 @@ Car::Car( std::vector<osm::Node*>& path, double vitesse, double frequence, doubl
     {
         d_to = 0;
     }
-
     if(!d_path.empty())
-        d_pos = d_path[d_from]->pos();
+        setPos(d_path[0]->pos());
 
-    d_pixmap = new QGraphicsPixmapItem(getRandomImage());
-    d_pixmap->setFlags(QGraphicsItem::ItemIsSelectable);
-    d_color = randomColor();
-    d_ellipse = new QGraphicsEllipseItem(0, 0, d_freq, d_freq);
-    d_ellipse->setFlags(QGraphicsItem::ItemIsSelectable);
-
-    updateItem();
-
+    setData(0, QString::number(d_id));
+    setFlags(QGraphicsItem::ItemIsSelectable);
     d_color.setAlphaF(0.5);
-
-    QBrush brush(d_color);
-    QPen pen(Qt::NoPen);
-    d_ellipse->setBrush(brush);
-    d_ellipse->setPen(pen);
-    updateCoverage();
-    d_pixmap->setData(0, QString::number(d_id));
-    d_ellipse->setData(0, QString::number(d_id));
-    d_pixmap->setData(1, toString());
 }
 
-//Car::Car(const Car &c): d_v{c.d_v}, d_freq{c.d_freq}, d_intensity{c.d_intensity},
-//    d_acceleration{c.d_acceleration},  d_pos{c.d_pos}, d_from{c.d_from}, d_to{c.d_to}
-//{
-//    if(d_from != nullptr)
-//    {
-//        d_pixmap = new QGraphicsPixmapItem(getRandomImage());
-//        d_pixmap->setPos(d_pos);
-////        d_ellipse = new QGraphicsEllipseItem(d_pos.x(), d_pos.y(), d_freq, d_freq);
-//    }
-//}
-size_t Car::id() const { return d_id; }
-
-QPointF Car::pos() const
+QRectF Car::boundingRect() const
 {
-    return d_pos;
+    return QRectF(-d_freq - PEN_WIDTH / 2, -d_freq - PEN_WIDTH / 2,
+                  d_freq*2 + PEN_WIDTH, d_freq*2 + PEN_WIDTH);
+}
+
+QPainterPath Car::shape() const
+{
+    QPainterPath path;
+    path.addRect(boundingRect());
+    return path;
+}
+
+void Car::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
+{
+    auto originalBrush{painter->brush()};
+
+    qreal pixWidth = d_pixmap.width();
+    qreal pixHeight = d_pixmap.height();
+
+    QBrush brush{d_color};
+
+    painter->setBrush(brush);
+    if(d_showFreq)
+        painter->drawEllipse(boundingRect());
+    painter->drawPixmap(-(pixWidth / 2), -(pixHeight / 2), d_pixmap);
+
+    painter->setBrush(originalBrush);
+
+    updateOrientation();
+}
+
+size_t Car::id() const
+{
+    return d_id;
 }
 
 double Car::acceleration() const
@@ -162,49 +157,42 @@ double Car::intensity() const
 
 void Car::accelerate(double acc)
 {
-    d_v = (d_v / d_acceleration) * acc;
     d_acceleration = acc;
 }
 
-QGraphicsPixmapItem* Car::pixmap() const
+osm::Node* Car::from() const
 {
-    return d_pixmap;
+    return d_path[d_from];
 }
 
-QGraphicsEllipseItem* Car::ellipse() const
+osm::Node* Car::to() const
 {
-    return d_ellipse;
+    return d_path[d_to];
 }
 
 void Car::updateOrientation()
 {
-    d_pixmap->setTransformOriginPoint(d_pixmap->pixmap().width() / 2, d_pixmap->pixmap().height() / 2);
+    if(d_path.empty() || d_path.size() < d_to)
+        return;
+
     QPointF d = d_path[d_to]->pos() - d_path[d_from]->pos();
     qreal angle = std::atan2(d.y(), d.x()) * 180 / M_PI;
-    d_pixmap->setRotation(angle + 90);
+    setRotation(angle + 90);
 }
 
-void Car::nextMove()
+void Car::updateFrequenceVisibility(bool activated)
 {
-
-    d_from = d_to;
-    if((++i) < d_path.size())
-    {
-        d_to = i;
-    }
-    d_pos = d_path[d_from]->pos();
+    d_showFreq = activated;
+    update();
 }
 
-void Car::updateItem()
+double Car::receivedPower(const QPointF& p) const
 {
-    qreal pixWidth = d_pixmap->pixmap().width();
-    qreal pixHeight = d_pixmap->pixmap().height();
-
-    d_pixmap->setTransformOriginPoint(pixWidth / 2, pixHeight / 2);
-
-    auto carPos = d_pos - QPointF{pixWidth / 2, pixHeight / 2};
-    d_pixmap->setPos(carPos);
-    d_ellipse->setPos(d_pos - QPointF(d_freq / 2, d_freq / 2));
+    // Distance entre le véhicule et un point donné
+    double dist = distance(pos(), p);
+    if (dist == 0) return d_intensity;  // Puissance maximale à la position du véhicule
+    // Calcul de la perte FSPL et de la puissance reçue
+    return d_intensity - fspl(dist, d_freq);
 }
 
 void Car::updateCoverage()
@@ -213,24 +201,34 @@ void Car::updateCoverage()
     if (received_intensity < d_power_threshold)
     {
         d_color.setAlphaF(0);
-        d_ellipse->setBrush(d_color);
         return;
     }
 
-//    double scaling_factor = d_freq / 10.0;
-//    double rad = std::sqrt(received_intensity / d_power_threshold) * 4 * scaling_factor;
-//    rad = std::clamp(rad, 10.0, 200.0);
+    //    double scaling_factor = d_freq / 10.0;
+    //    double rad = std::sqrt(received_intensity / d_power_threshold) * 4 * scaling_factor;
+    //    rad = std::clamp(rad, 10.0, 200.0);
 
     d_color.setAlphaF(std::clamp(received_intensity / 100, 0.1, 0.55));
-//    d_ellipse->setRect(0, 0, rad, rad);
-    d_ellipse->setBrush(d_color);
-//    d_ellipse->setPos(d_pos - QPointF(rad / 2, rad / 2));
+    update();
 }
 
-void Car::update(double interval)
+void Car::nextMove()
 {
-    if(hasReachedEndOfPath())
+    d_from = d_to;
+    if((++i) < d_path.size())
+    {
+        d_to = i;
+    }
+    setPos(d_path[d_from]->pos());
+}
+
+void Car::move(double interval)
+{
+    if(d_path[d_to] == d_path[d_from])
+    {
+        emit hasReachEndOfPath();
         return;
+    }
 
     d_elapsed += interval / 1000.0;  // Convertir l'intervalle en secondes
 
@@ -248,23 +246,14 @@ void Car::update(double interval)
     {
         double progress = d_elapsed / time;
 
-        d_pos = d_path[d_from]->pos() + ((d_path[d_to]->pos() - d_path[d_from]->pos()) * progress);
-        updateItem();
+        auto position = d_path[d_from]->pos() + ((d_path[d_to]->pos() - d_path[d_from]->pos()) * progress);
         updateCoverage();
+        setPos(position);
+        update();
     }
 }
 
-osm::Node* Car::from() const
-{
-    return d_path[d_from];
-}
-
-osm::Node* Car::to() const
-{
-    return d_path[d_to];
-}
-
-void Car::updatePath(const std::vector<osm::Node*>& path)
+void Car::setPath(const std::vector<osm::Node*>& path)
 {
     i = 1;
     d_path = path;
@@ -273,93 +262,26 @@ void Car::updatePath(const std::vector<osm::Node*>& path)
     updateOrientation();
 }
 
-bool Car::hasReachedEndOfPath() const
-{
-    return d_path[d_to] == d_path[d_from];
-}
-
-//QGraphicsEllipseItem* coverage = new QGraphicsEllipseItem(d_pos.x() - 50, d_pos.y() - 50, 100, 100);  // Ajuster la taille du cercle
-//coverage->setPen(Qt::NoPen);  // Pas de bordure
-//coverage->setBrush(QColor(255, 0, 0, static_cast<int>(255 * (power / d_intensity))));
-
-double Car::receivedPower(const QPointF& pos) const
-{
-    // Distance entre le véhicule et un point donné
-    double dist = distance(d_pos, pos);
-
-    if (dist == 0) return d_intensity;  // Puissance maximale à la position du véhicule
-
-    // Calcul de la perte FSPL et de la puissance reçue
-    return d_intensity - fspl(dist, d_freq);
-}
-
-//void Car::partiallySelected()
-//{
-//    auto pen = d_ellipse->pen();
-//    pen.setStyle(Qt::SolidLine);
-//    d_ellipse->setPen(pen);
-//}
-
-void Car::removeMark()
-{
-    auto pen = d_ellipse->pen();
-    pen.setStyle(Qt::NoPen);
-    d_ellipse->setPen(pen);
-}
-
-void Car::mark()
-{
-    auto pen = d_ellipse->pen();
-    pen.setStyle(Qt::SolidLine);
-    pen.setWidth(3);
-    d_ellipse->setPen(pen);
-}
-
-bool Car::operator==(size_t id) const
-{
-    return d_id == id;
-}
-
-bool Car::hasConnectedCars() const
-{
-    return !d_connected_cars.empty();
-}
-
 bool Car::isConnectedTo(const Car* other) const
 {
     // Distance entre les deux voitures
-    double dist =  distance(d_pos, other->d_pos);
+    double dist =  distance(pos(), other->pos());
     double radius = std::max((d_freq * 0.5), (other->d_freq * 0.5));
 
     return dist <= radius;
 }
 
-void Car::updateConnectedCars(const std::vector<std::unique_ptr<Car>>& cars)
-{
-    d_connected_cars.clear();
-    removeMark();
-
-    for(const auto& car: cars)
-    {
-        if(car.get() != this && isConnectedTo(car.get()))
-        {
-            d_connected_cars.push_back(car.get());
-            mark();
-        }
-    }
-}
-
 QString Car::toString() const
 {
     QString str = QString("<p>Car N°%1: pos(%2, %3), speed: %4 Km/h, frequence: %5 Hz, puissance reçue: %6")
-            .arg(d_id)
-            .arg(d_pos.x())
-            .arg(d_pos.y())
-            .arg(d_v)
-            .arg(d_freq)
-            .arg(receivedPower({0, 0}));
+                      .arg(d_id)
+                      .arg(pos().x())
+                      .arg(pos().y())
+                      .arg(d_v)
+                      .arg(d_freq)
+                      .arg(receivedPower({0, 0}));
 
-    if(hasConnectedCars())
+    if(!d_connected_cars.empty())
     {
         str += "<br>Connected to cars: ";
         for (const Car* car : d_connected_cars)
@@ -370,3 +292,4 @@ QString Car::toString() const
     str.chop(1);
     return str + "</p>";
 }
+

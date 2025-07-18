@@ -1,30 +1,33 @@
-
 #ifndef CAR_H
 #define CAR_H
 
-#include <functional>
 #include "graph.h"
-#include <QGraphicsPixmapItem>
-// #include <QGraphicsPolygonItem>
+#include <QGraphicsObject>
 
-class Car
+class Car: public QGraphicsObject
 {
+    Q_OBJECT
  public:
-    Car();
+    Car(QGraphicsItem *parent = nullptr);
      /**
       * @brief Car avec paramètre
       * @param pos: la position de la voiture
       * @param vitesse: la vitesse de la voiture
       * @param frequence: la fréquence de la voiture
       */
-    Car(std::vector<osm::Node*>& path, double vitesse = 50.0, double frequence = 60, double intensity = 25);
+    Car(std::vector<osm::Node*>& path, double vitesse = 50.0, double frequence = 60, double intensity = 25, QGraphicsItem *parent = nullptr);
 
     size_t id() const;
+
+    QRectF boundingRect() const override;
+
+    QPainterPath shape() const override;
+
     /**
-     * @brief pos
-     * @return
+     * @brief draw: dessine la route
      */
-    QPointF pos() const;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = nullptr) override;
+
     /**
      * @brief acceleration
      */
@@ -45,83 +48,54 @@ class Car
      */
     void accelerate(double acc);
     /**
-    * @brief pixmap retourne l'image de la voiture (si utilisée)
-    */
-    QGraphicsPixmapItem* pixmap() const;
-
-    QGraphicsEllipseItem* ellipse() const;
-
-    osm::Node* from() const;
-    osm::Node* to() const;
-
-    /**
-     * @brief nextMove move to the next segment of the path
-     */
-    void nextMove();
-
-    /**
-     * @brief updateItem update the graphic item of the car
-     */
-    void updateItem();
-    /**
      * @brief updateOrientation update the direction of the car
      */
     void updateOrientation();
     /**
-     * @brief updatePath updae the current path ha the car should follow
-     * @param path
-     */
-    void updatePath(const std::vector<osm::Node*>& path);
-
-    /**
-     * @brief hasReachedEndOfPath check if the car has reached the end of the path
-     * @return
-     */
-    bool hasReachedEndOfPath() const;
-
-    /**
-     * @brief receivedPower calculae the power received by the car
-     * @param pos the observaion point position
-     * @return
-     */
-    double receivedPower(const QPointF& pos) const;
-
-    /**
      * @brief updateCoverage update the radio coverage of the cars
      */
     void updateCoverage();
-
     /**
-     * @brief updateConnectedCar
-     */
-    void updateConnectedCars(const std::vector<std::unique_ptr<Car>>& cars);
-    /**
-     * @brief hasConnectedCars return true if the car is connected to another cars
+     * @brief receivedPower calculae the power received by the car
+     * @param p the observaion point position
      * @return
      */
-    bool hasConnectedCars() const;
+    double receivedPower(const QPointF& p) const;
+    /**
+     * @brief update the frequence visibility
+     */
+    void updateFrequenceVisibility(bool);
+    /**
+     * @brief nextMove move to the next segment of the path
+     */
+    void nextMove();
+    void setPath(const std::vector<osm::Node*>& path);
+    osm::Node* from() const;
+    osm::Node* to() const;
+    /**
+     * @brief check if the car is connected to
+     * @param other
+     * @return
+     */
+    bool isConnectedTo(const Car* other) const;
 
-//    void partiallymark();
-    void mark();
-    void removeMark();
+    QString toString() const;
 
+signals:
+    // this event it's emit when the car has reach the end of a path
+    void hasReachEndOfPath();
+
+public slots:
     /**
      * @brief update mettre à jour la position de la voiture selon un interval
      * @param interval
      */
-    void update(double interval);
-
-    QString toString() const;
-
-    bool operator==(size_t id) const;
-
-    bool isConnectedTo(const Car* other) const;
-
-// signals:
-//    void endPathReach(long long currentPos);
+    void move(double interval);
+private:
     static size_t d_instance_counter;
     static constexpr double d_power_threshold = 5.0;
- private:
+
+    bool d_showFreq;
     // vitesse de la voiture
     double d_v;
     // fréquence
@@ -130,28 +104,23 @@ class Car
     double d_intensity;
     // vitesse de lecture dans l'animation
     double d_acceleration;
-
-    // position reel de la voiture
-    QPointF d_pos;
-
     // position de depart de la voiture
     size_t d_from;
     // position de position d'arrivée
     size_t d_to;
-
+    // Chemin a parcourir
     std::vector<osm::Node*> d_path;
-
+    // position dans le chemin
     size_t i = 1;
-    // pixmap pour dessiner la voiture
-    QGraphicsPixmapItem* d_pixmap = nullptr;
-
-    double d_elapsed = 0.0; // Temps écoulé dans l'animation
-
-//     // cercle pour représenter la fréquence de la voiture
-    QGraphicsEllipseItem* d_ellipse = nullptr;
+    // Temps écoulé dans l'animation
+    double d_elapsed = 0.0;
+    // id du car
     size_t d_id;
+    // couleur du rayon de frequence
     QColor d_color;
-
+    // image de la voiture
+    QPixmap d_pixmap;
+    // connected cars
     std::vector<Car*> d_connected_cars = std::vector<Car*>(0);
  };
 
