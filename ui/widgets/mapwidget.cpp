@@ -560,7 +560,6 @@ void MapWidget::initRoads()
                 auto w = new Way{id, points};
                 w->setTags(tags);
                 QMetaObject::invokeMethod(this, [layer = d_wayLayer, w]() {
-                   //w.draw(d_wayLayer);
                     layer->addToGroup(w);
                 }, Qt::QueuedConnection);
             }
