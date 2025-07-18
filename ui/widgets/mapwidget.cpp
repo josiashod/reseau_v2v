@@ -12,6 +12,7 @@
 #include "./../../core/car.h"
 #include "./../../utils/dbmanager.h"
 #include "core/hexagon.h"
+#include "core/water.h"
 
 
 // CRÉATION DE L'INTERFACE
@@ -39,17 +40,11 @@ MapWidget::~MapWidget()
 
 void MapWidget::creerInterface()
 {
-//    QVBoxLayout *layout = new QVBoxLayout(this);
-//    layout->setContentsMargins(0, 0, 0, 0);
-//    setLayout(layout);
-
-//    d_view = new QGraphicsView{this};
-
-//    QTransform transform;
-//    transform.shear(0.4, 0); // Cisaillement horizontal pour simuler l'inclinaison
-//    transform.scale(1, 0.4); // Réduit la hauteur pour un effet isométrique
-//    setTransform(transform);
-//    rotate(-10);
+   // QTransform transform;
+   // transform.shear(0.4, 0); // Cisaillement horizontal pour simuler l'inclinaison
+   // transform.scale(1, 0.4); // Réduit la hauteur pour un effet isométrique
+   // setTransform(transform);
+   // rotate(-10);
 
     setMouseTracking(true);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -62,9 +57,9 @@ void MapWidget::creerInterface()
 
     show();
 
-   // d_waterLayer = new QGraphicsItemGroup();
-   // d_waterLayer->setVisible(d_showWater);
-   // d_scene->addItem(d_waterLayer);
+   d_waterLayer = new QGraphicsItemGroup();
+   d_waterLayer->setVisible(true);
+   d_scene->addItem(d_waterLayer);
 
     d_parkLayer = new QGraphicsItemGroup();
     d_parkLayer->setVisible(d_showPark);
@@ -90,7 +85,6 @@ void MapWidget::creerInterface()
     d_meshLayer->setVisible(d_showMesh);
     d_meshLayer->setAcceptedMouseButtons(Qt::NoButton);
     d_scene->addItem(d_meshLayer);
-//    d_carsLayer->setZValue(1);
 }
 
 void MapWidget::resizeEvent(QResizeEvent *event)
@@ -114,38 +108,31 @@ void MapWidget::resizeEvent(QResizeEvent *event)
         };
 
         auto roadWatcher = new QFutureWatcher<void>(this);
-        auto parkWatcher = new QFutureWatcher<void>(this);
+        auto defaultWatcher = new QFutureWatcher<void>(this);
         auto buildingWatcher = new QFutureWatcher<void>(this);
-        auto meshWatcher = new QFutureWatcher<void>(this);
 
         connect(roadWatcher, &QFutureWatcher<void>::finished, this, [this, cleanWatcher, roadWatcher](){
             isLoadingFinished();
             cleanWatcher(roadWatcher);
         });
-
-        connect(parkWatcher, &QFutureWatcher<void>::finished, this, [ cleanWatcher, parkWatcher](){
-            cleanWatcher(parkWatcher);
+        connect(defaultWatcher, &QFutureWatcher<void>::finished, this, [ cleanWatcher, defaultWatcher](){
+            cleanWatcher(defaultWatcher);
         });
-
-       connect(buildingWatcher, &QFutureWatcher<void>::finished, this, [cleanWatcher, buildingWatcher](){
+        connect(buildingWatcher, &QFutureWatcher<void>::finished, this, [cleanWatcher, buildingWatcher](){
            cleanWatcher(buildingWatcher);
-       });
-        connect(meshWatcher, &QFutureWatcher<void>::finished, this, [ cleanWatcher, meshWatcher](){
-            cleanWatcher(meshWatcher);
         });
 
         // Associe le watcher au future
-        parkWatcher->setFuture(QtConcurrent::run([this]() {
+        defaultWatcher->setFuture(QtConcurrent::run([this]() {
+            initMeshs();
             initParks();
+            initWaters();
         }));
         roadWatcher->setFuture(QtConcurrent::run([this]() {
             initRoads();
         }));
-       buildingWatcher->setFuture(QtConcurrent::run([this]() {
+        buildingWatcher->setFuture(QtConcurrent::run([this]() {
            initBuildings();
-       }));
-        meshWatcher->setFuture(QtConcurrent::run([this]() {
-            initMeshs();
         }));
     }
 }
@@ -372,6 +359,8 @@ void MapWidget::initBounds()
 
 void MapWidget::initBuildings()
 {
+    // uncomment this if you want to load the building
+    return;
     auto query = DBManager::instance().getBuildings();
     bool success = false;
 
@@ -459,10 +448,8 @@ void MapWidget::initParks()
     }
 }
 
-/*void MapWidget::initWaters()
+void MapWidget::initWaters()
 {
-    QVector<Water> waters;
-    // auto d_dbmanager = DBManager();
     auto query = DBManager::instance().getWaters();
     bool success = false;
 
@@ -474,8 +461,7 @@ void MapWidget::initParks()
         {
             long long id;
             id = query.value(0).toString().toLongLong();
-
-            Water w{id};
+            std::vector<QPointF> points;
 
             auto q = DBManager::instance().getWayNodes(id);
             success = q.exec();
@@ -484,36 +470,26 @@ void MapWidget::initParks()
                 while(q.next())
                 {
                     std::pair<double, double> coord;
-//                    long long id;
                     double lat = 0.0, lon = 0.0;
 
-//                    id = q.value(0).toString().toLongLong();
                     lat = q.value(1).toString().toDouble();
                     lon = q.value(2).toString().toDouble();
                     coord = std::make_pair(lon, lat);
-                    QPointF p = pairLatLonToXY(coord);
-                    w.addPoint(p);
+                    points.push_back(pairLatLonToXY(coord));
                 }
             }
-            waters.push_back(w);
-            // if(d_logger)
-            // d_logger->addLog(QString("[SUCCESS] Water n°: %1.").arg(id), LogWidget::SUCCESS);
+
+            auto water = new Water{id, points};
+            QMetaObject::invokeMethod(this, [layer = d_waterLayer, water]() {
+                layer->addToGroup(water);
+            }, Qt::QueuedConnection);
         }
         query.finish();
     }
-    // else
-    // {
-    //     d_logger->addLog("[ERREUR] Un problème est survenu lors de la récupération des waters", LogWidget::DANGER);
-    // }
-    // d_logger->addLog("[INFO] Emission des waters pour affichage.");
-    emit watersDataReady(waters);
-// DBManager::instance().close();
-}*/
+}
 
 void MapWidget::initRoads()
 {
-//    QVector<Way> ways;
-    // auto d_dbmanager = DBManager();
     auto query = DBManager::instance().getRoads();
     bool success = false;
 
@@ -556,7 +532,6 @@ void MapWidget::initRoads()
                         std::pair<double, double> c{lon, lat};
                         p = pairLatLonToXY(c);
                         points.push_back(p);
-                        //w.addPoint(p);
                         start = d_graph->addNode(id, p.x(), p.y());
                     }
                 }
@@ -581,7 +556,6 @@ void MapWidget::initRoads()
                         }
                         start = end;
                     }
-//                    qDebug() << QString("[SUCCESS] Road n°: %1.").arg(id);
                 }
                 auto w = new Way{id, points};
                 w->setTags(tags);
@@ -590,21 +564,11 @@ void MapWidget::initRoads()
                     layer->addToGroup(w);
                 }, Qt::QueuedConnection);
             }
-            // if(d_logger)
-            // d_logger->addLog(QString("[SUCCESS] Road n°: %1.").arg(id), LogWidget::SUCCESS);
+
         }
         query.finish();
     }
-    // else
-    // {
-    //     if(d_logger)
-    //         d_logger->addLog("[ERREUR] Un problème est survenu lors de la récupération des roads", LogWidget::DANGER);
-    // }
 
-    // if(d_logger)
-    //     d_logger->addLog("[INFO] Emission des roads pour affichage.");
-//    emit roadsDataReady(ways);
-    // DBManager::instance().close();
 }
 
 void MapWidget::initMeshs()
@@ -647,9 +611,6 @@ void MapWidget::initMeshs()
                 qreal vertexY = y + hexRadius * sin(angle);
                 hexagon << QPointF(vertexX, vertexY);
             }
-
-            // Ajouter l'hexagone à la collection
-//            d_meshs.push_back(polygon);
 
             QMetaObject::invokeMethod(this, [layer = d_meshLayer, hexagon]() {
                 auto* hex = new Hexagon{hexagon, layer};

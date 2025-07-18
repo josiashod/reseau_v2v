@@ -48,18 +48,15 @@ private:
     // lon, lat coord
     std::pair<double, double> d_maxCoord, d_minCoord;
 
-//    QVector<QPolygonF> d_meshs;
-
     // stocke les elements de la vue qui ont été partiellement selectionné
-//    std::vector<int> d_partially_selected_elements = std::vector<int>(0);
-//    std::vector<int> d_selected_elements = std::vector<int>(0);
+   // std::vector<int> d_partially_selected_elements = std::vector<int>(0);
+   // std::vector<int> d_selected_elements = std::vector<int>(0);
 
     double d_scale_factor = 1.15;
     qreal d_perspective_offset = 0.6;
 
     // Permet d'afficher les différentes scenes
     bool d_showPark         = true;
-//    bool d_showWater        = true;
     bool d_showBuilding     = true;
     bool d_showWay          = true;
     bool d_showDescription  = true;
@@ -71,18 +68,14 @@ private:
 
     osm::Graph* d_graph;
 
-    // /**
-    //  * @brief d_view la vue graphique pour la map
-    //  */
-    // QGraphicsView* d_view;
     /**
      * @brief d_scene scene de la map
      */
     QGraphicsScene*     d_scene;
-    // /**
-    // * @brief d_waterLayer couche d'affichage de l'eau
-    // */
-    // QGraphicsItemGroup* d_waterLayer;
+    /**
+    * @brief d_waterLayer couche d'affichage de l'eau
+    */
+    QGraphicsItemGroup* d_waterLayer;
     /**
      * @brief d_parcLayer couche d'affichage des espaces verts
      */
@@ -132,7 +125,7 @@ private:
     void initBounds();
     void initBuildings();
     void initParks();
-    // void initWaters();
+    void initWaters();
     void initRoads();
     void initMeshs();
 };

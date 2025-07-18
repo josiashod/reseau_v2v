@@ -163,7 +163,7 @@ QSqlQuery DBManager::getBuildings() const
     QString queryStr = QString("SELECT * "
         "FROM %1 "
         "LEFT JOIN %2 as t ON t.element_id = %1.id "
-        "WHERE t.t_key = 'building' limit 100").arg(_WAYS_TABLE_, _TAGS_TABLE_);
+        "WHERE t.t_key = 'building'").arg(_WAYS_TABLE_, _TAGS_TABLE_);
 
     QSqlQuery q(DBManager::threadDatabase());
     if (!q.prepare(queryStr)) {
