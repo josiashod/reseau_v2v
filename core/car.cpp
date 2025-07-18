@@ -82,6 +82,8 @@ Car::Car(QGraphicsItem *parent):
     setData(0, QString::number(d_id));
     setFlags(QGraphicsItem::ItemIsSelectable);
     d_color.setAlphaF(0.5);
+
+    setZValue(2);
 }
 
 // // Constructeur avec position, vitesse et fréquence
@@ -101,6 +103,8 @@ Car::Car( std::vector<osm::Node*>& path, double vitesse, double frequence, doubl
     setData(0, QString::number(d_id));
     setFlags(QGraphicsItem::ItemIsSelectable);
     d_color.setAlphaF(0.5);
+
+    setZValue(2);
 }
 
 QRectF Car::boundingRect() const
