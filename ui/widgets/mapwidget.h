@@ -71,18 +71,18 @@ private:
 
     osm::Graph* d_graph;
 
-    /**
-     * @brief d_view la vue graphique pour la map
-     */
-//    QGraphicsView* d_view;
+    // /**
+    //  * @brief d_view la vue graphique pour la map
+    //  */
+    // QGraphicsView* d_view;
     /**
      * @brief d_scene scene de la map
      */
     QGraphicsScene*     d_scene;
-//    /**
-//     * @brief d_waterLayer couche d'affichage de l'eau
-//     */
-//    QGraphicsItemGroup* d_waterLayer;
+    // /**
+    // * @brief d_waterLayer couche d'affichage de l'eau
+    // */
+    // QGraphicsItemGroup* d_waterLayer;
     /**
      * @brief d_parcLayer couche d'affichage des espaces verts
      */
@@ -99,8 +99,6 @@ private:
      * @brief d_carsLayer couche d'affichage des voitures
      */
     QGraphicsItemGroup* d_carsLayer;
-
-
     /**
      * @brief d_meshLayer couche d'affichage des mailles
      */
@@ -134,7 +132,7 @@ private:
     void initBounds();
     void initBuildings();
     void initParks();
-//    void initWaters();
+    // void initWaters();
     void initRoads();
     void initMeshs();
 };

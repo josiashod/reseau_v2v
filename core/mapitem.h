@@ -50,12 +50,6 @@ public:
      * @brief tag: Update the tags
      */
     void setTags(std::map<QString, QString> tags);
-    /**
-     * @brief draw: dessine la route avec un scale_factor donné
-     * @param group le group ou doit etre l'instance
-     * @param scale_factor: le scale factor
-     */
-    virtual void draw(QGraphicsItemGroup* group) const;
 protected:
     long long d_id;
     std::vector<QPointF> d_points;

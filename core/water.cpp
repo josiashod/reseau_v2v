@@ -1,36 +1,53 @@
 #include "water.h"
+#include <QPainter>
 
-Water::Water(long long id): MapItem{id}
-{}
-
-void Water::draw(QGraphicsItemGroup* group) const
+Water::Water(long long id, const std::vector<QPointF>& points, QGraphicsItem* parent):
+    MapItem{id, points},
+    QGraphicsObject{parent}
 {
     if(d_points.empty())
     {
         qDebug() << "No points available to draw the park.";
-        return;
     }
-
-    QPolygonF polygon;
-
-    for(const QPointF& p: d_points)
+    else
     {
-        polygon << p;
+        for(const QPointF& p: d_points)
+        {
+            d_polygon << p;
+        }
+
+        if (!d_polygon.isClosed())
+        {
+            d_polygon << d_polygon.first();
+        }
     }
+}
 
-    if (!polygon.isClosed())
-    {
-        polygon << polygon.first();
-    }
+QRectF Water::boundingRect() const
+{
+    return d_polygon.boundingRect();
+}
 
-//    QPainterPath p;
-//    p.addPolygon(polygon);
+QPainterPath Water::shape() const
+{
+    QPainterPath path;
+    path.addRect(boundingRect());
+    return path;
+}
 
-    auto water = new QGraphicsPolygonItem(polygon, group);
+void Water::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
+{
+    auto originalBrush  = painter->brush();
+    auto originalPen    = painter->pen();
+
     QBrush brush{QColor(0, 191, 255)};
-    water->setBrush(brush);
     QPen pen{QColor(0, 191, 255), 1}; // Noir, épaisseur 1 pixel
-    water->setPen(pen);
 
-    group->addToGroup(water);
+    painter->setPen(pen);
+    painter->setBrush(brush);
+
+    painter->drawPolygon(d_polygon);
+
+    painter->setBrush(originalBrush);
+    painter->setPen(originalPen);
 }

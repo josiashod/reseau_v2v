@@ -62,9 +62,9 @@ void MapWidget::creerInterface()
 
     show();
 
-//    d_waterLayer = new QGraphicsItemGroup();
-//    d_waterLayer->setVisible(d_showWater);
-//    d_scene->addItem(d_waterLayer);
+   // d_waterLayer = new QGraphicsItemGroup();
+   // d_waterLayer->setVisible(d_showWater);
+   // d_scene->addItem(d_waterLayer);
 
     d_parkLayer = new QGraphicsItemGroup();
     d_parkLayer->setVisible(d_showPark);
@@ -90,7 +90,6 @@ void MapWidget::creerInterface()
     d_meshLayer->setVisible(d_showMesh);
     d_meshLayer->setAcceptedMouseButtons(Qt::NoButton);
     d_scene->addItem(d_meshLayer);
-
 //    d_carsLayer->setZValue(1);
 }
 

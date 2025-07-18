@@ -37,8 +37,3 @@ QString MapItem::tag(const QString& tag) const {
 {
     d_tags = tags;
 }
-
-void MapItem::draw(QGraphicsItemGroup* group) const
-{
-
-}
