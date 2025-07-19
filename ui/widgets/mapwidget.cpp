@@ -18,7 +18,7 @@
 // CRÉATION DE L'INTERFACE
 
 MapWidget::MapWidget(QWidget *parent, osm::Graph* graph)
-    : QGraphicsView{parent}, d_graph{graph}
+    : QGraphicsView{parent}, d_graph{graph}, d_hasBeenResized{false}
 {
     creerInterface();
     initBounds();
@@ -55,11 +55,9 @@ void MapWidget::creerInterface()
     d_scene->setBackgroundBrush(QColor("#F2EFE9")); // Gris clair
     setScene(d_scene);
 
-    show();
-
-   d_waterLayer = new QGraphicsItemGroup();
-   d_waterLayer->setVisible(true);
-   d_scene->addItem(d_waterLayer);
+    d_waterLayer = new QGraphicsItemGroup();
+    d_waterLayer->setVisible(true);
+    d_scene->addItem(d_waterLayer);
 
     d_parkLayer = new QGraphicsItemGroup();
     d_parkLayer->setVisible(d_showPark);
@@ -92,8 +90,9 @@ void MapWidget::resizeEvent(QResizeEvent *event)
     // Mettre à jour la taille de la scène lors du redimensionnement de la vue
     QGraphicsView::resizeEvent(event);
 
-    if(!d_elementsHasBeenLoaded)
+    if(!d_elementsHasBeenLoaded && !d_hasBeenResized)
     {
+        d_hasBeenResized = true;
         emit isLoading(d_elementsHasBeenLoaded);
 
         setRenderHint(QPainter::Antialiasing);
@@ -102,6 +101,8 @@ void MapWidget::resizeEvent(QResizeEvent *event)
         fitInView(d_scene->sceneRect(), Qt::KeepAspectRatio);
         // Configurer la vue (taille et centrage)
         setAlignment(Qt::AlignCenter);
+
+        initMeshs();
 
         auto cleanWatcher = [](QFutureWatcher<void>* watcher) {
             watcher->deleteLater();
@@ -124,7 +125,6 @@ void MapWidget::resizeEvent(QResizeEvent *event)
 
         // Associe le watcher au future
         defaultWatcher->setFuture(QtConcurrent::run([this]() {
-            initMeshs();
             initParks();
             initWaters();
         }));
@@ -572,7 +572,7 @@ void MapWidget::initRoads()
 
 void MapWidget::initMeshs()
 {
-    qreal hexRadius = 300.0;  // Ajuster la taille au besoin
+    qreal hexRadius = 250.0;  // Ajuster la taille au besoin
     qreal dx = 1.5 * hexRadius;  // Décalage horizontal (distance entre centres des hexagones)
     qreal dy = sqrt(3) * hexRadius;  // Décalage vertical (distance entre centres des hexagones)
 
@@ -595,7 +595,6 @@ void MapWidget::initMeshs()
             qreal x = startX + j * dx;
             qreal y = startY + i * dy;
 
-
             // Décalage pour les rangées impaires
             if (j % 2 == 1) {
                 y += dy / 2;
@@ -611,10 +610,8 @@ void MapWidget::initMeshs()
                 hexagon << QPointF(vertexX, vertexY);
             }
 
-            QMetaObject::invokeMethod(this, [layer = d_meshLayer, hexagon]() {
-                auto* hex = new Hexagon{hexagon, layer};
-                layer->addToGroup(hex);
-            }, Qt::QueuedConnection);
+            auto* hex = new Hexagon{hexagon, d_meshLayer};
+            d_meshLayer->addToGroup(hex);
         }
     }
 }

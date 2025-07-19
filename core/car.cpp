@@ -7,7 +7,6 @@
 
 QString colors[] = {"black", "blue", "red", "green", "yellow"};
 size_t Car::d_instance_counter = 0;
-const qreal PEN_WIDTH = 1;
 
 QPixmap getRandomImage()
 {
@@ -123,13 +122,18 @@ QPainterPath Car::shape() const
 void Car::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
     auto originalBrush{painter->brush()};
+    auto originalPen{painter->pen()};
 
     qreal pixWidth = d_pixmap.width();
     qreal pixHeight = d_pixmap.height();
 
+    auto pen{originalPen};
     QBrush brush{d_color};
+    pen.setWidth(PEN_WIDTH);
 
+    painter->setPen(pen);
     painter->setBrush(brush);
+
     if(d_showFreq)
         painter->drawEllipse(boundingRect());
     painter->drawPixmap(-(pixWidth / 2), -(pixHeight / 2), d_pixmap);
@@ -219,9 +223,9 @@ void Car::updateCoverage()
 void Car::nextMove()
 {
     d_from = d_to;
-    if((++i) < d_path.size())
+    if((d_to + 1) < d_path.size())
     {
-        d_to = i;
+        ++d_to;
     }
     setPos(d_path[d_from]->pos());
 }
@@ -237,6 +241,8 @@ void Car::move(double interval)
     d_elapsed += interval / 1000.0;  // Convertir l'intervalle en secondes
 
     double time = duree(distance(d_path[d_from]->pos(), d_path[d_to]->pos()), d_v);
+
+    updateConnections();
 
     // Vérifier si on est arrivée à destination
     if (d_elapsed > time)
@@ -259,9 +265,9 @@ void Car::move(double interval)
 
 void Car::setPath(const std::vector<osm::Node*>& path)
 {
-    i = 1;
     d_path = path;
-    d_to = i;
+    d_from = d_to;
+    d_to = 1;
     d_elapsed = 0.0;
     updateOrientation();
 }
@@ -273,6 +279,23 @@ bool Car::isConnectedTo(const Car* other) const
     double radius = std::max((d_freq * 0.5), (other->d_freq * 0.5));
 
     return dist <= radius;
+}
+
+void Car::clearConnections()
+{
+    d_connected_cars.clear();
+    PEN_WIDTH = 1;
+    update();
+}
+
+void Car::updateConnectionWith(Car* other)
+{
+    if(isConnectedTo(other))
+    {
+        PEN_WIDTH = 3;
+        d_connected_cars.append(other);
+        update();
+    }
 }
 
 QString Car::toString() const
@@ -295,5 +318,24 @@ QString Car::toString() const
     }
     str.chop(1);
     return str + "</p>";
+}
+
+void Car::updateConnections()
+{
+    QList<QGraphicsItem*> collidingObjects = collidingItems(Qt::IntersectsItemShape);
+    QVector<Car*> cars;
+
+    for (auto* items : collidingObjects) {
+        if(auto* car = dynamic_cast<Car*>(items))
+        {
+            cars.append(car);
+        }
+    }
+
+    clearConnections();
+
+    for (int i = 0; i < cars.size(); ++i) {
+        updateConnectionWith(cars[i]);
+    }
 }
 

@@ -68,6 +68,8 @@ private:
 
     osm::Graph* d_graph;
 
+    // used to prevent view double resized;
+    bool d_hasBeenResized;
     /**
      * @brief d_scene scene de la map
      */

@@ -1,5 +1,6 @@
 #include "hexagon.h"
 #include <QPainter>
+#include <QTimer>
 
 Hexagon::Hexagon(QPolygonF hexagon, QGraphicsItem *parent):
     QGraphicsObject{parent}, d_polygon{hexagon}

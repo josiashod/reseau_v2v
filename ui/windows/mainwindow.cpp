@@ -253,7 +253,7 @@ void MainWindow::playOrPause()
     }
 
     if(d_isPlaying)
-        d_timer.start(1000 / FPS);
+        d_timer.start();
     else
         d_timer.stop();
 }
@@ -321,7 +321,10 @@ void MainWindow::addCar(int nb, double speed, double freq, double intensity)
 
 void MainWindow::onCarHasReachEndOfPath()
 {
-    auto car = qobject_cast<Car*>(sender());
+    auto* car = qobject_cast<Car*>(sender());
+
+    if(car == nullptr)
+        return;
 
     std::vector<osm::Node*> path(0);
     auto* newnode = d_graph.getRandomNode();

@@ -78,7 +78,15 @@ class Car: public QGraphicsObject
      * @return
      */
     bool isConnectedTo(const Car* other) const;
-
+    /**
+     * @brief updateConnectionWith
+     * @param other
+     */
+    void updateConnectionWith(Car* other);
+    /**
+     * @brief toString
+     * @return
+     */
     QString toString() const;
 
 signals:
@@ -92,6 +100,8 @@ public slots:
      */
     void move(double interval);
 private:
+    void clearConnections();
+    void updateConnections();
     static size_t d_instance_counter;
     static constexpr double d_power_threshold = 5.0;
 
@@ -110,8 +120,6 @@ private:
     size_t d_to;
     // Chemin a parcourir
     std::vector<osm::Node*> d_path;
-    // position dans le chemin
-    size_t i = 1;
     // Temps écoulé dans l'animation
     double d_elapsed = 0.0;
     // id du car
@@ -121,7 +129,9 @@ private:
     // image de la voiture
     QPixmap d_pixmap;
     // connected cars
-    std::vector<Car*> d_connected_cars = std::vector<Car*>(0);
+    QVector<Car*> d_connected_cars = QVector<Car*>(0);
+
+    qreal PEN_WIDTH = 1;
  };
 
 #endif // CAR_H
