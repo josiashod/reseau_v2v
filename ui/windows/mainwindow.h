@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QTimer>
 #include "../widgets/mapwidget.h"
 #include "../widgets/logwidget.h"
 
@@ -11,7 +12,6 @@
 class QPushButton;
 class QComboBox;
 class QVBoxLayout;
-class QTimer;
 class QLabel;
 
 class MainWindow : public QMainWindow
@@ -49,7 +49,6 @@ private slots:
     void updatePlayButtonLabel();
     void updateSpeedSelector(int i);
 
-//    void addCar(int nb, double freq, double intensity);
 
     /**
      * @brief updateFrame: update cars position
@@ -75,16 +74,14 @@ private:
     QPushButton* d_addCarButton;
     QComboBox* d_speedSelector;
     QLabel* d_timeLabel;
-
-    int FPS = 80;
-    QTimer *d_timer;
+    QTimer d_timer;
 
     osm::Graph d_graph;
     std::vector<std::unique_ptr<Car>> d_cars;
     // les voitures partiellement selectionnées par l'utilisateur
-//    std::vector<int> d_car_partially_selected = std::vector<int>(0);
+    // std::vector<int> d_car_partially_selected = std::vector<int>(0);
     // les voitures dont la selection a été validé
-//    std::vector<int> d_car_selection = std::vector<int>(0);
+    // std::vector<int> d_car_selection = std::vector<int>(0);
 
     bool d_showRoads;
     bool d_showCarFreq;
@@ -96,7 +93,6 @@ private:
     bool d_isPlaying;
     double d_v;
 
-    QStringList d_listOfSpeeds = {"0.25", "0.5" ,"0.75", "Normale", "1.25", "1.5", "1.75", "2", "2.25", "2.5", "2.75", "3"};
     double d_speeds[12] = {0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3};
     int d_selectedSpeed;
     int d_elapsed_time;

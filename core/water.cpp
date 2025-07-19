@@ -43,6 +43,9 @@ void Water::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWi
     QBrush brush{QColor(0, 191, 255)};
     QPen pen{QColor(0, 191, 255), 8};
 
+    pen.setJoinStyle(Qt::RoundJoin);
+    pen.setCapStyle(Qt::RoundCap);
+
     painter->setPen(pen);
     painter->setBrush(brush);
 

@@ -7,10 +7,11 @@
 #include <QPushButton>
 #include <QComboBox>
 #include <QMenuBar>
-#include <QTimer>
-#include <QtConcurrent>
 #include "../dialog/addcardialog.h"
 #include <QMessageBox>
+#include <QTime>
+
+const int FPS = 80;
 
 // retourne le libelle à mettre dans le menu
 QString menu_libelle(bool etat, const QString& libelle)
@@ -20,6 +21,7 @@ QString menu_libelle(bool etat, const QString& libelle)
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),
+    d_timer{this},
     d_graph{},
     d_showRoads(true),
     d_showCarFreq(true),
@@ -130,12 +132,6 @@ void MainWindow::creerInterface()
 //    connect(d_mapView, &MapWidget::deletePartialSelection, this, &MainWindow::onDeletePartialSelection);
 //    connect(d_mapView, &MapWidget::persistPartialSelection, this, &MainWindow::onPersistSelection);
 
-    d_timer = new QTimer(this);
-    // Mettre l'interval de rafraichissement de l'affichage
-    d_timer->setInterval(1000 / FPS);
-    // ecoute chaque fois que le timer signal etre arrivé à la fin d'un interval
-    connect(d_timer, &QTimer::timeout, this, &MainWindow::updateFrame);
-
     updatePlayButtonLabel();
 }
 
@@ -228,37 +224,38 @@ void MainWindow::onClearLog()
 
 void MainWindow::createVComboBox()
 {
-    d_speedSelector->addItems(d_listOfSpeeds);
+    QStringList listOfSpeeds;
+
+    for (const auto& speed: d_speeds)
+    {
+        listOfSpeeds.append(QString::number(speed));
+    }
+    listOfSpeeds[3] = "Normale";
+
+    d_speedSelector->addItems(listOfSpeeds);
 }
 
 void MainWindow::updateSpeedSelector(int i)
 {
     d_selectedSpeed = i;
     selectSpeed();
-//    accelerate();
     playOrPause();
 }
 
-//void MainWindow::onCarReachEndRoad(long long currentPos)
-//{
-//    Car* car = qobject_cast<Car *>(sender());
-//    osm::Node* newnode;
-//    do
-//    {
-//        newnode = d_graph.getRandomNode();
-//    }
-//    while(!newnode || newnode->id() == currentPos);
-
-//    auto path = d_graph.dijkstraPath(currentPos, newnode->id());
-//    car->updatePath(path);
-//}
-
 void MainWindow::playOrPause()
 {
+    if(d_timer.interval() == 0)
+    {
+        // Mettre l'interval de rafraichissement de l'affichage
+        d_timer.setInterval(1000 / FPS);
+        // ecoute chaque fois que le timer signal etre arrivé à la fin d'un interval
+        connect(&d_timer, &QTimer::timeout, this, &MainWindow::updateFrame);
+    }
+
     if(d_isPlaying)
-        d_timer->start(1000 / FPS);
+        d_timer.start(1000 / FPS);
     else
-        d_timer->stop();
+        d_timer.stop();
 }
 
 void MainWindow::accelerate()
@@ -418,7 +415,6 @@ MainWindow::~MainWindow()
     delete d_mapView;
     delete d_logsView;
     delete d_rightSidebar;
-    delete d_timer;
     for(auto* child: menuBar()->children())
         delete child;
 }

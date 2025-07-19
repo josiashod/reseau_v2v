@@ -572,7 +572,7 @@ void MapWidget::initRoads()
 
 void MapWidget::initMeshs()
 {
-    qreal hexRadius = 100.0;  // Ajuster la taille au besoin
+    qreal hexRadius = 300.0;  // Ajuster la taille au besoin
     qreal dx = 1.5 * hexRadius;  // Décalage horizontal (distance entre centres des hexagones)
     qreal dy = sqrt(3) * hexRadius;  // Décalage vertical (distance entre centres des hexagones)
 
