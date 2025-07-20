@@ -99,9 +99,11 @@ public slots:
      * @param interval
      */
     void move(double interval);
-private:
+    void handleInfo();
     void clearConnections();
-    void updateConnections();
+
+private:
+    // void updateConnections();
     static size_t d_instance_counter;
     static constexpr double d_power_threshold = 5.0;
 

@@ -128,6 +128,7 @@ void MainWindow::creerInterface()
     //connections aux évènements de la map
     connect(d_mapView, &MapWidget::isLoading, this, &MainWindow::onMapLoading);
     connect(d_mapView, &MapWidget::isLoaded, this, &MainWindow::onMapLoaded);
+    connect(d_mapView, &MapWidget::requestParentPause, this, &MainWindow::onMapRequestPause);
 //    connect(d_mapView, &MapWidget::addElementToPartialSelection, this, &MainWindow::onAddCarToPartialSelection);
 //    connect(d_mapView, &MapWidget::removeElementFromPartialSelection, this, &MainWindow::onRemoveCarFromPartialSelection);
 //    connect(d_mapView, &MapWidget::deletePartialSelection, this, &MainWindow::onDeletePartialSelection);
@@ -211,7 +212,7 @@ void  MainWindow::updatePlayButtonLabel()
     playOrPause();
 }
 
-void MainWindow::onPlay(bool)
+void MainWindow::onPlay()
 {
     d_isPlaying = !d_isPlaying;
 
@@ -292,6 +293,12 @@ void MainWindow::onAddCar()
     dialog->show();
 
     connect(dialog, &AddCarDialog::create_car, this, &MainWindow::addCar);
+}
+
+void MainWindow::onMapRequestPause()
+{
+    if(d_isPlaying)
+        onPlay();
 }
 
 void MainWindow::addCar(int nb, double speed, double freq, double intensity)

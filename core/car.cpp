@@ -4,6 +4,9 @@
 #include <QBrush>
 #include <QPen>
 #include <QColor>
+#include <QMenu>
+#include <QMessageBox>
+#include <QGraphicsSceneContextMenuEvent>
 
 QString colors[] = {"black", "blue", "red", "green", "yellow"};
 size_t Car::d_instance_counter = 0;
@@ -242,7 +245,7 @@ void Car::move(double interval)
 
     double time = duree(distance(d_path[d_from]->pos(), d_path[d_to]->pos()), d_v);
 
-    updateConnections();
+    // updateConnections();
 
     // Vérifier si on est arrivée à destination
     if (d_elapsed > time)
@@ -300,7 +303,7 @@ void Car::updateConnectionWith(Car* other)
 
 QString Car::toString() const
 {
-    QString str = QString("<p>Car N°%1: pos(%2, %3), speed: %4 Km/h, frequence: %5 Hz, puissance reçue: %6")
+    QString str = QString("<p>Car N°%1: pos(%2, %3) \n speed: %4 Km/h \n frequence: %5 Hz \n puissance reçue: %6")
                       .arg(d_id)
                       .arg(pos().x())
                       .arg(pos().y())
@@ -320,22 +323,31 @@ QString Car::toString() const
     return str + "</p>";
 }
 
-void Car::updateConnections()
+void Car::handleInfo()
 {
-    QList<QGraphicsItem*> collidingObjects = collidingItems(Qt::IntersectsItemShape);
-    QVector<Car*> cars;
-
-    for (auto* items : collidingObjects) {
-        if(auto* car = dynamic_cast<Car*>(items))
-        {
-            cars.append(car);
-        }
-    }
-
-    clearConnections();
-
-    for (int i = 0; i < cars.size(); ++i) {
-        updateConnectionWith(cars[i]);
-    }
+    QMessageBox::information(nullptr, "Information Voiture", toString());
+    // msgBox.setTitle("Information Voiture");
+    // msgBox.setIconPixmap(d_pixmap);
+    // msgBox.setText(toString());
+    // msgBox.exec();
 }
+
+// void Car::updateConnections()
+// {
+//     QList<QGraphicsItem*> collidingObjects = collidingItems(Qt::IntersectsItemShape);
+//     QVector<Car*> cars;
+
+//     for (auto* items : collidingObjects) {
+//         if(auto* car = dynamic_cast<Car*>(items))
+//         {
+//             cars.append(car);
+//         }
+//     }
+
+//     clearConnections();
+
+//     for (int i = 0; i < cars.size(); ++i) {
+//         updateConnectionWith(cars[i]);
+//     }
+// }
 

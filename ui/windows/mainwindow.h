@@ -36,11 +36,12 @@ private slots:
     void onShowHideMesh(bool);
     void onMapLoading(bool);
     void onMapLoaded(bool);
-    void onPlay(bool);
+    void onPlay();
     void onClearLog();
     void onAddCar();
     void addCar(int nb, double speed, double freq, double intensity);
     void onCarHasReachEndOfPath();
+    void onMapRequestPause();
 
 
     /**

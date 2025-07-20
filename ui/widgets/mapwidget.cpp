@@ -286,6 +286,22 @@ void MapWidget::wheelEvent(QWheelEvent *event)
     }
 }
 
+void MapWidget::contextMenuEvent(QContextMenuEvent *event)
+{
+    if(auto* car = dynamic_cast<Car*>(itemAt(event->pos())))
+    {
+        emit requestParentPause();
+        // car->contextMenuEvent();
+        QMenu menu;
+        QAction *infoAction = menu.addAction("Info");
+        QAction *removeAction = menu.addAction("Supprimer");
+
+        connect(removeAction, &QAction::triggered, car, [car](){ delete car; });
+        connect(infoAction, &QAction::triggered, car, &Car::handleInfo);
+        menu.exec(event->pos());
+    }
+}
+
 void MapWidget::addCar(Car* car)
 {
     d_carsLayer->addToGroup(car);
