@@ -43,8 +43,9 @@ void MainWindow::creerInterface()
     QRect  screenGeometry = screen->geometry();
     int height = screenGeometry.height();
     int width = screenGeometry.width();
-//    setMinimumSize(width - (width * 0.15), height - (height * 0.15));
-    setFixedSize(width - (width * 0.01), height - (height * 0.10));
+
+    setMinimumSize(width - (width * 0.3), height - (height * 0.15));
+    // setFixedSize(width - (width * 0.01), height - (height * 0.10));
 
     auto viewMenu = menuBar()->addMenu("Vue");
 //    auto logMenu = menuBar()->addMenu("Logs");
@@ -303,8 +304,9 @@ void MainWindow::addCar(int nb, double speed, double freq, double intensity)
         n1 = d_graph.getRandomNode();
         path.push_back(n1);
 
-        d_cars.push_back(std::make_unique<Car>(path, speed, freq, intensity));
-        auto* car = d_cars.back().get();
+        // d_cars.push_back(std::make_unique<Car>(path, speed, freq, intensity));
+        // auto* car = d_cars.back().get();
+        auto* car = new Car(path, speed, freq, intensity);
 
         connect(this, &MainWindow::timeout, car, &Car::move);
         connect(this, &MainWindow::freqVisibilityChanged, car, &Car::updateFrequenceVisibility);

@@ -77,7 +77,7 @@ private:
     QTimer d_timer;
 
     osm::Graph d_graph;
-    std::vector<std::unique_ptr<Car>> d_cars;
+    // std::vector<std::unique_ptr<Car>> d_cars;
     // les voitures partiellement selectionnées par l'utilisateur
     // std::vector<int> d_car_partially_selected = std::vector<int>(0);
     // les voitures dont la selection a été validé
