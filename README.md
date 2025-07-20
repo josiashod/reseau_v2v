@@ -49,11 +49,8 @@ CREATE TABLE tags (
 
 
 Pour charger le fichier osm:
-```cpp
-    // Commanter le code d'affichage de la fenetre principale
+- Ouvrer le projet map_loader dans QT
+- Lancer la compilation
 
-    // decommenter osmreader
-    OsmReader::readOSMFile("lien_vers_le_fichier_osm_a_lire");
-```
 > NB: Charger tout le fichier osm peut prendre du temps
 > Prenez une chaise, une boisson, du popcorn puis regarder un film 😉
