@@ -5,6 +5,21 @@
 #include <QTextEdit>
 #include <QScrollBar>
 
+LogWidget* LogWidget::d_instance = nullptr;
+
+LogWidget* LogWidget::instance()
+{
+    if(d_instance == nullptr)
+        d_instance = new LogWidget();
+
+    return d_instance;
+}
+
+bool LogWidget::addLog(const QString& text, int type)
+{
+    return instance()->log(text, type);
+}
+
 LogWidget::LogWidget(QWidget *parent)
     : QWidget{parent}
 {
@@ -30,7 +45,7 @@ void LogWidget::createInterface()
     setLayout(layout);
 }
 
-bool LogWidget::addLog(const QString& text, int type)
+bool LogWidget::log(const QString& text, int type)
 {
     QString color = "#FFFFFF";
 

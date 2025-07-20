@@ -4,15 +4,14 @@
 #include <QMainWindow>
 #include <QTimer>
 #include "../widgets/mapwidget.h"
-#include "../widgets/logwidget.h"
 
-#include "../../core/car.h"
 #include "../../core/graph.h"
 
 class QPushButton;
 class QComboBox;
 class QVBoxLayout;
 class QLabel;
+class LogWidget;
 
 class MainWindow : public QMainWindow
 {

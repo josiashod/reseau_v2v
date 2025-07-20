@@ -7,9 +7,12 @@
 #include <QPushButton>
 #include <QComboBox>
 #include <QMenuBar>
-#include "../dialog/addcardialog.h"
 #include <QMessageBox>
 #include <QTime>
+
+#include "ui/widgets/logwidget.h"
+#include "../../core/car.h"
+#include "../dialog/addcardialog.h"
 
 const int FPS = 80;
 
@@ -75,7 +78,7 @@ void MainWindow::creerInterface()
     mainWidget->setContentsMargins(0, 0, 0, 0);
     setCentralWidget(mainWidget);
 
-    d_logsWidget = new LogWidget{this};
+    d_logsWidget = LogWidget::instance();
     d_logsWidget->setFixedWidth(350);
     d_mapWidget = new MapWidget{this, &d_graph};
 
@@ -350,7 +353,6 @@ void MainWindow::onCarHasReachEndOfPath()
 MainWindow::~MainWindow()
 {
     delete d_mapWidget;
-    delete d_logsWidget;
     delete d_rightSidebar;
     for(auto* child: menuBar()->children())
         delete child;
