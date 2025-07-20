@@ -72,7 +72,7 @@ bool LogWidget::log(const QString& text, int type)
 
 void LogWidget::clearLog()
 {
-    d_logtext->clear();
+    instance()->d_logtext->clear();
 }
 
 LogWidget::~LogWidget()

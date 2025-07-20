@@ -78,8 +78,8 @@ void MainWindow::creerInterface()
     mainWidget->setContentsMargins(0, 0, 0, 0);
     setCentralWidget(mainWidget);
 
-    d_logsWidget = LogWidget::instance();
-    d_logsWidget->setFixedWidth(350);
+    auto logsWidget = LogWidget::instance();
+    logsWidget->setFixedWidth(350);
     d_mapWidget = new MapWidget{this, &d_graph};
 
     mainLayout->addWidget(d_mapWidget, 1);
@@ -89,7 +89,7 @@ void MainWindow::creerInterface()
     auto *simulationControlLayout = new QHBoxLayout(d_rightSidebar);
 
     mainLayout->addWidget(d_rightSidebar);
-    rightSidebarLayout->addWidget(d_logsWidget, 1);
+    rightSidebarLayout->addWidget(logsWidget, 1);
     d_addCarButton = new QPushButton{"Ajouter des voitures", this};
     d_addCarButton->setShortcut(Qt::CTRL|Qt::SHIFT|Qt::Key_A);
     d_timeLabel = new QLabel{"Temps écoulé: "+(QTime(0, 0, 0).addSecs(d_elapsed_time)).toString("hh:mm:ss"), this};
@@ -194,14 +194,14 @@ void MainWindow::onShowHideSidebar(bool)
 
 void MainWindow::onMapLoading(bool)
 {
-    d_logsWidget->addLog("Chargement de la carte...............", LogWidget::WARNING);
+    LogWidget::addLog("Chargement de la carte...............", LogWidget::WARNING);
 }
 
 void MainWindow::onMapLoaded(bool)
 {
     d_addCarButton->setEnabled(true);
 
-    d_logsWidget->addLog("La carte a été chargée !!!", LogWidget::SUCCESS);
+    LogWidget::addLog("La carte a été chargée !!!", LogWidget::SUCCESS);
 }
 
 void  MainWindow::updatePlayButtonLabel()
@@ -223,7 +223,7 @@ void MainWindow::onPlay()
 
 void MainWindow::onClearLog()
 {
-    d_logsWidget->clearLog();
+    LogWidget::clearLog();
 }
 
 void MainWindow::createVComboBox()
@@ -312,7 +312,7 @@ void MainWindow::addCar(int nb, double speed, double freq, double intensity)
         connect(this, &MainWindow::timeout, car, &Car::move);
         connect(this, &MainWindow::freqVisibilityChanged, car, &Car::updateFrequenceVisibility);
         connect(car, &Car::hasReachEndOfPath, this, &MainWindow::onCarHasReachEndOfPath);
-        connect(car, &Car::isConnectedToCars, this, [logs = d_logsWidget, this](){
+        connect(car, &Car::isConnectedToCars, this, [logs = LogWidget::instance(), this](){
             if(auto* car = qobject_cast<Car*>(sender()))
             {
                 logs->addLog("=============================================",

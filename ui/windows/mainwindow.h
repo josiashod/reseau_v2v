@@ -11,7 +11,6 @@ class QPushButton;
 class QComboBox;
 class QVBoxLayout;
 class QLabel;
-class LogWidget;
 
 class MainWindow : public QMainWindow
 {
@@ -58,7 +57,6 @@ private:
     void playOrPause();
 
     MapWidget* d_mapWidget;
-    LogWidget* d_logsWidget;
     QWidget* d_rightSidebar;
     QPushButton* d_playButton;
     QPushButton* d_addCarButton;

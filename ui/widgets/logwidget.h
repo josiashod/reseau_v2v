@@ -29,6 +29,17 @@ public:
      */
     static bool addLog(const QString& text, int type = LogWidget::INFO);
 
+    static void clearLog();
+
+signals:
+
+private:
+    static LogWidget* d_instance;
+    explicit LogWidget(QWidget *parent = nullptr);
+    ~LogWidget();
+    void createInterface();
+    QTextEdit *d_logtext;
+
     /**
      * @brief addLog ajouter un text au log
      * @param text: texte à ajouter
@@ -40,17 +51,6 @@ public:
      * @return true si le text a été ajouté avec succés, false sinon
      */
     bool log(const QString& text, int type = LogWidget::INFO);
-
-    void clearLog();
-
-signals:
-
-private:
-    static LogWidget* d_instance;
-    explicit LogWidget(QWidget *parent = nullptr);
-    ~LogWidget();
-    void createInterface();
-    QTextEdit *d_logtext;
 };
 
 #endif // LOGWIDGET_H
