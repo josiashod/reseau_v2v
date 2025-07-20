@@ -3,21 +3,23 @@
 
 #include <QWidget>
 
-QT_BEGIN_NAMESPACE
-namespace Ui {
-class Widget;
-}
-QT_END_NAMESPACE
+class LogWidget;
+class QLineEdit;
 
 class Widget : public QWidget
 {
     Q_OBJECT
-
 public:
-    Widget(QWidget *parent = nullptr);
-    ~Widget();
+    explicit Widget(QWidget *parent = nullptr);
+
+public slots:
+    void onLoadFile();
+    void onLoadDB();
 
 private:
-    Ui::Widget *ui;
+    LogWidget* d_logsWidget;
+    QLineEdit* d_edit;
+
 };
+
 #endif // WIDGET_H

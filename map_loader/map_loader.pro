@@ -10,14 +10,18 @@ CONFIG += c++17
 
 SOURCES += \
     ../env.cpp \
+    ../ui/widgets/logwidget.cpp \
     ../utils/dbmanager.cpp \
     ../utils/osmreader.cpp \
-    main.cpp
+    main.cpp \
+    widget.cpp
 
 HEADERS += \
     ../env.h \
+    ../ui/widgets/logwidget.h \
     ../utils/dbmanager.h \
-    ../utils/osmreader.h
+    ../utils/osmreader.h \
+    widget.h
 
 FORMS +=
 
