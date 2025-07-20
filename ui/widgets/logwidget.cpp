@@ -13,8 +13,6 @@ LogWidget::LogWidget(QWidget *parent)
 
 void LogWidget::createInterface()
 {
-    setFixedWidth(350);
-
     // Ajouter un layout avec un bouton comme contenu du widget
     QVBoxLayout *layout = new QVBoxLayout(this);
 
