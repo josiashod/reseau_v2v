@@ -74,15 +74,15 @@ void MapWidget::creerInterface()
     d_buildingLayer->setAcceptedMouseButtons(Qt::NoButton);
     d_scene->addItem(d_buildingLayer);
 
-    d_carsLayer = new QGraphicsItemGroup();
-    d_carsLayer->setVisible(d_showCar);
-    d_carsLayer->setAcceptedMouseButtons(Qt::AllButtons);
-    d_scene->addItem(d_carsLayer);
-
     d_meshLayer = new QGraphicsItemGroup();
     d_meshLayer->setVisible(d_showMesh);
     d_meshLayer->setAcceptedMouseButtons(Qt::NoButton);
     d_scene->addItem(d_meshLayer);
+
+    d_carsLayer = new QGraphicsItemGroup();
+    d_carsLayer->setVisible(d_showCar);
+    d_carsLayer->setAcceptedMouseButtons(Qt::AllButtons);
+    d_scene->addItem(d_carsLayer);
 }
 
 void MapWidget::resizeEvent(QResizeEvent *event)
@@ -136,7 +136,6 @@ void MapWidget::resizeEvent(QResizeEvent *event)
         }));
     }
 }
-
 
 //void MapWidget::mousePressEvent(QMouseEvent *event)
 //{
@@ -628,7 +627,15 @@ void MapWidget::initMeshs()
 
             auto* hex = new Hexagon{hexagon, d_meshLayer};
             d_meshLayer->addToGroup(hex);
+            d_hexagons.push_back(hex);
         }
+    }
+}
+
+void MapWidget::checkCarsConnections()
+{
+    for (auto& hex: d_hexagons) {
+        hex->checkCarConnections();
     }
 }
 

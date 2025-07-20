@@ -89,9 +89,18 @@ class Car: public QGraphicsObject
      */
     QString toString() const;
 
+    /**
+     * @brief fixed connections cars. Remove the cars with whom
+     * i dont have connections anymore
+     */
+    void fixedConnections();
 signals:
     // this event it's emit when the car has reach the end of a path
     void hasReachEndOfPath();
+    /**
+     * @brief this signals that the cars is connected to other cars
+     */
+    void isConnectedToCars();
 
 public slots:
     /**
@@ -99,11 +108,12 @@ public slots:
      * @param interval
      */
     void move(double interval);
+    /**
+     * @brief this paly the information of the car in a QMessageBox
+     */
     void handleInfo();
-    void clearConnections();
 
 private:
-    // void updateConnections();
     static size_t d_instance_counter;
     static constexpr double d_power_threshold = 5.0;
 
@@ -131,7 +141,7 @@ private:
     // image de la voiture
     QPixmap d_pixmap;
     // connected cars
-    QVector<Car*> d_connected_cars = QVector<Car*>(0);
+    QSet<Car*> d_connected_cars;
 
     qreal PEN_WIDTH = 1;
  };

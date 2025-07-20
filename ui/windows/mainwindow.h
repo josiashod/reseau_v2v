@@ -42,34 +42,24 @@ private slots:
     void addCar(int nb, double speed, double freq, double intensity);
     void onCarHasReachEndOfPath();
     void onMapRequestPause();
-
-
     /**
      * @brief updatePlayButtonLabel met a jour le bouton play en fonction de l'état de la simutlation
      */
     void updatePlayButtonLabel();
     void updateSpeedSelector(int i);
-
-
     /**
      * @brief updateFrame: update cars position
      */
     void updateFrame();
-
-//    void onAddCarToPartialSelection(int id);
-//    void onRemoveCarFromPartialSelection(int id);
-//    void onDeletePartialSelection();
-//    void onPersistSelection();
 
 private:
     void creerInterface();
     void createVComboBox();
     void selectSpeed();
     void playOrPause();
-    void accelerate();
 
-    MapWidget* d_mapView;
-    LogWidget* d_logsView;
+    MapWidget* d_mapWidget;
+    LogWidget* d_logsWidget;
     QWidget* d_rightSidebar;
     QPushButton* d_playButton;
     QPushButton* d_addCarButton;
@@ -78,11 +68,6 @@ private:
     QTimer d_timer;
 
     osm::Graph d_graph;
-    // std::vector<std::unique_ptr<Car>> d_cars;
-    // les voitures partiellement selectionnées par l'utilisateur
-    // std::vector<int> d_car_partially_selected = std::vector<int>(0);
-    // les voitures dont la selection a été validé
-    // std::vector<int> d_car_selection = std::vector<int>(0);
 
     bool d_showRoads;
     bool d_showCarFreq;

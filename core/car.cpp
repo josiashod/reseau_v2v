@@ -138,7 +138,9 @@ void Car::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidg
     painter->setBrush(brush);
 
     if(d_showFreq)
+    {
         painter->drawEllipse(boundingRect());
+    }
     painter->drawPixmap(-(pixWidth / 2), -(pixHeight / 2), d_pixmap);
 
     painter->setBrush(originalBrush);
@@ -279,16 +281,30 @@ bool Car::isConnectedTo(const Car* other) const
 {
     // Distance entre les deux voitures
     double dist =  distance(pos(), other->pos());
-    double radius = std::max((d_freq * 0.5), (other->d_freq * 0.5));
+    double radius = std::max(d_freq, other->d_freq);
 
     return dist <= radius;
 }
 
-void Car::clearConnections()
+void Car::fixedConnections()
 {
-    d_connected_cars.clear();
-    PEN_WIDTH = 1;
-    update();
+    for (auto it = d_connected_cars.begin(); it != d_connected_cars.end(); )
+    {
+        Car* car = *it;
+        if (!isConnectedTo(car)) {
+            it = d_connected_cars.erase(it); // Remove and advance iterator
+        } else {
+            ++it;
+        }
+    }
+    if (d_connected_cars.isEmpty()) {
+        PEN_WIDTH = 1;
+        update();
+    }
+
+    else{
+        emit isConnectedToCars();
+    }
 }
 
 void Car::updateConnectionWith(Car* other)
@@ -296,14 +312,17 @@ void Car::updateConnectionWith(Car* other)
     if(isConnectedTo(other))
     {
         PEN_WIDTH = 3;
-        d_connected_cars.append(other);
+        d_connected_cars.insert(other);
         update();
     }
 }
 
 QString Car::toString() const
 {
-    QString str = QString("<p>Car N°%1: pos(%2, %3) \n speed: %4 Km/h \n frequence: %5 Hz \n puissance reçue: %6")
+    QString str = QString("Car N°%1: pos(%2, %3)\n"
+                         "speed: %4 Km/h\n"
+                         "frequence: %5 Hz\n"
+                         "puissance reçue: %6\n")
                       .arg(d_id)
                       .arg(pos().x())
                       .arg(pos().y())
@@ -311,16 +330,22 @@ QString Car::toString() const
                       .arg(d_freq)
                       .arg(receivedPower({0, 0}));
 
-    if(!d_connected_cars.empty())
+    if(!d_connected_cars.isEmpty())
     {
-        str += "<br>Connected to cars: ";
+        str += "Connected to cars:\n";
+        
         for (const Car* car : d_connected_cars)
         {
-            str += "N° " + QString::number(car->id()) + ",";
+            str += "  N° " + QString::number(car->id()) + "\n";
+
+            for (const Car* car2 : car->d_connected_cars)
+            {
+                if(car2 != this)
+                    str += "    N° " + QString::number(car2->id()) + "\n";
+            }
         }
     }
-    str.chop(1);
-    return str + "</p>";
+    return str;
 }
 
 void Car::handleInfo()
@@ -331,23 +356,3 @@ void Car::handleInfo()
     // msgBox.setText(toString());
     // msgBox.exec();
 }
-
-// void Car::updateConnections()
-// {
-//     QList<QGraphicsItem*> collidingObjects = collidingItems(Qt::IntersectsItemShape);
-//     QVector<Car*> cars;
-
-//     for (auto* items : collidingObjects) {
-//         if(auto* car = dynamic_cast<Car*>(items))
-//         {
-//             cars.append(car);
-//         }
-//     }
-
-//     clearConnections();
-
-//     for (int i = 0; i < cars.size(); ++i) {
-//         updateConnectionWith(cars[i]);
-//     }
-// }
-

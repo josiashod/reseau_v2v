@@ -15,6 +15,7 @@ namespace osm
 }
 
 class Car;
+class Hexagon;
 
 class MapWidget : public QGraphicsView
 {
@@ -31,8 +32,10 @@ public:
     void addCarEllipse(QGraphicsEllipseItem*);
 
     static QPointF observation_point;
-private slots :
+
+public  slots :
     void isLoadingFinished();
+    void checkCarsConnections();
 
 signals :
     void isLoading(bool);
@@ -131,6 +134,11 @@ private:
     void initWaters();
     void initRoads();
     void initMeshs();
+
+    /**
+     * @brief Decoupage territorial en hexagon
+     */
+    QVector<Hexagon*> d_hexagons;
 };
 
 #endif // MAPWIDGET_H

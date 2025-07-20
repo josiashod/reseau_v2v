@@ -13,7 +13,7 @@ LogWidget::LogWidget(QWidget *parent)
 
 void LogWidget::createInterface()
 {
-    // setFixedWidth(150);
+    setFixedWidth(350);
 
     // Ajouter un layout avec un bouton comme contenu du widget
     QVBoxLayout *layout = new QVBoxLayout(this);
@@ -22,7 +22,6 @@ void LogWidget::createInterface()
     d_logtext->setReadOnly(true);
     d_logtext->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
     d_logtext->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-//    d_logtext->setFixedHeight(300);
 
     QPalette palette = d_logtext->palette();
     palette.setColor(QPalette::Base, QColor("#0A0A0A")); // Couleur de fond

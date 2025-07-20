@@ -15,8 +15,11 @@ public:
 
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = nullptr) override;
 
+    void checkCarConnections();
 private:
     QPolygonF d_polygon;
+    static size_t d_instance_counter;
+    const int d_id;
 };
 
 #endif // HEXAGON_H

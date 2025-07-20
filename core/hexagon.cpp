@@ -1,9 +1,12 @@
 #include "hexagon.h"
+#include "core/car.h"
 #include <QPainter>
 #include <QTimer>
 
+size_t Hexagon::d_instance_counter = 0;
+
 Hexagon::Hexagon(QPolygonF hexagon, QGraphicsItem *parent):
-    QGraphicsObject{parent}, d_polygon{hexagon}
+    QGraphicsObject{parent}, d_polygon{hexagon}, d_id{static_cast<int>(++d_instance_counter)}
 {}
 
 QRectF Hexagon::boundingRect() const
@@ -27,4 +30,31 @@ void Hexagon::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, Q
     painter->drawPolygon(d_polygon);
 
     painter->setPen(originalPen);
+}
+
+void Hexagon::checkCarConnections()
+{
+    QList<QGraphicsItem*> collidingObjects = collidingItems(Qt::IntersectsItemShape);
+    QVector<Car*> cars;
+
+    for (auto* items : collidingObjects) {
+        if(auto* car = dynamic_cast<Car*>(items))
+        {
+            cars.append(car);
+        }
+    }
+
+    for (auto* car : cars) {
+        car->fixedConnections();
+    }
+
+    for (int i = 0; i < cars.size(); ++i) {
+        for (int j = 1; j < cars.size(); ++j) {
+            if(cars[j] != cars[i])
+            {
+                cars[i]->updateConnectionWith(cars[j]);
+                cars[j]->updateConnectionWith(cars[i]);
+            }
+        }
+    }
 }

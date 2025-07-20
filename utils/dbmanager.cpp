@@ -135,7 +135,7 @@ QSqlQuery DBManager::getRoads() const
     QString queryStr = QString("SELECT  * "
         "FROM %1 "
         "LEFT JOIN %2 as t ON t.element_id = %1.id "
-        "WHERE t.t_key = 'highway' limit 100").arg(_WAYS_TABLE_, _TAGS_TABLE_);
+        "WHERE t.t_key = 'highway'").arg(_WAYS_TABLE_, _TAGS_TABLE_);
     QSqlQuery q(DBManager::threadDatabase());
     if (!q.prepare(queryStr)) {
         qDebug() << "Error preparing query: " << q.lastError().text();
