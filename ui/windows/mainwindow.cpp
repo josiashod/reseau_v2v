@@ -78,6 +78,7 @@ void MainWindow::creerInterface()
     mainWidget->setContentsMargins(0, 0, 0, 0);
     setCentralWidget(mainWidget);
 
+    LogWidget::init(this);
     auto logsWidget = LogWidget::instance();
     logsWidget->setFixedWidth(350);
     d_mapWidget = new MapWidget{this, &d_graph};

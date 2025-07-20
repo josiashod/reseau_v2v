@@ -15,20 +15,11 @@ public:
     static constexpr int WARNING = 2;
     static constexpr int DANGER = 3;
 
+    // Must be called once before any usage, e.g. in main window/widget
+    static void init(QWidget* parent = nullptr);
     static LogWidget* instance();
 
-    /**
-     * @brief addLog ajouter un text au log
-     * @param text: texte à ajouter
-     * @param type: le type de log. les types sont:
-     *  LogWidget::INFO
-     *  LogWidget::SUCCESS
-     *  LogWidget::WARNING
-     *  LogWidget::DANGER
-     * @return true si le text a été ajouté avec succés, false sinon
-     */
     static bool addLog(const QString& text, int type = LogWidget::INFO);
-
     static void clear();
 
 signals:

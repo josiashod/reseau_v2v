@@ -5,13 +5,21 @@
 #include <QTextEdit>
 #include <QScrollBar>
 
+
 LogWidget* LogWidget::d_instance = nullptr;
+
+void LogWidget::init(QWidget* parent)
+{
+    if (!d_instance) {
+        d_instance = new LogWidget(parent);
+    }
+}
 
 LogWidget* LogWidget::instance()
 {
-    if(d_instance == nullptr)
-        d_instance = new LogWidget();
-
+    if (!d_instance) {
+        qFatal("LogWidget::init() must be called before using LogWidget::instance()");
+    }
     return d_instance;
 }
 

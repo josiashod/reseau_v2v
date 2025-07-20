@@ -1,5 +1,6 @@
 #include "osmreader.h"
 #include "dbmanager.h"
+#include "../ui/widgets/logwidget.h"
 
 #include <QSqlQuery>
 #include <vector>
@@ -10,7 +11,7 @@ OsmReader::OsmReader()
 void OsmReader::readOSMFile(const QString& filePath) {
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        qDebug() << "Unable to open OSM file.";
+        LogWidget::addLog("Unable to open OSM file.", LogWidget::DANGER);
         return;
     }
 
@@ -34,7 +35,7 @@ void OsmReader::readOSMFile(const QString& filePath) {
     }
 
     if (xml.hasError()) {
-        qDebug() << "Error while reading file:" << xml.errorString();
+        LogWidget::addLog("Error while reading file: " + xml.errorString(), LogWidget::DANGER);
     }
 
     file.close();
@@ -55,11 +56,11 @@ void OsmReader::readBounds(QXmlStreamReader& xml) {
     query.bindValue(":maxlon", maxlon);
     if(query.exec())
     {
-       qDebug() << "add bounds success";
+        LogWidget::addLog("add bounds success", LogWidget::SUCCESS);
     }
     else
     {
-        qDebug() << "add bounds error " << db.lastError().text();;
+        LogWidget::addLog("add bounds error: " + db.lastError().text(), LogWidget::DANGER);
     }
 
     query.finish();
@@ -79,11 +80,11 @@ void OsmReader::readNode(QXmlStreamReader& xml) {
     query.bindValue(":lon", lon);
     if(query.exec())
     {
-       qDebug() << "add node success";
+       LogWidget::addLog("add node success", LogWidget::SUCCESS);
     }
     else
     {
-        qDebug() << "add node error " << db.lastError().text();;
+        LogWidget::addLog("add node error " + db.lastError().text(), LogWidget::DANGER);
     }
 
     // Parcourir les nœuds du chemin
@@ -100,10 +101,10 @@ void OsmReader::readNode(QXmlStreamReader& xml) {
             query.bindValue(":value", xml.attributes().value("v").toString());
             if(query.exec())
                {
-                   qDebug() << "add node tag";
+                   LogWidget::addLog("add node tag", LogWidget::SUCCESS);
                }
             else
-                qDebug() << "Erreur";
+                LogWidget::addLog("Erreur " + query.lastError().text(), LogWidget::DANGER);;
         }
     }
 
@@ -138,7 +139,7 @@ void OsmReader::readWay(QXmlStreamReader& xml)
             query.bindValue(":value", xml.attributes().value("v").toString());
             if(query.exec())
                {
-                   qDebug() << "node add tag succes";
+                   LogWidget::addLog("node add tag succes", LogWidget::SUCCESS);
                }
         }
     }
@@ -147,7 +148,7 @@ void OsmReader::readWay(QXmlStreamReader& xml)
     query.bindValue(":id", wayId);
     if(query.exec())
    {
-       qDebug() << "add way success";
+       LogWidget::addLog("add way success", LogWidget::SUCCESS);
    }
 
     for(auto id: node_ids)
@@ -157,7 +158,7 @@ void OsmReader::readWay(QXmlStreamReader& xml)
         query.bindValue(":node_id", id);
         if(query.exec())
            {
-               qDebug() << "add node way success";
+               LogWidget::addLog("add node way success", LogWidget::SUCCESS);
            }
     }
 
@@ -167,7 +168,7 @@ void OsmReader::readWay(QXmlStreamReader& xml)
 
 void OsmReader::readRelation(QXmlStreamReader& xml) {
    QString relationId = xml.attributes().value("id").toString();
-   qDebug() << "Relation ID:" << relationId;
+   LogWidget::addLog("Relation ID: " + relationId, LogWidget::INFO);
 
    // Parcourir les membres de la relation
    while (!(xml.tokenType() == QXmlStreamReader::EndElement && xml.name() == "relation")) {
@@ -175,14 +176,14 @@ void OsmReader::readRelation(QXmlStreamReader& xml) {
        if (xml.tokenType() == QXmlStreamReader::StartElement && xml.name() == "member") {
            QString type = xml.attributes().value("type").toString();
            QString ref = xml.attributes().value("ref").toString();
-           qDebug() << "  Member type:" << type << "Reference:" << ref;
+           LogWidget::addLog("  Member type: " + type + " Reference: " + ref, LogWidget::INFO);
        }
 
        // Gérer les tags pour identifier le type de relation (par exemple, pour les bâtiments)
        if (xml.tokenType() == QXmlStreamReader::StartElement && xml.name() == "tag") {
            QString key = xml.attributes().value("k").toString();
            QString value = xml.attributes().value("v").toString();
-           qDebug() << "  Tag:" << key << "Value:" << value;
+           LogWidget::addLog("  Tag:" + key + "Value:" + value, LogWidget::INFO);
        }
    }
 }

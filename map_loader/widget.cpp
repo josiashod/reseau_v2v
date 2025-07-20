@@ -29,6 +29,7 @@ Widget::Widget(QWidget *parent)
     hlayout->addWidget(btn_load);
     setLayout(layout);
     layout->addLayout(hlayout);
+    LogWidget::init(this); // Ensure LogWidget is initialized with parent
     layout->addWidget(LogWidget::instance(), 1);
 
     connect(btn, &QPushButton::clicked, this, &Widget::onLoadFile);
