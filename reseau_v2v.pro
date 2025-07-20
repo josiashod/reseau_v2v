@@ -1,5 +1,5 @@
-QT       += core gui concurrent
-QT += sql
+QT       += core gui concurrent sql
+
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++17
