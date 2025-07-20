@@ -29,7 +29,7 @@ public:
      */
     static bool addLog(const QString& text, int type = LogWidget::INFO);
 
-    static void clearLog();
+    static void clear();
 
 signals:
 

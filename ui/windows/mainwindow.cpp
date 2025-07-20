@@ -223,7 +223,7 @@ void MainWindow::onPlay()
 
 void MainWindow::onClearLog()
 {
-    LogWidget::clearLog();
+    LogWidget::clear();
 }
 
 void MainWindow::createVComboBox()
