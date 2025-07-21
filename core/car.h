@@ -17,6 +17,8 @@ class Car: public QGraphicsObject
       */
     Car(std::vector<osm::Node*>& path, double vitesse = 50.0, double frequence = 60, double intensity = 25, QGraphicsItem *parent = nullptr);
 
+    ~Car();
+
     size_t id() const;
 
     QRectF boundingRect() const override;

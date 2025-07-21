@@ -73,6 +73,16 @@ double fspl(double dist, double freq)
     return (20 * std::log10(dist) + 20 * std::log10(freq) + C);
 }
 
+Car::~Car()
+{
+    for (auto carPtr : d_connected_cars) {
+        if (carPtr) {
+            carPtr->d_connected_cars.remove(this);
+        }
+    }
+    d_connected_cars.clear();
+}
+
 
 Car::Car(QGraphicsItem *parent):
     QGraphicsObject{parent}, d_showFreq{true},
@@ -311,11 +321,15 @@ void Car::fixedConnections()
 {
     for (auto it = d_connected_cars.begin(); it != d_connected_cars.end(); )
     {
-        Car* car = *it;
-        if (!isConnectedTo(car)) {
-            it = d_connected_cars.erase(it); // Remove and advance iterator
+        if (*it) {
+            if (!isConnectedTo(*it)) {
+                it = d_connected_cars.erase(it);
+            } else {
+                ++it;
+            }
         } else {
-            ++it;
+            // The car was deleted
+            it = d_connected_cars.erase(it);
         }
     }
     if (d_connected_cars.isEmpty()) {
@@ -330,7 +344,7 @@ void Car::fixedConnections()
 
 void Car::updateConnectionWith(Car* other)
 {
-    if(isConnectedTo(other))
+    if(other && isConnectedTo(other))
     {
         PEN_WIDTH = 3;
         d_connected_cars.insert(other);
