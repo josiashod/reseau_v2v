@@ -135,7 +135,6 @@ void MainWindow::creerInterface()
 
     //connections aux évènements de la map
     connect(d_mapWidget, &MapWidget::isLoaded, this, &MainWindow::onMapLoaded);
-    connect(d_mapWidget, &MapWidget::requestParentPause, this, &MainWindow::onMapRequestPause);
     connect(this, &MainWindow::timeout, d_mapWidget, &MapWidget::checkCarsConnections);
 
     updatePlayButtonLabel();
@@ -196,7 +195,6 @@ void MainWindow::onShowHideSidebar(bool)
 
 void MainWindow::onMapLoaded(bool loaded)
 {
-    qDebug() << "aclled";
     if(loaded)
     {
         d_addCarButton->setEnabled(true);
@@ -293,7 +291,7 @@ void MainWindow::onAddCar()
     connect(dialog, &AddCarDialog::create_car, this, &MainWindow::addCar);
 }
 
-void MainWindow::onMapRequestPause()
+void MainWindow::onSimulationPauseRequest()
 {
     if(d_isPlaying)
         onPlay();
@@ -316,6 +314,7 @@ void MainWindow::addCar(int nb, double speed, double freq, double intensity)
         connect(this, &MainWindow::timeout, car, &Car::move);
         connect(this, &MainWindow::freqVisibilityChanged, car, &Car::updateFrequenceVisibility);
         connect(car, &Car::hasReachEndOfPath, this, &MainWindow::onCarHasReachEndOfPath);
+        connect(car, &Car::requestSimulationPause, this, &MainWindow::onSimulationPauseRequest);
         connect(car, &Car::isConnectedToCars, this, [logs = LogWidget::instance(), this](){
             if(auto* car = qobject_cast<Car*>(sender()))
             {

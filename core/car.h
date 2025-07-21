@@ -28,6 +28,7 @@ class Car: public QGraphicsObject
      */
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = nullptr) override;
 
+    void contextMenuEvent(QGraphicsSceneContextMenuEvent *event) override;
     /**
      * @brief acceleration
      */
@@ -94,6 +95,7 @@ class Car: public QGraphicsObject
      * i dont have connections anymore
      */
     void fixedConnections();
+
 signals:
     // this event it's emit when the car has reach the end of a path
     void hasReachEndOfPath();
@@ -101,6 +103,8 @@ signals:
      * @brief this signals that the cars is connected to other cars
      */
     void isConnectedToCars();
+
+    void requestSimulationPause();
 
 public slots:
     /**

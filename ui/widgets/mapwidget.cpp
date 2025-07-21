@@ -26,11 +26,6 @@ MapWidget::MapWidget(QWidget *parent, osm::Graph* graph)
 
 MapWidget::~MapWidget()
 {
-//    delete d_parkLayer;
-//    delete d_wayLayer;
-//    delete d_buildingLayer;
-//    delete d_freqCarsLayer;
-//    delete d_carsLayer;
     for (auto *item : d_scene->items()) {
         delete item; // Libère chaque élément
     }
@@ -79,7 +74,7 @@ void MapWidget::creerInterface()
 
     d_carsLayer = new QGraphicsItemGroup();
     d_carsLayer->setVisible(d_showCar);
-    d_carsLayer->setAcceptedMouseButtons(Qt::AllButtons);
+    d_carsLayer->setHandlesChildEvents(false);
     d_scene->addItem(d_carsLayer);
 
     layout->addWidget(d_view);
@@ -92,7 +87,6 @@ void MapWidget::resizeEvent(QResizeEvent *event)
     if(d_default_scene_rect.size() == QSize(0,0))
     {
         d_view->setRenderHint(QPainter::Antialiasing);
-
         d_scene->setSceneRect(0, 0, width() * 2.5, height() * 2.5);
         d_view->fitInView(d_scene->sceneRect(), Qt::KeepAspectRatio);
         d_view->setAlignment(Qt::AlignCenter);
@@ -283,8 +277,8 @@ void MapWidget::wheelEvent(QWheelEvent *event)
     }
 }
 
-void MapWidget::contextMenuEvent(QContextMenuEvent *event)
-{
+// void MapWidget::contextMenuEvent(QContextMenuEvent *event)
+// {
     // if(auto* car = dynamic_cast<Car*>(itemAt(event->pos())))
     // {
     //     emit requestParentPause();
@@ -297,7 +291,9 @@ void MapWidget::contextMenuEvent(QContextMenuEvent *event)
     //     connect(infoAction, &QAction::triggered, car, &Car::handleInfo);
     //     menu.exec(event->pos());
     // }
-}
+    // d_view->contextMenuEvent(event);
+//     QWidget::contextMenuEvent(event);
+// }
 
 void MapWidget::addCar(Car* car)
 {

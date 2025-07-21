@@ -82,11 +82,14 @@ Car::Car(QGraphicsItem *parent):
     d_id = ++d_instance_counter;
 
     setData(0, QString::number(d_id));
-    setFlags(QGraphicsItem::ItemIsSelectable);
+    setFlag(QGraphicsItem::ItemIsSelectable, true);
     d_color.setAlphaF(0.5);
 
     setCursor(Qt::PointingHandCursor);
     setZValue(2);
+
+    setAcceptHoverEvents(true);  // for hover feedback (optional)
+    setAcceptedMouseButtons(Qt::AllButtons); // explicitly accept right-click
 }
 
 // // Constructeur avec position, vitesse et fréquence
@@ -104,11 +107,14 @@ Car::Car( std::vector<osm::Node*>& path, double vitesse, double frequence, doubl
         setPos(d_path[0]->pos());
 
     setData(0, QString::number(d_id));
-    setFlags(QGraphicsItem::ItemIsSelectable);
+    setFlag(QGraphicsItem::ItemIsSelectable, true);
     d_color.setAlphaF(0.5);
 
     setCursor(Qt::PointingHandCursor);
     setZValue(2);
+
+    setAcceptHoverEvents(true);  // for hover feedback (optional)
+    setAcceptedMouseButtons(Qt::AllButtons); // explicitly accept right-click
 }
 
 QRectF Car::boundingRect() const
@@ -237,6 +243,19 @@ void Car::nextMove()
     setPos(d_path[d_from]->pos());
 }
 
+void Car::contextMenuEvent(QGraphicsSceneContextMenuEvent *event)
+{
+    emit requestSimulationPause();
+
+    QMenu menu;
+    QAction *infoAction = menu.addAction("Info");
+    QAction *removeAction = menu.addAction("Supprimer");
+
+    connect(removeAction, &QAction::triggered, this, [this](){ delete this; });
+    connect(infoAction, &QAction::triggered, this, &Car::handleInfo);
+    menu.exec(event->screenPos());
+}
+
 void Car::move(double interval)
 {
     if(d_path[d_to] == d_path[d_from])
@@ -321,10 +340,8 @@ void Car::updateConnectionWith(Car* other)
 
 QString Car::toString() const
 {
-    QString str = QString("Car N°%1: pos(%2, %3)\n"
-                         "speed: %4 Km/h\n"
-                         "frequence: %5 Hz\n"
-                         "puissance reçue: %6\n")
+    QString str = QString("Numéro de la voiture: %1 \nCoordonnées: %2, %3\nSpeed: %4 Km/h \n"
+                          "Frequence: %5 Hz\nPuissance reçue: %6 W\n")
                       .arg(d_id)
                       .arg(pos().x())
                       .arg(pos().y())
@@ -352,9 +369,12 @@ QString Car::toString() const
 
 void Car::handleInfo()
 {
-    QMessageBox::information(nullptr, "Information Voiture", toString());
-    // msgBox.setTitle("Information Voiture");
-    // msgBox.setIconPixmap(d_pixmap);
-    // msgBox.setText(toString());
-    // msgBox.exec();
+    QMessageBox msgBox;
+    msgBox.setMinimumWidth(200);
+    msgBox.setWindowTitle(QString("Info").arg(d_id));
+    msgBox.setText(toString());
+    msgBox.setIconPixmap(d_pixmap.scaled({d_pixmap.width() * 3, d_pixmap.height() * 3}, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    // msgBox.move(QCursor::pos());
+    msgBox.exec();
+
 }

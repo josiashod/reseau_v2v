@@ -38,7 +38,6 @@ public  slots :
 
 signals :
     void isLoaded(bool);
-    void requestParentPause();
     // emet l'id du car avec la selection partielle
 //    void addElementToPartialSelection(int id);
 //    void removeElementFromPartialSelection(int id);
@@ -111,7 +110,7 @@ private:
 //    void mousePressEvent(QMouseEvent *event) override;
 //    void keyPressEvent(QKeyEvent *event) override;
 //    void keyReleaseEvent(QKeyEvent *event) override;
-    void contextMenuEvent(QContextMenuEvent *event) override;
+    // void contextMenuEvent(QContextMenuEvent *event) override;
 
     /**
      * @brief pairLatLonToXY Convertit les coordonnées géographiques (latitude et longitude)

@@ -38,7 +38,7 @@ private slots:
     void onAddCar();
     void addCar(int nb, double speed, double freq, double intensity);
     void onCarHasReachEndOfPath();
-    void onMapRequestPause();
+    void onSimulationPauseRequest();
     /**
      * @brief updatePlayButtonLabel met a jour le bouton play en fonction de l'état de la simutlation
      */
