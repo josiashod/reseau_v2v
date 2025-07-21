@@ -75,13 +75,15 @@ void MainWindow::creerInterface()
     QWidget* mainWidget = new QWidget{this};
     QHBoxLayout* mainLayout = new QHBoxLayout(mainWidget);
 
-    mainWidget->setContentsMargins(0, 0, 0, 0);
+    mainLayout->setContentsMargins(0, 0, 0, 0);
     setCentralWidget(mainWidget);
 
     LogWidget::init(this);
     auto logsWidget = LogWidget::instance();
     logsWidget->setFixedWidth(350);
     d_mapWidget = new MapWidget{this, &d_graph};
+
+    d_mapWidget->setStyleSheet("border: 3px solide blue");
 
     mainLayout->addWidget(d_mapWidget, 1);
     // creation des differents layout
@@ -132,7 +134,6 @@ void MainWindow::creerInterface()
     connect(d_speedSelector, &QComboBox::currentIndexChanged, this, &MainWindow::updateSpeedSelector);
 
     //connections aux évènements de la map
-    connect(d_mapWidget, &MapWidget::isLoading, this, &MainWindow::onMapLoading);
     connect(d_mapWidget, &MapWidget::isLoaded, this, &MainWindow::onMapLoaded);
     connect(d_mapWidget, &MapWidget::requestParentPause, this, &MainWindow::onMapRequestPause);
     connect(this, &MainWindow::timeout, d_mapWidget, &MapWidget::checkCarsConnections);
@@ -193,16 +194,18 @@ void MainWindow::onShowHideSidebar(bool)
     action->setText(menu_libelle(d_showSidebar, "la menu latérale"));
 }
 
-void MainWindow::onMapLoading(bool)
+void MainWindow::onMapLoaded(bool loaded)
 {
-    LogWidget::addLog("Chargement de la carte...............", LogWidget::WARNING);
-}
-
-void MainWindow::onMapLoaded(bool)
-{
-    d_addCarButton->setEnabled(true);
-
-    LogWidget::addLog("La carte a été chargée !!!", LogWidget::SUCCESS);
+    qDebug() << "aclled";
+    if(loaded)
+    {
+        d_addCarButton->setEnabled(true);
+        LogWidget::addLog("La carte a été chargée !!!", LogWidget::SUCCESS);
+    }
+    else
+    {
+        LogWidget::addLog("Chargement de la carte...............", LogWidget::WARNING);
+    }
 }
 
 void  MainWindow::updatePlayButtonLabel()

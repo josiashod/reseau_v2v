@@ -85,6 +85,7 @@ Car::Car(QGraphicsItem *parent):
     setFlags(QGraphicsItem::ItemIsSelectable);
     d_color.setAlphaF(0.5);
 
+    setCursor(Qt::PointingHandCursor);
     setZValue(2);
 }
 
@@ -106,6 +107,7 @@ Car::Car( std::vector<osm::Node*>& path, double vitesse, double frequence, doubl
     setFlags(QGraphicsItem::ItemIsSelectable);
     d_color.setAlphaF(0.5);
 
+    setCursor(Qt::PointingHandCursor);
     setZValue(2);
 }
 

@@ -18,10 +18,10 @@
 // CRÉATION DE L'INTERFACE
 
 MapWidget::MapWidget(QWidget *parent, osm::Graph* graph)
-    : QGraphicsView{parent}, d_graph{graph}, d_hasBeenResized{false}
+    : QWidget{parent}, d_graph{graph}
 {
-    creerInterface();
     initBounds();
+    creerInterface();
 }
 
 MapWidget::~MapWidget()
@@ -40,20 +40,18 @@ MapWidget::~MapWidget()
 
 void MapWidget::creerInterface()
 {
-   // QTransform transform;
-   // transform.shear(0.4, 0); // Cisaillement horizontal pour simuler l'inclinaison
-   // transform.scale(1, 0.4); // Réduit la hauteur pour un effet isométrique
-   // setTransform(transform);
-   // rotate(-10);
+    // Add d_view to layout so it fills the widget
+    auto layout = new QVBoxLayout{this};
 
-    setMouseTracking(true);
-    setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    setDragMode(QGraphicsView::ScrollHandDrag);
+    d_view = new QGraphicsView{};
+    d_view->setMouseTracking(true);
+    d_view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    d_view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    d_view->setDragMode(QGraphicsView::ScrollHandDrag);
 
     d_scene = new QGraphicsScene(this);
     d_scene->setBackgroundBrush(QColor("#F2EFE9")); // Gris clair
-    setScene(d_scene);
+    d_view->setScene(d_scene);
 
     d_waterLayer = new QGraphicsItemGroup();
     d_waterLayer->setVisible(true);
@@ -83,58 +81,64 @@ void MapWidget::creerInterface()
     d_carsLayer->setVisible(d_showCar);
     d_carsLayer->setAcceptedMouseButtons(Qt::AllButtons);
     d_scene->addItem(d_carsLayer);
+
+    layout->addWidget(d_view);
+    layout->setContentsMargins(0, 0, 0, 0);
+    setLayout(layout);
 }
 
 void MapWidget::resizeEvent(QResizeEvent *event)
 {
-    // Mettre à jour la taille de la scène lors du redimensionnement de la vue
-    QGraphicsView::resizeEvent(event);
-
-    if(!d_elementsHasBeenLoaded && !d_hasBeenResized)
+    if(d_default_scene_rect.size() == QSize(0,0))
     {
-        d_hasBeenResized = true;
-        emit isLoading(d_elementsHasBeenLoaded);
+        d_view->setRenderHint(QPainter::Antialiasing);
 
-        setRenderHint(QPainter::Antialiasing);
-        d_scene->setSceneRect(0, 0, event->size().width() * 2.5, event->size().height() * 2.5);
-//        observation_point = QPointF(event->size().width() / 2, event->size().height() / 2);
-        fitInView(d_scene->sceneRect(), Qt::KeepAspectRatio);
-        // Configurer la vue (taille et centrage)
-        setAlignment(Qt::AlignCenter);
-
-        initMeshs();
-
-        auto cleanWatcher = [](QFutureWatcher<void>* watcher) {
-            watcher->deleteLater();
-        };
-
-        auto roadWatcher = new QFutureWatcher<void>(this);
-        auto defaultWatcher = new QFutureWatcher<void>(this);
-        auto buildingWatcher = new QFutureWatcher<void>(this);
-
-        connect(roadWatcher, &QFutureWatcher<void>::finished, this, [this, cleanWatcher, roadWatcher](){
-            isLoadingFinished();
-            cleanWatcher(roadWatcher);
-        });
-        connect(defaultWatcher, &QFutureWatcher<void>::finished, this, [ cleanWatcher, defaultWatcher](){
-            cleanWatcher(defaultWatcher);
-        });
-        connect(buildingWatcher, &QFutureWatcher<void>::finished, this, [cleanWatcher, buildingWatcher](){
-           cleanWatcher(buildingWatcher);
-        });
-
-        // Associe le watcher au future
-        defaultWatcher->setFuture(QtConcurrent::run([this]() {
-            initParks();
-            initWaters();
-        }));
-        roadWatcher->setFuture(QtConcurrent::run([this]() {
-            initRoads();
-        }));
-        buildingWatcher->setFuture(QtConcurrent::run([this]() {
-           initBuildings();
-        }));
+        d_scene->setSceneRect(0, 0, width() * 2.5, height() * 2.5);
+        d_view->fitInView(d_scene->sceneRect(), Qt::KeepAspectRatio);
+        d_view->setAlignment(Qt::AlignCenter);
+        d_default_scene_rect = d_scene->sceneRect();
+        d_view->scale(2, 2);
+        init();
     }
+}
+
+void MapWidget::init()
+{
+    // Mettre à jour la taille de la scène lors du redimensionnement de la vue
+    emit isLoaded(false);
+
+    initMeshs();
+
+    auto cleanWatcher = [](QFutureWatcher<void>* watcher) {
+        watcher->deleteLater();
+    };
+
+    auto roadWatcher = new QFutureWatcher<void>(this);
+    auto defaultWatcher = new QFutureWatcher<void>(this);
+    auto buildingWatcher = new QFutureWatcher<void>(this);
+
+    connect(roadWatcher, &QFutureWatcher<void>::finished, this, [this, cleanWatcher, roadWatcher](){
+        emit isLoaded(true);
+        cleanWatcher(roadWatcher);
+    });
+    connect(defaultWatcher, &QFutureWatcher<void>::finished, this, [ cleanWatcher, defaultWatcher](){
+        cleanWatcher(defaultWatcher);
+    });
+    connect(buildingWatcher, &QFutureWatcher<void>::finished, this, [cleanWatcher, buildingWatcher](){
+       cleanWatcher(buildingWatcher);
+    });
+
+    // Associe le watcher au future
+    defaultWatcher->setFuture(QtConcurrent::run([this]() {
+        initParks();
+        initWaters();
+    }));
+    roadWatcher->setFuture(QtConcurrent::run([this]() {
+        initRoads();
+    }));
+    buildingWatcher->setFuture(QtConcurrent::run([this]() {
+       initBuildings();
+    }));
 }
 
 //void MapWidget::mousePressEvent(QMouseEvent *event)
@@ -260,12 +264,6 @@ void MapWidget::resizeEvent(QResizeEvent *event)
 //    QGraphicsView::keyPressEvent(event);
 //}
 
-void MapWidget::isLoadingFinished()
-{
-    d_elementsHasBeenLoaded = true;
-    emit isLoaded(d_elementsHasBeenLoaded);
-}
-
 void MapWidget::wheelEvent(QWheelEvent *event)
 {
     // Zoomer avec la molette de la souris
@@ -274,31 +272,31 @@ void MapWidget::wheelEvent(QWheelEvent *event)
     if (event->angleDelta().y() > 0) {
         // Zoom avant
         d_scale_factor *= scaleFactor;
-        scale(scaleFactor, scaleFactor);
+        d_view->scale(scaleFactor, scaleFactor);
     } else {
         // Zoom arrière
         if(d_scale_factor > 0.7)
         {
             d_scale_factor *= (1.0 / scaleFactor);
-            scale(1.0 / scaleFactor, 1.0 / scaleFactor);
+            d_view->scale(1.0 / scaleFactor, 1.0 / scaleFactor);
         }
     }
 }
 
 void MapWidget::contextMenuEvent(QContextMenuEvent *event)
 {
-    if(auto* car = dynamic_cast<Car*>(itemAt(event->pos())))
-    {
-        emit requestParentPause();
-        // car->contextMenuEvent();
-        QMenu menu;
-        QAction *infoAction = menu.addAction("Info");
-        QAction *removeAction = menu.addAction("Supprimer");
+    // if(auto* car = dynamic_cast<Car*>(itemAt(event->pos())))
+    // {
+    //     emit requestParentPause();
+    //     // car->contextMenuEvent();
+    //     QMenu menu;
+    //     QAction *infoAction = menu.addAction("Info");
+    //     QAction *removeAction = menu.addAction("Supprimer");
 
-        connect(removeAction, &QAction::triggered, car, [car](){ delete car; });
-        connect(infoAction, &QAction::triggered, car, &Car::handleInfo);
-        menu.exec(event->pos());
-    }
+    //     connect(removeAction, &QAction::triggered, car, [car](){ delete car; });
+    //     connect(infoAction, &QAction::triggered, car, &Car::handleInfo);
+    //     menu.exec(event->pos());
+    // }
 }
 
 void MapWidget::addCar(Car* car)
@@ -312,8 +310,8 @@ QPointF MapWidget::pairLatLonToXY(std::pair<double, double>& coord)
 }
 
 QPointF MapWidget::latLonToXY(double lon, double lat) {
-    double width = d_scene->sceneRect().width();
-    double height = d_scene->sceneRect().height();
+    double width = d_default_scene_rect.size().width();
+    double height = d_default_scene_rect.size().height();
 
 //    double x = (lon - d_minCoord.first) / (d_maxCoord.first - d_minCoord.first) * width;
 //    double y = height - (lat - d_minCoord.second) / (d_maxCoord.second - d_minCoord.second) * height;
@@ -592,9 +590,8 @@ void MapWidget::initMeshs()
     qreal dy = sqrt(3) * hexRadius;  // Décalage vertical (distance entre centres des hexagones)
 
 
-    QRectF scene_rect = d_scene->sceneRect();
-    QPointF topLeft = scene_rect.topLeft();    // Coin supérieur gauche
-    QPointF bottomRight = scene_rect.bottomRight();  // Coin inférieur droit
+    QPointF topLeft = d_default_scene_rect.topLeft();    // Coin supérieur gauche
+    QPointF bottomRight = d_default_scene_rect.bottomRight();  // Coin inférieur droit
 
     qreal startX = topLeft.x();
     qreal startY = topLeft.y();

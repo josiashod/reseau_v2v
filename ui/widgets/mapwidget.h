@@ -17,7 +17,7 @@ namespace osm
 class Car;
 class Hexagon;
 
-class MapWidget : public QGraphicsView
+class MapWidget : public QWidget
 {
     Q_OBJECT
 public:
@@ -34,11 +34,9 @@ public:
     static QPointF observation_point;
 
 public  slots :
-    void isLoadingFinished();
     void checkCarsConnections();
 
 signals :
-    void isLoading(bool);
     void isLoaded(bool);
     void requestParentPause();
     // emet l'id du car avec la selection partielle
@@ -72,8 +70,7 @@ private:
 
     osm::Graph* d_graph;
 
-    // used to prevent view double resized;
-    bool d_hasBeenResized;
+    QGraphicsView*      d_view;
     /**
      * @brief d_scene scene de la map
      */
@@ -104,6 +101,10 @@ private:
     QGraphicsItemGroup* d_meshLayer;
 
     void creerInterface();
+    /**
+     * @brief init map creation
+     */
+    void init();
     void resizeEvent(QResizeEvent *event) override;
     // zoom et deplacement sur la carte
     void wheelEvent(QWheelEvent *event) override;
@@ -139,6 +140,8 @@ private:
      * @brief Decoupage territorial en hexagon
      */
     QVector<Hexagon*> d_hexagons;
+
+    QRectF d_default_scene_rect;
 };
 
 #endif // MAPWIDGET_H
