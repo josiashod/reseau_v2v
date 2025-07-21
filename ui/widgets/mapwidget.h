@@ -105,12 +105,8 @@ private:
      */
     void init();
     void resizeEvent(QResizeEvent *event) override;
-    // zoom et deplacement sur la carte
-    void wheelEvent(QWheelEvent *event) override;
-//    void mousePressEvent(QMouseEvent *event) override;
-//    void keyPressEvent(QKeyEvent *event) override;
-//    void keyReleaseEvent(QKeyEvent *event) override;
-    // void contextMenuEvent(QContextMenuEvent *event) override;
+    // filter les event pour gerer le zoom et deplacement sur la carte
+    bool eventFilter(QObject* watched, QEvent* event) override;
 
     /**
      * @brief pairLatLonToXY Convertit les coordonnées géographiques (latitude et longitude)

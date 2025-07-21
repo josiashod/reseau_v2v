@@ -4,15 +4,16 @@
 #include <QFuture>
 #include <QFutureWatcher>
 #include <QMenu>
-#include "../../core/graph.h"
-#include "./../../core/way.h"
-#include "./../../core/building.h"
-//#include "./../../core/water.h"
-#include "./../../core/park.h"
-#include "./../../core/car.h"
-#include "./../../utils/dbmanager.h"
+
+#include "core/graph.h"
+#include "core/way.h"
+#include "core/building.h"
+#include "core/park.h"
+#include "core/car.h"
+#include "./utils/dbmanager.h"
 #include "core/hexagon.h"
 #include "core/water.h"
+#include "ui/widgets/logwidget.h"
 
 
 // CRÉATION DE L'INTERFACE
@@ -20,7 +21,6 @@
 MapWidget::MapWidget(QWidget *parent, osm::Graph* graph)
     : QWidget{parent}, d_graph{graph}
 {
-    initBounds();
     creerInterface();
 }
 
@@ -43,6 +43,10 @@ void MapWidget::creerInterface()
     d_view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     d_view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     d_view->setDragMode(QGraphicsView::ScrollHandDrag);
+    d_view->setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
+    d_view->setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
+    d_view->setRenderHint(QPainter::Antialiasing, true);
+    d_view->viewport()->installEventFilter(this);
 
     d_scene = new QGraphicsScene(this);
     d_scene->setBackgroundBrush(QColor("#F2EFE9")); // Gris clair
@@ -86,7 +90,6 @@ void MapWidget::resizeEvent(QResizeEvent *event)
 {
     if(d_default_scene_rect.size() == QSize(0,0))
     {
-        d_view->setRenderHint(QPainter::Antialiasing);
         d_scene->setSceneRect(0, 0, width() * 2.5, height() * 2.5);
         d_view->fitInView(d_scene->sceneRect(), Qt::KeepAspectRatio);
         d_view->setAlignment(Qt::AlignCenter);
@@ -96,11 +99,13 @@ void MapWidget::resizeEvent(QResizeEvent *event)
     }
 }
 
+
 void MapWidget::init()
 {
     // Mettre à jour la taille de la scène lors du redimensionnement de la vue
     emit isLoaded(false);
 
+    initBounds();
     initMeshs();
 
     auto cleanWatcher = [](QFutureWatcher<void>* watcher) {
@@ -135,166 +140,37 @@ void MapWidget::init()
     }));
 }
 
-//void MapWidget::mousePressEvent(QMouseEvent *event)
-//{
-//    if (event->modifiers() == (Qt::ControlModifier | Qt::ShiftModifier))
-//    {
-//        QGraphicsItem *item = itemAt(event->pos());
-//        if (d_carsLayer->isAncestorOf(item) || d_freqCarsLayer->isAncestorOf(item))
-//        {
-//            int id = item->data(0).toString().toInt();
-//            auto it = std::find(d_partially_selected_elements.begin(), d_partially_selected_elements.end(), id);
-
-//            // element n'est pas selectionné
-//            if (it == d_partially_selected_elements.end())
-//            {
-//                emit addElementToPartialSelection(id);
-//                d_partially_selected_elements.push_back(id);
-//            }
-//            else
-//            {
-//                emit removeElementFromPartialSelection(id);
-//                d_partially_selected_elements.erase(it);
-//            }
-//        }
-//    }
-//    else if(event->modifiers() & Qt::ControlModifier)
-//    {
-//        if(event->buttons() == Qt::LeftButton)
-//        {
-//            QGraphicsItem *item = itemAt(event->pos());
-//            if (d_carsLayer->isAncestorOf(item) || d_freqCarsLayer->isAncestorOf(item))
-//            {
-//                int id = item->data(0).toString().toInt();
-//                auto it = std::find(d_partially_selected_elements.begin(), d_partially_selected_elements.end(), id);
-
-//                // element n'est pas selectionné
-//                if (it == d_partially_selected_elements.end())
-//                {
-//                    d_partially_selected_elements.clear();
-//                    emit deletePartialSelection();
-
-//                    emit addElementToPartialSelection(id);
-//                    d_partially_selected_elements.push_back(id);
-//                }
-//            }
-//            else
-//            {
-//                d_partially_selected_elements.clear();
-//                emit deletePartialSelection();
-//            }
-//        }
-//    }
-//    else
-//    {
-//        if(event->buttons() == Qt::LeftButton)
-//        {
-//            d_partially_selected_elements.clear();
-//            emit deletePartialSelection();
-//        }
-//        else
-//        {
-//            QMenu menu(this);
-
-//            if(!d_partially_selected_elements.empty())
-//            {
-//                QString elt = (d_partially_selected_elements.size() == 1) ? "l'élément" : "les éléments";
-
-//                QAction *infoAction = menu.addAction("Ajouter " + elt +" à la selection");
-//                QAction *deleteAction = menu.addAction("Supprimer " + elt + " selectionnée" + ((d_partially_selected_elements.size() > 1) ? "s" : ""));
-
-//                QAction *selectedAction = menu.exec(event->globalPos());
-//                if (selectedAction == infoAction) {
-//                    emit persistPartialSelection();
-//                    for(const int& id: d_partially_selected_elements)
-//                    {
-//                        d_selected_elements.push_back(id);
-//                    }
-//                    d_partially_selected_elements.clear();
-//                } else if (selectedAction == deleteAction) {
-//                    emit deleteSelectedElement();
-//                    d_partially_selected_elements.clear();
-//                }
-//            }
-
-
-//    //        if (item) {
-//    //            QAction *infoAction = menu.addAction("Afficher les informations");
-//    //            QAction *deleteAction = menu.addAction("Supprimer l'élément");
-
-//    //            QAction *selectedAction = menu.exec(event->globalPos());
-//    //            if (selectedAction == infoAction) {
-//    //                qDebug() << "Afficher les informations de l'élément à la position:" << item->pos();
-//    //            } else if (selectedAction == deleteAction) {
-//    //                qDebug() << "Supprimer l'élément";
-//    //                delete item;  // Supprime l'élément
-//    //            }
-//    //        } else {
-//    //            QAction *resetAction = menu.addAction("Réinitialiser la vue");
-//    //            if (menu.exec(event->globalPos()) == resetAction) {
-//    //                qDebug() << "Vue réinitialisée";
-//    //                resetTransform();  // Réinitialise la transformation
-//    //            }
-//    //        }
-//        }
-//    }
-
-
-//    QGraphicsView::mousePressEvent(event);
-//}
-
-//void MapWidget::keyPressEvent(QKeyEvent *event)
-//{
-//    if (event->modifiers() == Qt::ControlModifier || (event->modifiers() == (Qt::ControlModifier | Qt::ShiftModifier)))
-//        setDragMode(QGraphicsView::NoDrag);  // Permettre la sélection
-//    else
-//        setDragMode(QGraphicsView::ScrollHandDrag);  // Rester en mode défilement
-//    QGraphicsView::keyPressEvent(event);
-//}
-
-//void MapWidget::keyReleaseEvent(QKeyEvent *event)
-//{
-//    setDragMode(QGraphicsView::ScrollHandDrag);  // Rester en mode défilement
-//    QGraphicsView::keyPressEvent(event);
-//}
-
-void MapWidget::wheelEvent(QWheelEvent *event)
+bool MapWidget::eventFilter(QObject* watched, QEvent* event)
 {
-    // Zoomer avec la molette de la souris
-    const double scaleFactor = 1.1;  // Facteur de zoom
+    if (watched == d_view->viewport() && event->type() == QEvent::Wheel)
+    {
+        QWheelEvent* wheelEvent = static_cast<QWheelEvent*>(event);
 
-    if (event->angleDelta().y() > 0) {
-        // Zoom avant
-        d_scale_factor *= scaleFactor;
-        d_view->scale(scaleFactor, scaleFactor);
-    } else {
-        // Zoom arrière
-        if(d_scale_factor > 0.7)
+        const double scaleFactor = 1.1;
+        QPointF mouseScenePos = d_view->mapToScene(wheelEvent->position().toPoint());
+
+        if (wheelEvent->angleDelta().y() > 0)
         {
+            // Zoom avant
+            d_scale_factor *= scaleFactor;
+            d_view->scale(scaleFactor, scaleFactor);
+        }
+        else if (d_scale_factor > 0.7)
+        {
+            // Zoom arrière
             d_scale_factor *= (1.0 / scaleFactor);
             d_view->scale(1.0 / scaleFactor, 1.0 / scaleFactor);
         }
+
+        // Compensation du décalage
+        QPointF newMouseScenePos = d_view->mapToScene(wheelEvent->position().toPoint());
+        d_view->translate(
+            mouseScenePos.x() - newMouseScenePos.x(),
+            mouseScenePos.y() - newMouseScenePos.y()
+        );
     }
+    return QWidget::eventFilter(watched, event); // Passe les autres événements
 }
-
-// void MapWidget::contextMenuEvent(QContextMenuEvent *event)
-// {
-    // if(auto* car = dynamic_cast<Car*>(itemAt(event->pos())))
-    // {
-    //     emit requestParentPause();
-    //     // car->contextMenuEvent();
-    //     QMenu menu;
-    //     QAction *infoAction = menu.addAction("Info");
-    //     QAction *removeAction = menu.addAction("Supprimer");
-
-    //     connect(removeAction, &QAction::triggered, car, [car](){ delete car; });
-    //     connect(infoAction, &QAction::triggered, car, &Car::handleInfo);
-    //     menu.exec(event->pos());
-    // }
-    // d_view->contextMenuEvent(event);
-//     QWidget::contextMenuEvent(event);
-// }
-
 void MapWidget::addCar(Car* car)
 {
     d_carsLayer->addToGroup(car);
@@ -309,17 +185,9 @@ QPointF MapWidget::latLonToXY(double lon, double lat) {
     double width = d_default_scene_rect.size().width();
     double height = d_default_scene_rect.size().height();
 
-//    double x = (lon - d_minCoord.first) / (d_maxCoord.first - d_minCoord.first) * width;
-//    double y = height - (lat - d_minCoord.second) / (d_maxCoord.second - d_minCoord.second) * height;
-
-//    double scaleFactor = 2.0; // Agrandir 2 fois
-
     double x = (lon - d_minCoord.first) / (d_maxCoord.first - d_minCoord.first) * width;
     double y = height - (lat - d_minCoord.second) / (d_maxCoord.second - d_minCoord.second) * height;
     return {x, y};
-
-//    return {x, y * d_perspective_offset};
-//    return {x, y};
 }
 
 
@@ -344,23 +212,21 @@ void MapWidget::initBounds()
         d_minCoord = std::make_pair(minLon, minLat);
 
         // Vérification des bornes projetées
-        log = "[INFO] Max Coord (Lambert93): lon -> " + QString::number(maxLon, 'f', 5) + ", lat -> " + QString::number(maxLat, 'f', 5) + ".";
+        log = "[INFO] Max Coord: lon -> " + QString::number(maxLon, 'f', 5) + ", lat -> " + QString::number(maxLat, 'f', 5) + ".";
+        LogWidget::addLog(log);
+
+        qDebug() << log;
+        log = "[INFO] Min Coord: lon -> " + QString::number(minLon, 'f', 5) + ", lat -> " + QString::number(minLat, 'f', 5) + ".";
         // if(d_logger)
         //     d_logger->addLog(log);
         // else
-            qDebug() << log;
-        log = "[INFO] Min Coord (Lambert93): lon -> " + QString::number(minLon, 'f', 5) + ", lat -> " + QString::number(minLat, 'f', 5) + ".";
-        // if(d_logger)
-        //     d_logger->addLog(log);
-        // else
-            qDebug() << log;
+        LogWidget::addLog(log);
+        qDebug() << log;
 
     } else {
         log = "[ERREUR] Impossible de récupérer les longitude et latitudes min/max.";
-        // if(d_logger)
-        //     d_logger->addLog(log, LogWidget::DANGER);
-        // else
-            qDebug() << log;
+        LogWidget::addLog(log, LogWidget::DANGER);
+        qDebug() << log;
     }
     query.finish();
     // DBManager::instance().close();
