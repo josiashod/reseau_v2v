@@ -275,7 +275,7 @@ void Car::contextMenuEvent(QGraphicsSceneContextMenuEvent *event)
 
 void Car::move(double interval)
 {
-    if(d_path[d_to] == d_path[d_from])
+    if(d_from == d_path.size() - 1)
     {
         emit hasReachEndOfPath();
         return;
@@ -307,11 +307,14 @@ void Car::move(double interval)
 
 void Car::setPath(const std::vector<osm::Node*>& path)
 {
-    d_path = path;
-    d_from = d_to;
-    d_to = 1;
-    d_elapsed = 0.0;
-    updateOrientation();
+    if(!path.empty() && path.size() > 1)
+    {
+        d_path = path;
+        d_from = 0;
+        d_to = 1;
+        d_elapsed = 0.0;
+        updateOrientation();
+    }
 }
 
 bool Car::isConnectedTo(const Car* other) const
