@@ -14,7 +14,7 @@
 #include "../../core/car.h"
 #include "../dialog/addcardialog.h"
 
-const int FPS = 80;
+const int FPS = 60;
 
 // retourne le libelle à mettre dans le menu
 QString menu_libelle(bool etat, const QString& libelle)
@@ -137,7 +137,7 @@ void MainWindow::creerInterface()
     connect(d_mapWidget, &MapWidget::isLoaded, this, &MainWindow::onMapLoaded);
     connect(this, &MainWindow::timeout, d_mapWidget, &MapWidget::checkCarsConnections);
 
-    updatePlayButtonLabel();
+    updatePlayButton();
 }
 
 void MainWindow::onShowHideBuildings(bool)
@@ -206,7 +206,7 @@ void MainWindow::onMapLoaded(bool loaded)
     }
 }
 
-void  MainWindow::updatePlayButtonLabel()
+void  MainWindow::updatePlayButton()
 {
     if(d_isPlaying)
         d_playButton->setText("Mettre en pause");
@@ -220,7 +220,7 @@ void MainWindow::onPlay()
 {
     d_isPlaying = !d_isPlaying;
 
-    updatePlayButtonLabel();
+    updatePlayButton();
 }
 
 void MainWindow::onClearLog()
@@ -282,7 +282,7 @@ void MainWindow::selectSpeed()
 void MainWindow::onAddCar()
 {
     d_isPlaying = false;
-    updatePlayButtonLabel();
+    updatePlayButton();
     playOrPause();
 
     auto dialog = new AddCarDialog(this);
@@ -291,10 +291,19 @@ void MainWindow::onAddCar()
     connect(dialog, &AddCarDialog::create_car, this, &MainWindow::addCar);
 }
 
-void MainWindow::onSimulationPauseRequest()
+void MainWindow::onSimulationPauseRequest(bool pause)
 {
-    if(d_isPlaying)
-        onPlay();
+    if(pause)
+    {
+        d_isPlaying = false;
+        updatePlayButton();
+    }
+    else
+    {
+        d_isPlaying = true;
+        updatePlayButton();
+    }
+
 }
 
 void MainWindow::addCar(int nb, double speed, double freq, double intensity)

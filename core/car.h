@@ -106,7 +106,7 @@ signals:
      */
     void isConnectedToCars();
 
-    void requestSimulationPause();
+    void requestSimulationPause(bool);
 
 public slots:
     /**

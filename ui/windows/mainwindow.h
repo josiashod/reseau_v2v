@@ -38,11 +38,11 @@ private slots:
     void onAddCar();
     void addCar(int nb, double speed, double freq, double intensity);
     void onCarHasReachEndOfPath();
-    void onSimulationPauseRequest();
+    void onSimulationPauseRequest(bool);
     /**
-     * @brief updatePlayButtonLabel met a jour le bouton play en fonction de l'état de la simutlation
+     * @brief met a jour le bouton play en fonction de l'état de la simutlation
      */
-    void updatePlayButtonLabel();
+    void updatePlayButton();
     void updateSpeedSelector(int i);
     /**
      * @brief updateFrame: update cars position

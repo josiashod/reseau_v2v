@@ -255,13 +255,16 @@ void Car::nextMove()
 
 void Car::contextMenuEvent(QGraphicsSceneContextMenuEvent *event)
 {
-    emit requestSimulationPause();
+    emit requestSimulationPause(true);
 
     QMenu menu;
     QAction *infoAction = menu.addAction("Info");
     QAction *removeAction = menu.addAction("Supprimer");
 
-    connect(removeAction, &QAction::triggered, this, [this](){ delete this; });
+    connect(removeAction, &QAction::triggered, this, [this](){
+        emit requestSimulationPause(false);
+        delete this;
+    });
     connect(infoAction, &QAction::triggered, this, &Car::handleInfo);
     menu.exec(event->screenPos());
 }
@@ -390,5 +393,7 @@ void Car::handleInfo()
     msgBox.setIconPixmap(d_pixmap.scaled({d_pixmap.width() * 3, d_pixmap.height() * 3}, Qt::KeepAspectRatio, Qt::SmoothTransformation));
     // msgBox.move(QCursor::pos());
     msgBox.exec();
+
+    emit requestSimulationPause(false);
 
 }
