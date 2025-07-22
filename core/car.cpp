@@ -193,11 +193,15 @@ void Car::accelerate(double acc)
 
 osm::Node* Car::from() const
 {
+    if(path.empty())
+        return nullptr;
     return d_path[d_from];
 }
 
 osm::Node* Car::to() const
 {
+    if(path.empty())
+        return nullptr;
     return d_path[d_to];
 }
 
@@ -271,7 +275,7 @@ void Car::contextMenuEvent(QGraphicsSceneContextMenuEvent *event)
 
 void Car::move(double interval)
 {
-    if(d_path[d_to] == d_path[d_from])
+    if(path.empty() || d_path[d_to] == d_path[d_from])
     {
         emit hasReachEndOfPath();
         return;
@@ -305,8 +309,12 @@ void Car::move(double interval)
 void Car::setPath(const std::vector<osm::Node*>& path)
 {
     d_path = path;
-    d_from = d_to;
-    d_to = 1;
+    d_from = 0;
+    d_to = 0;
+    if(path.size() >= 2)
+    {
+        d_to = 1;
+    }
     d_elapsed = 0.0;
     updateOrientation();
 }
