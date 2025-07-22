@@ -90,7 +90,7 @@ void MapWidget::resizeEvent(QResizeEvent *event)
 {
     if(d_default_scene_rect.size() == QSize(0,0))
     {
-        d_scene->setSceneRect(0, 0, width() * 2.5, height() * 2.5);
+        d_scene->setSceneRect(0, 0, width() * 4, height() * 4);
         d_view->fitInView(d_scene->sceneRect(), Qt::KeepAspectRatio);
         d_view->setAlignment(Qt::AlignCenter);
         d_default_scene_rect = d_scene->sceneRect();
@@ -149,11 +149,17 @@ bool MapWidget::eventFilter(QObject* watched, QEvent* event)
         const double scaleFactor = 1.1;
         QPointF mouseScenePos = d_view->mapToScene(wheelEvent->position().toPoint());
 
-        if (wheelEvent->angleDelta().y() > 0)
+        if (wheelEvent->angleDelta().y() > 0 && d_scale_factor < 5.0)
         {
             // Zoom avant
             d_scale_factor *= scaleFactor;
             d_view->scale(scaleFactor, scaleFactor);
+            // Compensation du décalage
+            QPointF newMouseScenePos = d_view->mapToScene(wheelEvent->position().toPoint());
+            d_view->translate(
+                mouseScenePos.x() - newMouseScenePos.x(),
+                mouseScenePos.y() - newMouseScenePos.y()
+            );
         }
         else if (d_scale_factor > 0.7)
         {
@@ -161,13 +167,6 @@ bool MapWidget::eventFilter(QObject* watched, QEvent* event)
             d_scale_factor *= (1.0 / scaleFactor);
             d_view->scale(1.0 / scaleFactor, 1.0 / scaleFactor);
         }
-
-        // Compensation du décalage
-        QPointF newMouseScenePos = d_view->mapToScene(wheelEvent->position().toPoint());
-        d_view->translate(
-            mouseScenePos.x() - newMouseScenePos.x(),
-            mouseScenePos.y() - newMouseScenePos.y()
-        );
     }
     return QWidget::eventFilter(watched, event); // Passe les autres événements
 }

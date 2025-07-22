@@ -245,7 +245,7 @@ void MainWindow::updateSpeedSelector(int i)
 {
     d_selectedSpeed = i;
     selectSpeed();
-    playOrPause();
+    emit accelarate(d_speeds[i]);
 }
 
 void MainWindow::playOrPause()
@@ -259,7 +259,7 @@ void MainWindow::playOrPause()
     }
 
     if(d_isPlaying)
-        d_timer.start();
+        d_timer.start(1000 / FPS);
     else
         d_timer.stop();
 }
@@ -271,7 +271,7 @@ void MainWindow::updateFrame()
     QString time = (QTime(0, 0, 0).addSecs(d_elapsed_time / 1000)).toString("hh:mm:ss");
     d_timeLabel->setText("Temps écoulé: " + time);
 
-    emit timeout(interval * d_speeds[d_selectedSpeed]);
+    emit timeout(interval);
 }
 
 void MainWindow::selectSpeed()
@@ -321,15 +321,18 @@ void MainWindow::addCar(int nb, double speed, double freq, double intensity)
         auto* car = new Car(path, speed, freq, intensity);
 
         connect(this, &MainWindow::timeout, car, &Car::move);
+        connect(this, &MainWindow::accelarate, car, &Car::accelerate);
         connect(this, &MainWindow::freqVisibilityChanged, car, &Car::updateFrequenceVisibility);
         connect(car, &Car::hasReachEndOfPath, this, &MainWindow::onCarHasReachEndOfPath);
         connect(car, &Car::requestSimulationPause, this, &MainWindow::onSimulationPauseRequest);
         connect(car, &Car::isConnectedToCars, this, [logs = LogWidget::instance(), this](){
             if(auto* car = qobject_cast<Car*>(sender()))
             {
-                logs->addLog("=============================================",
-                    LogWidget::INFO);
-                logs->addLog(car->toString(), LogWidget::SUCCESS);
+                QTimer::singleShot(1000, [car, logs, time = &d_elapsed_time](){
+                    logs->addLog(QString("================ %1  ================").arg((QTime(0, 0, 0).addSecs(*time / 1000)).toString("hh:mm:ss")),
+                                 LogWidget::INFO);
+                    logs->addLog(car->toString(), LogWidget::SUCCESS);
+                });
             }
         });
 

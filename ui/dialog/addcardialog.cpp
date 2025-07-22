@@ -45,8 +45,8 @@ void AddCarDialog::create_interface()
     // créations des molette de frequence et de puissance
     // avec une valeur par defaut à 20
     d_speed_dial = new QDial(this);
-    d_speed_dial->setMinimum(50.0);
-    d_speed_dial->setMaximum(170.0);
+    d_speed_dial->setMinimum(80.0);
+    d_speed_dial->setMaximum(300.0);
     d_speed_dial->setNotchesVisible(true);
 
     d_freq_dial = new QDial(this);

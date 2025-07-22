@@ -271,7 +271,7 @@ void Car::contextMenuEvent(QGraphicsSceneContextMenuEvent *event)
 
 void Car::move(double interval)
 {
-    if(d_path[d_to] == d_path[d_from])
+    if(d_from == d_path.size() - 1)
     {
         emit hasReachEndOfPath();
         return;
@@ -279,21 +279,20 @@ void Car::move(double interval)
 
     d_elapsed += interval / 1000.0;  // Convertir l'intervalle en secondes
 
-    double time = duree(distance(d_path[d_from]->pos(), d_path[d_to]->pos()), d_v);
+    double time = duree(distance(d_path[d_from]->pos(), d_path[d_to]->pos()), d_v) / d_acceleration;
 
     // updateConnections();
 
     // Vérifier si on est arrivée à destination
     if (d_elapsed > time)
     {
-        d_from = d_to;
         d_elapsed = 0.0;
         nextMove();
         updateOrientation();
     }
     else
     {
-        double progress = d_elapsed / time;
+        double progress = std::min(1.0, d_elapsed / time);
 
         auto position = d_path[d_from]->pos() + ((d_path[d_to]->pos() - d_path[d_from]->pos()) * progress);
         updateCoverage();
@@ -304,11 +303,14 @@ void Car::move(double interval)
 
 void Car::setPath(const std::vector<osm::Node*>& path)
 {
-    d_path = path;
-    d_from = d_to;
-    d_to = 1;
-    d_elapsed = 0.0;
-    updateOrientation();
+    if(!path.empty() && path.size() > 1)
+    {
+        d_path = path;
+        d_from = 0;
+        d_to = 1;
+        d_elapsed = 0.0;
+        updateOrientation();
+    }
 }
 
 bool Car::isConnectedTo(const Car* other) const

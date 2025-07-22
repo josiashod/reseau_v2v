@@ -24,6 +24,7 @@ signals:
     // emit the new elapsed time
     void timeout(double);
     void freqVisibilityChanged(bool);
+    void accelarate(double);
 
 private slots:
     void onShowHideRoads(bool);
