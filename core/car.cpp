@@ -193,11 +193,15 @@ void Car::accelerate(double acc)
 
 osm::Node* Car::from() const
 {
+    if(path.empty())
+        return nullptr;
     return d_path[d_from];
 }
 
 osm::Node* Car::to() const
 {
+    if(path.empty())
+        return nullptr;
     return d_path[d_to];
 }
 
@@ -271,7 +275,7 @@ void Car::contextMenuEvent(QGraphicsSceneContextMenuEvent *event)
 
 void Car::move(double interval)
 {
-    if(d_from == d_path.size() - 1)
+    if(d_path[d_to] == d_path[d_from])
     {
         emit hasReachEndOfPath();
         return;
@@ -303,14 +307,11 @@ void Car::move(double interval)
 
 void Car::setPath(const std::vector<osm::Node*>& path)
 {
-    if(!path.empty() && path.size() > 1)
-    {
-        d_path = path;
-        d_from = 0;
-        d_to = 1;
-        d_elapsed = 0.0;
-        updateOrientation();
-    }
+    d_path = path;
+    d_from = d_to;
+    d_to = 1;
+    d_elapsed = 0.0;
+    updateOrientation();
 }
 
 bool Car::isConnectedTo(const Car* other) const
