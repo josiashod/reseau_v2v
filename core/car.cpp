@@ -193,14 +193,14 @@ void Car::accelerate(double acc)
 
 osm::Node* Car::from() const
 {
-    if(path.empty())
+    if(d_path.empty())
         return nullptr;
     return d_path[d_from];
 }
 
 osm::Node* Car::to() const
 {
-    if(path.empty())
+    if(d_path.empty())
         return nullptr;
     return d_path[d_to];
 }

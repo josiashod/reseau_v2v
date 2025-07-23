@@ -6,6 +6,7 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QStandardPaths>
+#include <QApplication>
 
 #include "../ui/widgets/logwidget.h"
 #include "../utils/osmreader.h"
@@ -47,12 +48,32 @@ void Widget::onLoadFile()
                         tr("Importer le fichier OSM à charger"),
                         directory);
 
-    d_edit->setText(fileName);
+    if(!fileName.isEmpty()) {
+        d_edit->setText(fileName);
+    }
 }
 
 void Widget::onLoadDB()
 {
+    if(d_edit->text().isEmpty()) {
+        LogWidget::addLog(tr("Veuillez d'abord sélectionner un fichier OSM"), LogWidget::WARNING);
+        return;
+    }
+
+    if(!QFile::exists(d_edit->text())) {
+        LogWidget::addLog(tr("Le fichier spécifié n'existe pas"), LogWidget::DANGER);
+        return;
+    }
     LogWidget::clear();
-    OsmReader::readOSMFile(d_edit->text());
+
+    // Ajouter un feedback visuel (curseur en attente)
+    QApplication::setOverrideCursor(Qt::WaitCursor);
+    try {
+        OsmReader::readOSMFile(d_edit->text());
+        LogWidget::addLog(tr("Le fichier OSM a été chargé avec succès"),  LogWidget::INFO);
+    } catch(const std::exception& e) {
+        LogWidget::addLog(tr("Erreur lors du chargement: %1").arg(e.what()),  LogWidget::DANGER);
+    }
+    QApplication::restoreOverrideCursor();
 }
 

@@ -1,9 +1,7 @@
 #include "osmreader.h"
 #include "dbmanager.h"
 #include "../ui/widgets/logwidget.h"
-
 #include <QSqlQuery>
-#include <vector>
 
 OsmReader::OsmReader()
 {}
@@ -11,179 +9,137 @@ OsmReader::OsmReader()
 void OsmReader::readOSMFile(const QString& filePath) {
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        LogWidget::addLog("Unable to open OSM file.", LogWidget::DANGER);
+        LogWidget::addLog("Unable to open OSM file", LogWidget::DANGER);
+        return;
+    }
+
+    auto db = DBManager::instance().database();
+    if (!db.transaction()) {
+        LogWidget::addLog("Failed to start database transaction", LogWidget::DANGER);
         return;
     }
 
     QXmlStreamReader xml(&file);
+    int nodeCount = 0, wayCount = 0, tagCount = 0;
+    bool hasError = false;
 
-    while (!xml.atEnd() && !xml.hasError()) {
+    while (!xml.atEnd() && !xml.hasError() && !hasError) {
         QXmlStreamReader::TokenType token = xml.readNext();
 
         if (token == QXmlStreamReader::StartElement) {
-            if (xml.name().toString() == "node") {
-                readNode(xml);
-            } else if (xml.name().toString() == "way") {
-                readWay(xml);
+            try {
+                if (xml.name() == "node") {
+                    readNode(xml, nodeCount, tagCount);
+                } else if (xml.name() == "way") {
+                    readWay(xml, wayCount, tagCount);
+                } else if (xml.name() == "bounds") {
+                    readBounds(xml);
+                }
+            } catch (const std::exception& e) {
+                LogWidget::addLog(QString("Processing error: %1").arg(e.what()), LogWidget::DANGER);
+                hasError = true;
             }
-            else if (xml.name().toString() == "bounds") {
-                readBounds(xml);  // Pour des données plus complexes (comme les bâtiments)
-            }/*else if (xml.name().toString() == "relation") {
-                readRelation(xml);  // Pour des données plus complexes (comme les bâtiments)
-            }*/
         }
     }
 
-    if (xml.hasError()) {
-        LogWidget::addLog("Error while reading file: " + xml.errorString(), LogWidget::DANGER);
+    if (hasError || xml.hasError()) {
+        db.rollback();
+        LogWidget::addLog(QString("Processing aborted: %1").arg(xml.errorString()), LogWidget::DANGER);
+    } else {
+        if (!db.commit()) {
+            LogWidget::addLog("Commit failed", LogWidget::DANGER);
+            db.rollback();
+        } else {
+            LogWidget::addLog(QString("Success: %1 nodes, %2 ways, %3 tags processed")
+                                  .arg(nodeCount).arg(wayCount).arg(tagCount), LogWidget::SUCCESS);
+        }
     }
-
     file.close();
 }
 
 void OsmReader::readBounds(QXmlStreamReader& xml) {
-    double minlat = xml.attributes().value("minlat").toDouble();
-    double minlon = xml.attributes().value("minlon").toDouble();
-    double maxlat = xml.attributes().value("maxlat").toDouble();
-    double maxlon = xml.attributes().value("maxlon").toDouble();
+    QSqlQuery query(DBManager::instance().database());
+    query.prepare("INSERT INTO bounds(minlat, minlon, maxlat, maxlon) VALUES(?,?,?,?)");
+    query.addBindValue(xml.attributes().value("minlat").toDouble());
+    query.addBindValue(xml.attributes().value("minlon").toDouble());
+    query.addBindValue(xml.attributes().value("maxlat").toDouble());
+    query.addBindValue(xml.attributes().value("maxlon").toDouble());
 
-    auto db = DBManager::instance().database();
-    QSqlQuery query(db);
-    query.prepare("INSERT INTO bounds(minlat, minlon, maxlat, maxlon) VALUES(:minlat, :minlon, :maxlat, :maxlon)");
-    query.bindValue(":minlat", minlat);
-    query.bindValue(":minlon", minlon);
-    query.bindValue(":maxlat", maxlat);
-    query.bindValue(":maxlon", maxlon);
-    if(query.exec())
-    {
-        LogWidget::addLog("add bounds success", LogWidget::SUCCESS);
+    if(!query.exec()) {
+        LogWidget::addLog(QString("Bounds error: %1").arg(query.lastError().text()), LogWidget::DANGER);
     }
-    else
-    {
-        LogWidget::addLog("add bounds error: " + db.lastError().text(), LogWidget::DANGER);
-    }
-
-    query.finish();
-    query.clear();
 }
 
-void OsmReader::readNode(QXmlStreamReader& xml) {
-    double lat = xml.attributes().value("lat").toDouble();
-    double lon = xml.attributes().value("lon").toDouble();
-    long long id = xml.attributes().value("id").toString().toLongLong();
+void OsmReader::readNode(QXmlStreamReader& xml, int& nodeCount, int& tagCount) {
+    const long long id = xml.attributes().value("id").toString().toLongLong();
+    QSqlQuery query(DBManager::instance().database());
 
-    auto db = DBManager::instance().database();
-    QSqlQuery query(db);
-    query.prepare("INSERT INTO nodes(id, lat, lon) VALUES(:id, :lat, :lon)");
-    query.bindValue(":id", id);
-    query.bindValue(":lat", lat);
-    query.bindValue(":lon", lon);
-    if(query.exec())
-    {
-       LogWidget::addLog("add node success", LogWidget::SUCCESS);
-    }
-    else
-    {
-        LogWidget::addLog("add node error " + db.lastError().text(), LogWidget::DANGER);
+    // Insert node
+    query.prepare("INSERT INTO nodes(id, lat, lon) VALUES(?,?,?)");
+    query.addBindValue(id);
+    query.addBindValue(xml.attributes().value("lat").toDouble());
+    query.addBindValue(xml.attributes().value("lon").toDouble());
+
+    if(query.exec()) {
+        nodeCount++;
+    } else {
+        LogWidget::addLog(QString("Node %1 error: %2").arg(id).arg(query.lastError().text()), LogWidget::DANGER);
+        return;
     }
 
-    // Parcourir les nœuds du chemin
-    while (!(xml.tokenType() == QXmlStreamReader::EndElement && xml.name().toString() == "node"))
-    {
+    // Process tags
+    while (!(xml.tokenType() == QXmlStreamReader::EndElement && xml.name() == "node")) {
         xml.readNext();
-        // Gérer les tags pour savoir si c'est une route ou un bâtiment
-        if (xml.tokenType() == QXmlStreamReader::StartElement && xml.name().toString() == "tag")
-        {
-            query.prepare("INSERT INTO tags(element_type, element_id, t_key, t_value) VALUES(:element_type, :element_id, :key, :value)");
-            query.bindValue(":element_type", "node");
-            query.bindValue(":element_id", id);
-            query.bindValue(":key", xml.attributes().value("k").toString());
-            query.bindValue(":value", xml.attributes().value("v").toString());
-            if(query.exec())
-               {
-                   LogWidget::addLog("add node tag", LogWidget::SUCCESS);
-               }
-            else
-                LogWidget::addLog("Erreur " + query.lastError().text(), LogWidget::DANGER);;
+        if (xml.tokenType() == QXmlStreamReader::StartElement && xml.name() == "tag") {
+            query.prepare("INSERT INTO tags(element_type, element_id, t_key, t_value) VALUES(?,?,?,?)");
+            query.addBindValue("node");
+            query.addBindValue(id);
+            query.addBindValue(xml.attributes().value("k").toString());
+            query.addBindValue(xml.attributes().value("v").toString());
+
+            if(query.exec()) {
+                tagCount++;
+            }
         }
     }
-
-    query.finish();
-    query.clear();
 }
 
+void OsmReader::readWay(QXmlStreamReader& xml, int& wayCount, int& tagCount) {
+    const long long wayId = xml.attributes().value("id").toString().toLongLong();
+    QSqlQuery query(DBManager::instance().database());
 
-void OsmReader::readWay(QXmlStreamReader& xml)
-{
-    long long wayId = xml.attributes().value("id").toString().toLongLong();
-    std::vector<long long> node_ids;
-    auto db = DBManager::instance().database();
-    QSqlQuery query(db);
+    // Insert way
+    query.prepare("INSERT INTO ways(id) VALUES(?)");
+    query.addBindValue(wayId);
 
-    // Parcourir les nœuds du chemin
-    while (!(xml.tokenType() == QXmlStreamReader::EndElement && xml.name().toString() == "way"))
-    {
+    if(!query.exec()) {
+        LogWidget::addLog(QString("Way %1 error: %2").arg(wayId).arg(query.lastError().text()), LogWidget::DANGER);
+        return;
+    }
+    wayCount++;
+
+    // Process nodes and tags
+    while (!(xml.tokenType() == QXmlStreamReader::EndElement && xml.name() == "way")) {
         xml.readNext();
-        if (xml.tokenType() == QXmlStreamReader::StartElement && xml.name().toString() == "nd")
-        {
-            node_ids.push_back(xml.attributes().value("ref").toString().toLongLong());
-        }
 
-        // Gérer les tags pour savoir si c'est une route ou un bâtiment
-        if (xml.tokenType() == QXmlStreamReader::StartElement && xml.name().toString() == "tag")
-        {
-            query.prepare("INSERT INTO tags(element_type, element_id, t_key, t_value) VALUES(:element_type, :element_id, :key, :value)");
-            query.bindValue(":element_type", "way");
-            query.bindValue(":element_id", wayId);
-            query.bindValue(":key", xml.attributes().value("k").toString());
-            query.bindValue(":value", xml.attributes().value("v").toString());
-            if(query.exec())
-               {
-                   LogWidget::addLog("node add tag succes", LogWidget::SUCCESS);
-               }
+        if (xml.tokenType() == QXmlStreamReader::StartElement) {
+            if (xml.name() == "nd") {
+                query.prepare("INSERT INTO way_node(node_id, way_id) VALUES(?,?)");
+                query.addBindValue(xml.attributes().value("ref").toString().toLongLong());
+                query.addBindValue(wayId);
+                query.exec(); // We don't count these separately
+            }
+            else if (xml.name() == "tag") {
+                query.prepare("INSERT INTO tags(element_type, element_id, t_key, t_value) VALUES(?,?,?,?)");
+                query.addBindValue("way");
+                query.addBindValue(wayId);
+                query.addBindValue(xml.attributes().value("k").toString());
+                query.addBindValue(xml.attributes().value("v").toString());
+
+                if(query.exec()) {
+                    tagCount++;
+                }
+            }
         }
     }
-
-    query.prepare("INSERT INTO ways(id) VALUES(:id)");
-    query.bindValue(":id", wayId);
-    if(query.exec())
-   {
-       LogWidget::addLog("add way success", LogWidget::SUCCESS);
-   }
-
-    for(auto id: node_ids)
-    {
-        query.prepare("INSERT INTO way_node(node_id, way_id) VALUES(:node_id, :way_id)");
-        query.bindValue(":way_id", wayId);
-        query.bindValue(":node_id", id);
-        if(query.exec())
-           {
-               LogWidget::addLog("add node way success", LogWidget::SUCCESS);
-           }
-    }
-
-    query.finish();
-    query.clear();
-}
-
-void OsmReader::readRelation(QXmlStreamReader& xml) {
-   QString relationId = xml.attributes().value("id").toString();
-   LogWidget::addLog("Relation ID: " + relationId, LogWidget::INFO);
-
-   // Parcourir les membres de la relation
-   while (!(xml.tokenType() == QXmlStreamReader::EndElement && xml.name() == "relation")) {
-       xml.readNext();
-       if (xml.tokenType() == QXmlStreamReader::StartElement && xml.name() == "member") {
-           QString type = xml.attributes().value("type").toString();
-           QString ref = xml.attributes().value("ref").toString();
-           LogWidget::addLog("  Member type: " + type + " Reference: " + ref, LogWidget::INFO);
-       }
-
-       // Gérer les tags pour identifier le type de relation (par exemple, pour les bâtiments)
-       if (xml.tokenType() == QXmlStreamReader::StartElement && xml.name() == "tag") {
-           QString key = xml.attributes().value("k").toString();
-           QString value = xml.attributes().value("v").toString();
-           LogWidget::addLog("  Tag:" + key + "Value:" + value, LogWidget::INFO);
-       }
-   }
 }

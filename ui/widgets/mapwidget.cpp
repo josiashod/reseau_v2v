@@ -149,7 +149,7 @@ bool MapWidget::eventFilter(QObject* watched, QEvent* event)
         const double scaleFactor = 1.1;
         QPointF mouseScenePos = d_view->mapToScene(wheelEvent->position().toPoint());
 
-        if (wheelEvent->angleDelta().y() > 0 && d_scale_factor < 5.0)
+        if (wheelEvent->angleDelta().y() > 0 && d_scale_factor < 8.0)
         {
             // Zoom avant
             d_scale_factor *= scaleFactor;
