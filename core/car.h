@@ -3,6 +3,7 @@
 
 #include "graph.h"
 #include <QGraphicsObject>
+#include <QSet>
 
 class Car: public QGraphicsObject
 {
