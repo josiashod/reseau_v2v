@@ -32,6 +32,7 @@ public:
     void addCarEllipse(QGraphicsEllipseItem*);
 
     static QPointF observation_point;
+    void paintEvent(QPaintEvent* event) override;
 
 public  slots :
     void checkCarsConnections();
