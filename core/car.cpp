@@ -266,7 +266,7 @@ void Car::contextMenuEvent(QGraphicsSceneContextMenuEvent *event)
     QAction *removeAction = menu.addAction("Supprimer");
 
     connect(removeAction, &QAction::triggered, this, [this](){
-        emit requestSimulationPause(false);
+        // emit requestSimulationPause(false);
         delete this;
     });
     connect(infoAction, &QAction::triggered, this, &Car::handleInfo);
@@ -400,6 +400,6 @@ void Car::handleInfo()
     // msgBox.move(QCursor::pos());
     msgBox.exec();
 
-    emit requestSimulationPause(false);
+    // emit requestSimulationPause(false);
 
 }
