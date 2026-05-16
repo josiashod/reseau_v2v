@@ -10,6 +10,7 @@ namespace osm
 {
     class Edge;
     class Graph;
+    class InDataSource;  // Forward declaration
 
     class Node
     {
@@ -81,6 +82,7 @@ namespace osm
 
         friend class Graph;
         friend class Edge;
+        friend class InDataSource;
     };
 
     class Edge{
@@ -129,6 +131,7 @@ namespace osm
         Node* d_start;
         Node* d_end;
         friend class Graph;
+        friend class InDataSource;
     };
 
     class Graph
@@ -143,6 +146,13 @@ namespace osm
         Node* addNode(long long id, double x, double y);
         void addEdge(Node* start, Node* end);
         std::vector<Node*> dijkstraPath(long long startId, long long endId);
+        
+        /**
+         * @brief Construit le graphe à partir d'une source de données
+         * @param source Interface InDataSource (SQLDataSource ou BinaryDataSource)
+         * @return Pointeur sur le Graph construit (this)
+         */
+        Graph* buildFromDataSource(InDataSource* source);
     private:
         std::unordered_map<long long, std::unique_ptr<Node>> d_nodes;
 //        std::vector<long long> d_nodesId;

@@ -25,6 +25,8 @@ SOURCES += \
     ui/windows/mainwindow.cpp \
     utils/dbmanager.cpp \
     utils/osmreader.cpp \
+    utils/SQLDataSource.cpp \
+    utils/OsmDataSource.cpp
 
 HEADERS += \
     core/building.h \
@@ -35,13 +37,16 @@ HEADERS += \
     core/park.h \
     core/water.h \
     core/way.h \
+    core/InDataSource.h \
     env.h \
     ui/dialog/addcardialog.h \
     ui/widgets/logwidget.h \
     ui/widgets/mapwidget.h \
     ui/windows/mainwindow.h \
     utils/dbmanager.h \
-    utils/osmreader.h
+    utils/osmreader.h \
+    utils/SQLDataSource.h \
+    utils/OsmDataSource.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

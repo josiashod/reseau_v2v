@@ -1,4 +1,5 @@
 #include "graph.h"
+#include "InDataSource.h"
 #include <random>
 #include <stack>
 #include <limits>
@@ -289,5 +290,55 @@ std::vector<Node*> Graph::dijkstraPath(long long startId, long long endId)
 //    bool Node::operator==(const Node& n) {
 //        return d_id == n.d_id;
 //    }
+
+Graph* Graph::buildFromDataSource(InDataSource* source)
+{
+    if (!source) {
+        qWarning() << "Graph::buildFromDataSource: source is null";
+        return this;
+    }
+
+    // Charger tous les nœuds
+    auto allWays = source->getAllWays();
+    
+    for (const auto& wayData : allWays) {
+        // Pour chaque way, créer ses nœuds et edges
+        std::vector<Node*> wayNodes;
+        
+        for (long long nodeId : wayData.nodeIds) {
+            // Vérifier si le nœud existe déjà
+            Node* node = findNode(nodeId);
+            
+            if (!node) {
+                // Récupérer les coordonnées du nœud
+                // Créer une requête pour obtenir la position
+                // Pour maintenant, on va créer des coordonnées par défaut
+                // (dans une vraie implémentation, InDataSource retournerait les coords)
+                
+                // Chercher le nœud dans getWayNodes qui retourne NodeData
+                auto nodeDataVec = source->getWayNodes(wayData.id);
+                for (const auto& nodeData : nodeDataVec) {
+                    if (nodeData.id == nodeId) {
+                        node = addNode(nodeId, nodeData.lon, nodeData.lat);
+                        break;
+                    }
+                }
+            }
+            
+            if (node) {
+                wayNodes.push_back(node);
+            }
+        }
+        
+        // Créer les edges entre nœuds consécutifs
+        for (size_t i = 0; i + 1 < wayNodes.size(); ++i) {
+            if (!wayNodes[i]->hasNeighbor(wayNodes[i + 1])) {
+                addEdge(wayNodes[i], wayNodes[i + 1]);
+            }
+        }
+    }
+    
+    return this;
+}
 
 }
