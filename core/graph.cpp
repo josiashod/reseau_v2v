@@ -1,8 +1,10 @@
 #include "graph.h"
+#include <algorithm>
 #include <random>
 #include <stack>
 #include <limits>
 #include <queue>
+#include <unordered_set>
 
 #include <QDebug>
 
@@ -217,60 +219,84 @@ void Graph::addEdge(Node* start, Node* end)
 }
 
 
-std::vector<Node*> Graph::dijkstraPath(long long startId, long long endId)
+std::vector<Node*> Graph::astarPath(long long startId, long long endId)
 {
-    std::unordered_map<long long, double> distances;
-    std::unordered_map<long long, Node*> previous;
+    Node* start = findNode(startId);
+    Node* end = findNode(endId);
     std::vector<Node*> path;
 
-    // Initialisation des distances avec l'infini
-    for (const auto& pair : d_nodes) {
-        distances[pair.first] = std::numeric_limits<double>::infinity();
-    }
-    distances[startId] = 0;
+    if(!start || !end)
+        return path;
 
-    // Comparateur pour la pour notre file de priorité
-    auto cmp = [&distances](Node* left, Node* right) {
-        return distances[left->id()] > distances[right->id()];
+    std::unordered_map<long long, double> gScore;
+    std::unordered_map<long long, Node*> previous;
+    std::unordered_set<long long> closed;
+
+    struct QueueNode
+    {
+        Node* node;
+        double score;
     };
 
-    // Priority queue pour explorer les noeuds
-    std::priority_queue<Node*, std::vector<Node*>, decltype(cmp)> queue(cmp);
-    queue.push(d_nodes[startId].get());
+    auto cmp = [](const QueueNode& left, const QueueNode& right) {
+        return left.score > right.score;
+    };
+
+    // Initialisation des distances avec l'infini.
+    for (const auto& pair : d_nodes) {
+        gScore[pair.first] = std::numeric_limits<double>::infinity();
+    }
+    gScore[startId] = 0;
+
+    // A* explore d'abord les noeuds au meilleur score estime: cout deja parcouru + heuristique.
+    std::priority_queue<QueueNode, std::vector<QueueNode>, decltype(cmp)> queue(cmp);
+    queue.push({start, distance(start->pos(), end->pos())});
 
     while (!queue.empty()) {
-        Node* current = queue.top();
+        Node* current = queue.top().node;
         queue.pop();
 
-        // Arrêtez l'algorithme si on atteint le nœud cible
+        if(closed.find(current->id()) != closed.end())
+            continue;
+
+        closed.insert(current->id());
+
+        // Arrete l'algorithme si on atteint le noeud cible.
         if (current->id() == endId) {
             break;
         }
 
-        // on cherche les sommets qui ont les distances les plus courtes
         for (const auto& neighbor : current->d_neighbors) {
             Node* neighborNode = neighbor.first;
             double weight = neighbor.second;
-            double alternativeDist = distances[current->id()] + weight;
+            double tentativeGScore = gScore[current->id()] + weight;
 
-            // on ajoute le noeud a notre pile et on met à jour son precedent
-            if (alternativeDist < distances[neighborNode->id()]) {
-                distances[neighborNode->id()] = alternativeDist;
+            // On met a jour le chemin si ce passage est plus court.
+            if (tentativeGScore < gScore[neighborNode->id()]) {
+                gScore[neighborNode->id()] = tentativeGScore;
                 previous[neighborNode->id()] = current;
-                queue.push(neighborNode);
+                queue.push({neighborNode, tentativeGScore + distance(neighborNode->pos(), end->pos())});
             }
         }
     }
 
-    // Reconstruire le chemin en remontant par les "previous"
-    Node* step = d_nodes[endId].get();
+    if(startId != endId && previous.find(endId) == previous.end())
+        return path;
+
+    // Reconstruire le chemin en remontant par les "previous".
+    Node* step = end;
     while (step) {
         path.push_back(step);
         if (step->id() == startId) break;
-        step = previous[step->id()];
+        auto previousIt = previous.find(step->id());
+        if(previousIt == previous.end()) {
+            path.clear();
+            return path;
+        }
+        step = previousIt->second;
     }
 
-    // Inverser le chemin pour partir de startId vers endId
+    // Inverser le chemin pour partir de startId vers endId.
     std::reverse(path.begin(), path.end());
 
     return path;

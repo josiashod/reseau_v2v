@@ -355,7 +355,7 @@ void MainWindow::onCarHasReachEndOfPath()
     std::vector<osm::Node*> path(0);
     auto* newnode = d_graph.getRandomNode();
     if(newnode)
-        path = d_graph.dijkstraPath(car->to()->id(), newnode->id());
+        path = d_graph.astarPath(car->to()->id(), newnode->id());
 
     if(!path.empty() && path.size() > 2)
     {
