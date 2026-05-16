@@ -33,6 +33,7 @@ private slots:
     void onShowHideParks(bool);
     void onShowHideSidebar(bool);
     void onShowHideMesh(bool);
+    void onLoadOsmMap();
     void onMapLoaded(bool);
     void onPlay();
     void onClearLog();

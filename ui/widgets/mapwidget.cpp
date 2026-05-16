@@ -10,7 +10,6 @@
 #include "core/building.h"
 #include "core/park.h"
 #include "core/car.h"
-#include "./utils/dbmanager.h"
 #include "core/hexagon.h"
 #include "core/water.h"
 #include "ui/widgets/logwidget.h"
@@ -99,12 +98,12 @@ void MapWidget::resizeEvent(QResizeEvent *event)
     }
 }
 
-
 void MapWidget::init()
 {
     // Mettre à jour la taille de la scène lors du redimensionnement de la vue
     emit isLoaded(false);
 
+    d_parsedMap = OsmReader::parseMapFile(d_osmFilePath);
     initBounds();
     initMeshs();
 
@@ -175,6 +174,42 @@ void MapWidget::addCar(Car* car)
     d_carsLayer->addToGroup(car);
 }
 
+void MapWidget::setOsmFilePath(const QString& filePath)
+{
+    d_osmFilePath = filePath;
+}
+
+void MapWidget::loadOsmFile(const QString& filePath)
+{
+    d_osmFilePath = filePath;
+    clearMapItems();
+
+    if(d_graph)
+        d_graph->clear();
+
+    init();
+}
+
+void MapWidget::clearLayer(QGraphicsItemGroup* layer)
+{
+    const auto items = layer->childItems();
+    for(auto* item: items) {
+        layer->removeFromGroup(item);
+        delete item;
+    }
+}
+
+void MapWidget::clearMapItems()
+{
+    clearLayer(d_waterLayer);
+    clearLayer(d_parkLayer);
+    clearLayer(d_wayLayer);
+    clearLayer(d_buildingLayer);
+    clearLayer(d_meshLayer);
+    clearLayer(d_carsLayer);
+    d_hexagons.clear();
+}
+
 QPointF MapWidget::pairLatLonToXY(std::pair<double, double>& coord)
 {
     return latLonToXY(coord.first, coord.second);
@@ -192,20 +227,13 @@ QPointF MapWidget::latLonToXY(double lon, double lat) {
 
 void MapWidget::initBounds()
 {
-    // auto d_dbmanager = DBManager();
-    QSqlQuery query = DBManager::instance().getBounds();
-    double minLat = 0.0, maxLat = 0.0, minLon = 0.0, maxLon = 0.0;
-    bool success = false;
     QString log;
 
-    success = query.exec();
-
-    if (success && query.next()) {
-        // je récupère les bornes de la table nodes
-        minLat = query.value("minlat").toDouble();
-        maxLat = query.value("maxlat").toDouble();
-        minLon = query.value("minlon").toDouble();
-        maxLon = query.value("maxlon").toDouble();
+    if (d_parsedMap.bounds.valid) {
+        const double minLat = d_parsedMap.bounds.minLat;
+        const double maxLat = d_parsedMap.bounds.maxLat;
+        const double minLon = d_parsedMap.bounds.minLon;
+        const double maxLon = d_parsedMap.bounds.maxLon;
 
         d_maxCoord = std::make_pair(maxLon, maxLat);
         d_minCoord = std::make_pair(minLon, minLat);
@@ -227,221 +255,106 @@ void MapWidget::initBounds()
         LogWidget::addLog(log, LogWidget::DANGER);
         qDebug() << log;
     }
-    query.finish();
-    // DBManager::instance().close();
+}
+
+std::vector<QPointF> MapWidget::pointsFromFeature(const OsmFeature& feature)
+{
+    std::vector<QPointF> points;
+    points.reserve(feature.nodeRefs.size());
+
+    for(const long long nodeId: feature.nodeRefs) {
+        auto nodeIt = d_parsedMap.nodes.find(nodeId);
+        if(nodeIt == d_parsedMap.nodes.end())
+            continue;
+
+        auto coord = nodeIt->second;
+        points.push_back(pairLatLonToXY(coord));
+    }
+
+    return points;
 }
 
 void MapWidget::initBuildings()
 {
-    // uncomment this if you want to load the building
-    return;
-    auto query = DBManager::instance().getBuildings();
-    bool success = false;
+    for(const auto& building: d_parsedMap.buildings) {
+        auto points = pointsFromFeature(building);
+        if(points.empty())
+            continue;
 
-    success = query.exec();
-    if(success)
-    {
-        while(query.next())
-        {
-            long long id;
-            id = query.value(0).toString().toLongLong();
-
-            std::vector<QPointF> points;
-
-            auto q = DBManager::instance().getWayNodes(id);
-            success = q.exec();
-            if(success)
-            {
-                while(q.next())
-                {
-                    std::pair<double, double> coord;
-                    double lat = 0.0, lon = 0.0;
-
-                    lat = q.value(1).toString().toDouble();
-                    lon = q.value(2).toString().toDouble();
-
-                    coord = std::make_pair(lon, lat);
-                    points.push_back(pairLatLonToXY(coord));
-
-                }
-            }
-            auto b = new Building{id, points};
-            QMetaObject::invokeMethod(this, [layer = d_buildingLayer, b]() {
-                layer->addToGroup(b);
-            }, Qt::QueuedConnection);
-        }
-        query.finish();
+        auto b = new Building{building.id, points};
+        QMetaObject::invokeMethod(this, [layer = d_buildingLayer, b]() {
+            layer->addToGroup(b);
+        }, Qt::QueuedConnection);
     }
-    else
-    {
-        qWarning() << "Erreur lors de la lecture de la  base de donnée";
-    }
-
 }
 
 void MapWidget::initParks()
 {
-    auto query = DBManager::instance().getParks();
-    bool success = false;
+    for(const auto& parkFeature: d_parsedMap.parks) {
+        auto points = pointsFromFeature(parkFeature);
+        if(points.empty())
+            continue;
 
-    success = query.exec();
-    if(success)
-    {
-        while(query.next())
-        {
-            long long id;
-            id = query.value(0).toString().toLongLong();
-            std::vector<QPointF> points;
-
-            auto q = DBManager::instance().getWayNodes(id);
-            success = q.exec();
-            if(success)
-            {
-                while(q.next())
-                {
-                    std::pair<double, double> coord;
-                    double lat = 0.0, lon = 0.0;
-
-                    lat = q.value(1).toString().toDouble();
-                    lon = q.value(2).toString().toDouble();
-                    coord = std::make_pair(lon, lat);
-                    // QPointF p = ;
-                    points.push_back(pairLatLonToXY(coord));
-                }
-            }
-            auto park = new Park{id, points};
-            QMetaObject::invokeMethod(this, [layer = d_parkLayer, park]() {
-                layer->addToGroup(park);
-            }, Qt::QueuedConnection);
-        }
-        query.finish();
-    }
-    else
-    {
-        qWarning() << "Erreur lors de la lecture de la  base de donnée";
+        auto park = new Park{parkFeature.id, points};
+        QMetaObject::invokeMethod(this, [layer = d_parkLayer, park]() {
+            layer->addToGroup(park);
+        }, Qt::QueuedConnection);
     }
 }
 
 void MapWidget::initWaters()
 {
-    auto query = DBManager::instance().getWaters();
-    bool success = false;
+    for(const auto& waterFeature: d_parsedMap.waters) {
+        auto points = pointsFromFeature(waterFeature);
+        if(points.empty())
+            continue;
 
-    success = query.exec();
-
-    if(success)
-    {
-        while(query.next())
-        {
-            long long id;
-            id = query.value(0).toString().toLongLong();
-            std::vector<QPointF> points;
-
-            auto q = DBManager::instance().getWayNodes(id);
-            success = q.exec();
-            if(success)
-            {
-                while(q.next())
-                {
-                    std::pair<double, double> coord;
-                    double lat = 0.0, lon = 0.0;
-
-                    lat = q.value(1).toString().toDouble();
-                    lon = q.value(2).toString().toDouble();
-                    coord = std::make_pair(lon, lat);
-                    points.push_back(pairLatLonToXY(coord));
-                }
-            }
-
-            auto water = new Water{id, points};
-            QMetaObject::invokeMethod(this, [layer = d_waterLayer, water]() {
-                layer->addToGroup(water);
-            }, Qt::QueuedConnection);
-        }
-        query.finish();
+        auto water = new Water{waterFeature.id, points};
+        QMetaObject::invokeMethod(this, [layer = d_waterLayer, water]() {
+            layer->addToGroup(water);
+        }, Qt::QueuedConnection);
     }
 }
 
 void MapWidget::initRoads()
 {
-    auto query = DBManager::instance().getRoads();
-    bool success = false;
+    for(const auto& road: d_parsedMap.roads) {
+        std::vector<QPointF> points;
+        points.reserve(road.nodeRefs.size());
 
-    success = query.exec();
+        Way defaultWay{road.id, {}};
+        defaultWay.setTags(road.tags);
 
-    if(success)
-    {
-        while(query.next())
-        {
-            long long id;
-            id = query.value(0).toString().toLongLong();
-            std::vector<QPointF> points;
-            std::map<QString, QString> tags;
-            
-            QString key = query.value(4).toString();
-            QString value = query.value(5).toString();
-            
-            tags[key] = value;
+        osm::Node* start = nullptr;
+        osm::Node* end = nullptr;
 
-            Way defaultWay{0, {}};
-            defaultWay.addTag(key, value);
+        for(const long long nodeId: road.nodeRefs) {
+            auto nodeIt = d_parsedMap.nodes.find(nodeId);
+            if(nodeIt == d_parsedMap.nodes.end())
+                continue;
 
-            auto q = DBManager::instance().getWayNodes(id);
-            success = q.exec();
-            if(success)
-            {
-                long long id;
-                double lat = 0.0, lon = 0.0;
-                QPointF p;
-                osm::Node* start    = nullptr;
-                osm::Node* end      = nullptr;
+            auto coord = nodeIt->second;
+            QPointF p = pairLatLonToXY(coord);
+            points.push_back(p);
 
-                if (d_graph &&  defaultWay.isCarWay())
-                {
-                    if(q.next())
-                    {
-                        id = q.value(0).toString().toLongLong();
-                        lat = q.value(1).toString().toDouble();
-                        lon = q.value(2).toString().toDouble();
-                        std::pair<double, double> c{lon, lat};
-                        p = pairLatLonToXY(c);
-                        points.push_back(p);
-                        start = d_graph->addNode(id, p.x(), p.y());
-                    }
-                }
-                while(q.next())
-                {
+            if(d_graph && defaultWay.isCarWay()) {
+                end = d_graph->addNode(nodeId, p.x(), p.y());
+                if(start && end && !start->hasNeighbor(end))
+                    d_graph->addEdge(start, end);
 
-                    id = q.value(0).toString().toLongLong();
-                    lat = q.value(1).toString().toDouble();
-                    lon = q.value(2).toString().toDouble();
-                    std::pair<double, double> coord{lon, lat};
-                    p = pairLatLonToXY(coord);
-                    points.push_back(p);
-
-                    // Ajouter un nœud au graphe et connecter l'arête
-                    if (start) {
-                        end = d_graph->addNode(id, p.x(), p.y());
-                        if (start && end) {
-                            // on verifie si l'arret n'existe pas dejà
-                            if (!start->hasNeighbor(end)) {
-                                d_graph->addEdge(start, end);
-                            }
-                        }
-                        start = end;
-                    }
-                }
-                auto w = new Way{id, points};
-                w->setTags(tags);
-                QMetaObject::invokeMethod(this, [layer = d_wayLayer, w]() {
-                    layer->addToGroup(w);
-                }, Qt::QueuedConnection);
+                start = end;
             }
-
         }
-        query.finish();
-    }
 
+        if(points.empty())
+            continue;
+
+        auto w = new Way{road.id, points};
+        w->setTags(road.tags);
+        QMetaObject::invokeMethod(this, [layer = d_wayLayer, w]() {
+            layer->addToGroup(w);
+        }, Qt::QueuedConnection);
+    }
 }
 
 void MapWidget::initMeshs()

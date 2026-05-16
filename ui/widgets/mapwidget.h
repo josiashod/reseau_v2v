@@ -7,6 +7,9 @@
 #include <QResizeEvent>
 #include <QPoint>
 #include <QMap>
+#include <QString>
+
+#include "utils/osmreader.h"
 
 
 namespace osm
@@ -30,9 +33,10 @@ public:
     void setShowHex(bool);
     void addCar(Car*);
     void addCarEllipse(QGraphicsEllipseItem*);
+    void setOsmFilePath(const QString& filePath);
+    void loadOsmFile(const QString& filePath);
 
     static QPointF observation_point;
-    void paintEvent(QPaintEvent* event) override;
 
 public  slots :
     void checkCarsConnections();
@@ -131,6 +135,9 @@ private:
     void initWaters();
     void initRoads();
     void initMeshs();
+    std::vector<QPointF> pointsFromFeature(const OsmFeature& feature);
+    void clearMapItems();
+    void clearLayer(QGraphicsItemGroup* layer);
 
     /**
      * @brief Decoupage territorial en hexagon
@@ -138,6 +145,8 @@ private:
     QVector<Hexagon*> d_hexagons;
 
     QRectF d_default_scene_rect;
+    QString d_osmFilePath = ":/lib/mulhouse.osm";
+    ParsedOsmMap d_parsedMap;
 };
 
 #endif // MAPWIDGET_H

@@ -6,6 +6,7 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QComboBox>
+#include <QFileDialog>
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QTime>
@@ -51,7 +52,11 @@ void MainWindow::creerInterface()
     // setFixedSize(width - (width * 0.01), height - (height * 0.10));
 
     auto viewMenu = menuBar()->addMenu("Vue");
+    auto mapMenu = menuBar()->addMenu("Carte");
 //    auto logMenu = menuBar()->addMenu("Logs");
+
+    QAction *loadMapAct = new QAction{"Charger une carte OSM", mapMenu};
+    mapMenu->addAction(loadMapAct);
 
     QAction *showRoadAct = new QAction{menu_libelle(d_showRoads, "les routes"), viewMenu};
     viewMenu->addAction(showRoadAct);
@@ -117,6 +122,7 @@ void MainWindow::creerInterface()
 
 
     // actions connects
+    connect(loadMapAct, &QAction::triggered, this, &MainWindow::onLoadOsmMap);
     connect(showRoadAct, &QAction::triggered, this, &MainWindow::onShowHideRoads);
     connect(showBuildindAct, &QAction::triggered, this, &MainWindow::onShowHideBuildings);
     connect(showParcAct, &QAction::triggered, this, &MainWindow::onShowHideParks);
@@ -193,6 +199,29 @@ void MainWindow::onShowHideSidebar(bool)
     action->setText(menu_libelle(d_showSidebar, "la menu latérale"));
 }
 
+void MainWindow::onLoadOsmMap()
+{
+    const QString filePath = QFileDialog::getOpenFileName(
+        this,
+        "Charger une carte OSM",
+        QString(),
+        "OpenStreetMap (*.osm);;Tous les fichiers (*)"
+    );
+
+    if(filePath.isEmpty())
+        return;
+
+    d_isPlaying = false;
+    updatePlayButton();
+    d_addCarButton->setEnabled(false);
+    d_playButton->setEnabled(false);
+    d_speedSelector->setEnabled(false);
+    d_elapsed_time = 0;
+    d_timeLabel->setText("Temps écoulé: " + QTime(0, 0, 0).toString("hh:mm:ss"));
+
+    d_mapWidget->loadOsmFile(filePath);
+}
+
 void MainWindow::onMapLoaded(bool loaded)
 {
     if(loaded)
@@ -202,6 +231,9 @@ void MainWindow::onMapLoaded(bool loaded)
     }
     else
     {
+        d_addCarButton->setEnabled(false);
+        d_playButton->setEnabled(false);
+        d_speedSelector->setEnabled(false);
         LogWidget::addLog("Chargement de la carte...............", LogWidget::WARNING);
     }
 }
