@@ -168,7 +168,7 @@ void Car::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidg
 
             const double normalizedPower = std::clamp((power - d_power_threshold) / std::max(1.0, d_intensity - d_power_threshold), 0.0, 1.0);
             QColor coverageColor = d_color;
-            coverageColor.setAlphaF(std::clamp(0.05 + normalizedPower * 0.35, 0.05, 0.45));
+            coverageColor.setAlphaF(std::clamp(0.08 + normalizedPower * 0.42, 0.08, 0.5));
 
             painter->setPen(Qt::NoPen);
             painter->setBrush(QBrush{coverageColor});
@@ -178,7 +178,7 @@ void Car::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidg
 
     auto pen{originalPen};
     pen.setWidth(PEN_WIDTH);
-    pen.setColor(d_color.darker(130));
+    pen.setColor(d_color);
     painter->setPen(pen);
     painter->setBrush(Qt::NoBrush);
 

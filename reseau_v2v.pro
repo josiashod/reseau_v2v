@@ -24,7 +24,7 @@ SOURCES += \
     ui/widgets/mapwidget.cpp \
     ui/windows/mainwindow.cpp \
     utils/dbmanager.cpp \
-    utils/osmreader.cpp \
+    utils/osmreader.cpp
 
 HEADERS += \
     core/building.h \
@@ -42,7 +42,6 @@ HEADERS += \
     ui/windows/mainwindow.h \
     utils/dbmanager.h \
     utils/osmreader.h
-
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
