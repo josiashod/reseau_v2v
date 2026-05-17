@@ -6,6 +6,7 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QComboBox>
+#include <QFileDialog>
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QTime>
@@ -15,6 +16,19 @@
 #include "../dialog/addcardialog.h"
 
 const int FPS = 60;
+
+QString formatElapsedTime(double elapsedMs)
+{
+    const int totalSeconds = static_cast<int>(elapsedMs / 1000.0);
+    const int hours = totalSeconds / 3600;
+    const int minutes = (totalSeconds % 3600) / 60;
+    const int seconds = totalSeconds % 60;
+
+    return QString("%1:%2:%3")
+        .arg(hours, 2, 10, QChar('0'))
+        .arg(minutes, 2, 10, QChar('0'))
+        .arg(seconds, 2, 10, QChar('0'));
+}
 
 // retourne le libelle à mettre dans le menu
 QString menu_libelle(bool etat, const QString& libelle)
@@ -34,7 +48,7 @@ MainWindow::MainWindow(QWidget *parent)
     d_showSidebar(true),
     d_isPlaying(false),
     d_selectedSpeed(3),
-    d_elapsed_time(0)
+    d_elapsed_time(0.0)
 {
     creerInterface();
 }
@@ -51,7 +65,11 @@ void MainWindow::creerInterface()
     // setFixedSize(width - (width * 0.01), height - (height * 0.10));
 
     auto viewMenu = menuBar()->addMenu("Vue");
+    auto mapMenu = menuBar()->addMenu("Carte");
 //    auto logMenu = menuBar()->addMenu("Logs");
+
+    QAction *loadMapAct = new QAction{"Charger une carte OSM", mapMenu};
+    mapMenu->addAction(loadMapAct);
 
     QAction *showRoadAct = new QAction{menu_libelle(d_showRoads, "les routes"), viewMenu};
     viewMenu->addAction(showRoadAct);
@@ -95,10 +113,9 @@ void MainWindow::creerInterface()
     rightSidebarLayout->addWidget(logsWidget, 1);
     d_addCarButton = new QPushButton{"Ajouter des voitures", this};
     d_addCarButton->setShortcut(Qt::CTRL|Qt::SHIFT|Qt::Key_A);
-    d_timeLabel = new QLabel{"Temps écoulé: "+(QTime(0, 0, 0).addSecs(d_elapsed_time)).toString("hh:mm:ss"), this};
+    d_timeLabel = new QLabel{"Temps écoulé: " + formatElapsedTime(d_elapsed_time), this};
     rightSidebarLayout->addWidget(d_timeLabel, 0, Qt::AlignCenter);
     rightSidebarLayout->addWidget(d_addCarButton);
-    d_addCarButton->setEnabled(false);
 
     auto clearLogButton = new QPushButton{"Effacer les logs", this};
     rightSidebarLayout->addWidget(clearLogButton);
@@ -117,6 +134,7 @@ void MainWindow::creerInterface()
 
 
     // actions connects
+    connect(loadMapAct, &QAction::triggered, this, &MainWindow::onLoadOsmMap);
     connect(showRoadAct, &QAction::triggered, this, &MainWindow::onShowHideRoads);
     connect(showBuildindAct, &QAction::triggered, this, &MainWindow::onShowHideBuildings);
     connect(showParcAct, &QAction::triggered, this, &MainWindow::onShowHideParks);
@@ -193,15 +211,38 @@ void MainWindow::onShowHideSidebar(bool)
     action->setText(menu_libelle(d_showSidebar, "la menu latérale"));
 }
 
+void MainWindow::onLoadOsmMap()
+{
+    const QString filePath = QFileDialog::getOpenFileName(
+        this,
+        "Charger une carte OSM",
+        QString(),
+        "OpenStreetMap (*.osm);;Tous les fichiers (*)"
+    );
+
+    if(filePath.isEmpty())
+        return;
+
+    d_isPlaying = false;
+    updatePlayButton();
+    d_playButton->setEnabled(false);
+    d_speedSelector->setEnabled(false);
+    d_elapsed_time = 0.0;
+    d_timeLabel->setText("Temps écoulé: " + formatElapsedTime(d_elapsed_time));
+
+    d_mapWidget->loadOsmFile(filePath);
+}
+
 void MainWindow::onMapLoaded(bool loaded)
 {
     if(loaded)
     {
-        d_addCarButton->setEnabled(true);
         LogWidget::addLog("La carte a été chargée !!!", LogWidget::SUCCESS);
     }
     else
     {
+        d_playButton->setEnabled(false);
+        d_speedSelector->setEnabled(false);
         LogWidget::addLog("Chargement de la carte...............", LogWidget::WARNING);
     }
 }
@@ -266,10 +307,10 @@ void MainWindow::playOrPause()
 
 void MainWindow::updateFrame()
 {
-    double interval = 1000 / FPS;
-    d_elapsed_time += interval * d_speeds[d_selectedSpeed];
-    QString time = (QTime(0, 0, 0).addSecs(d_elapsed_time / 1000)).toString("hh:mm:ss");
-    d_timeLabel->setText("Temps écoulé: " + time);
+    double interval = 1000.0 / FPS;
+    const double simulatedInterval = interval * d_speeds[d_selectedSpeed];
+    d_elapsed_time += simulatedInterval;
+    d_timeLabel->setText("Temps écoulé: " + formatElapsedTime(d_elapsed_time));
 
     emit timeout(interval);
 }
@@ -314,6 +355,11 @@ void MainWindow::addCar(int nb, double speed, double freq, double intensity)
         osm::Node* n1 = nullptr;
 
         n1 = d_graph.getRandomNode();
+        if(!n1)
+        {
+            LogWidget::addLog("Impossible d'ajouter une voiture: aucun noeud routier disponible.", LogWidget::WARNING);
+            continue;
+        }
         path.push_back(n1);
 
         // d_cars.push_back(std::make_unique<Car>(path, speed, freq, intensity));
@@ -329,7 +375,7 @@ void MainWindow::addCar(int nb, double speed, double freq, double intensity)
             if(auto* car = qobject_cast<Car*>(sender()))
             {
                 QTimer::singleShot(1000, [car, logs, time = &d_elapsed_time](){
-                    logs->addLog(QString("================ %1  ================").arg((QTime(0, 0, 0).addSecs(*time / 1000)).toString("hh:mm:ss")),
+                    logs->addLog(QString("================ %1  ================").arg(formatElapsedTime(*time)),
                                  LogWidget::INFO);
                     logs->addLog(car->toString(), LogWidget::SUCCESS);
                 });

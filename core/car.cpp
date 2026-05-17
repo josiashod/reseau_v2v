@@ -1,5 +1,7 @@
 #include "car.h"
 #include "qpainter.h"
+#include <algorithm>
+#include <cmath>
 #include <random>
 #include <QBrush>
 #include <QPen>
@@ -73,6 +75,11 @@ double fspl(double dist, double freq)
     return (20 * std::log10(dist) + 20 * std::log10(freq) + C);
 }
 
+double frequencyHz(double frequencyMhz)
+{
+    return std::max(1.0, frequencyMhz) * 1'000'000.0;
+}
+
 Car::~Car()
 {
     for (auto carPtr : d_connected_cars) {
@@ -129,8 +136,9 @@ Car::Car( std::vector<osm::Node*>& path, double vitesse, double frequence, doubl
 
 QRectF Car::boundingRect() const
 {
-    return QRectF(-d_freq - PEN_WIDTH / 2, -d_freq - PEN_WIDTH / 2,
-                  d_freq*2 + PEN_WIDTH, d_freq*2 + PEN_WIDTH);
+    const double radius = std::max(coverageRadius(), std::max(d_pixmap.width(), d_pixmap.height()) / 2.0);
+    return QRectF(-radius - PEN_WIDTH / 2, -radius - PEN_WIDTH / 2,
+                  radius * 2 + PEN_WIDTH, radius * 2 + PEN_WIDTH);
 }
 
 QPainterPath Car::shape() const
@@ -148,20 +156,39 @@ void Car::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidg
     qreal pixWidth = d_pixmap.width();
     qreal pixHeight = d_pixmap.height();
 
-    auto pen{originalPen};
-    QBrush brush{d_color};
-    pen.setWidth(PEN_WIDTH);
-
-    painter->setPen(pen);
-    painter->setBrush(brush);
-
     if(d_showFreq)
     {
-        painter->drawEllipse(boundingRect());
+        const double radius = coverageRadius();
+        for(int i = d_coverage_rings; i >= 1; --i)
+        {
+            const double ringRadius = radius * i / d_coverage_rings;
+            const double power = d_intensity - fspl(std::max(1.0, ringRadius), frequencyHz(d_freq));
+            if(power < d_power_threshold)
+                continue;
+
+            const double normalizedPower = std::clamp((power - d_power_threshold) / std::max(1.0, d_intensity - d_power_threshold), 0.0, 1.0);
+            QColor coverageColor = d_color;
+            coverageColor.setAlphaF(std::clamp(0.08 + normalizedPower * 0.42, 0.08, 0.5));
+
+            painter->setPen(Qt::NoPen);
+            painter->setBrush(QBrush{coverageColor});
+            painter->drawEllipse(QPointF{0, 0}, ringRadius, ringRadius);
+        }
     }
+
+    auto pen{originalPen};
+    pen.setWidth(PEN_WIDTH);
+    pen.setColor(d_color);
+    painter->setPen(pen);
+    painter->setBrush(Qt::NoBrush);
+
+    if(d_showFreq)
+        painter->drawEllipse(QPointF{0, 0}, coverageRadius(), coverageRadius());
+
     painter->drawPixmap(-(pixWidth / 2), -(pixHeight / 2), d_pixmap);
 
     painter->setBrush(originalBrush);
+    painter->setPen(originalPen);
 
     updateOrientation();
 }
@@ -227,23 +254,17 @@ double Car::receivedPower(const QPointF& p) const
     double dist = distance(pos(), p);
     if (dist == 0) return d_intensity;  // Puissance maximale à la position du véhicule
     // Calcul de la perte FSPL et de la puissance reçue
-    return d_intensity - fspl(dist, d_freq);
+    return d_intensity - fspl(dist, frequencyHz(d_freq));
+}
+
+double Car::coverageRadius() const
+{
+    const double maxDistance = std::pow(10.0, (d_intensity - d_power_threshold - 20.0 * std::log10(frequencyHz(d_freq)) + 147.55) / 20.0);
+    return std::clamp(maxDistance, 35.0, 280.0);
 }
 
 void Car::updateCoverage()
 {
-    double received_intensity = receivedPower({0, 0});
-    if (received_intensity < d_power_threshold)
-    {
-        d_color.setAlphaF(0);
-        return;
-    }
-
-    //    double scaling_factor = d_freq / 10.0;
-    //    double rad = std::sqrt(received_intensity / d_power_threshold) * 4 * scaling_factor;
-    //    rad = std::clamp(rad, 10.0, 200.0);
-
-    d_color.setAlphaF(std::clamp(received_intensity / 100, 0.1, 0.55));
     update();
 }
 
@@ -321,7 +342,7 @@ bool Car::isConnectedTo(const Car* other) const
 {
     // Distance entre les deux voitures
     double dist =  distance(pos(), other->pos());
-    double radius = std::max(d_freq, other->d_freq);
+    double radius = std::max(coverageRadius(), other->coverageRadius());
 
     return dist <= radius;
 }
