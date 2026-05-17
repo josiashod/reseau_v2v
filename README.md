@@ -9,7 +9,7 @@ L'application lit maintenant directement les fichiers `.osm` pour afficher la ca
 Au lancement, l'application charge la carte par défaut embarquée dans les ressources Qt :
 
 ```text
-:/lib/mulhouse.osm
+:/lib/map.osm
 ```
 
 Le fichier OSM est parsé en mémoire par `OsmReader::parseMapFile()` :

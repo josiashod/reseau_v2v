@@ -145,7 +145,7 @@ private:
     QVector<Hexagon*> d_hexagons;
 
     QRectF d_default_scene_rect;
-    QString d_osmFilePath = ":/lib/mulhouse.osm";
+    QString d_osmFilePath = ":/lib/map.osm";
     ParsedOsmMap d_parsedMap;
 };
 

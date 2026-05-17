@@ -50,6 +50,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 DISTFILES += \
     lib/geo.db \
+    lib/map.osm \
     lib/mulhouse.osm
 
 RESOURCES += \
