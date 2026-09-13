@@ -80,7 +80,7 @@ void MainWindow::creerInterface()
     QAction *showParcAct = new QAction{menu_libelle(d_showParks, "les parcs"), viewMenu};
     viewMenu->addAction(showParcAct);
 
-    QAction *showWaterAct = new QAction{menu_libelle(d_showWaters, "les cours d'eaux"), viewMenu};
+    QAction *showWaterAct = new QAction{menu_libelle(d_showWaters, "les cours d'eau"), viewMenu};
     viewMenu->addAction(showWaterAct);
 
     QAction *showFrequenceAct = new QAction{menu_libelle(d_showRoads, "les couvertures radio"), viewMenu};
@@ -199,7 +199,7 @@ void MainWindow::onShowHideWaters(bool)
     QAction* action = qobject_cast<QAction*>(sender());
     d_showWaters = !d_showWaters;
     d_mapWidget->setShowWater(d_showWaters);
-    action->setText(menu_libelle(d_showWaters, "les cours d'eaux"));
+    action->setText(menu_libelle(d_showWaters, "les cours d'eau"));
 }
 
 void MainWindow::onShowHideMesh(bool)
