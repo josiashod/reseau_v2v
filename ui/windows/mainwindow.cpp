@@ -80,6 +80,9 @@ void MainWindow::creerInterface()
     QAction *showParcAct = new QAction{menu_libelle(d_showParks, "les parcs"), viewMenu};
     viewMenu->addAction(showParcAct);
 
+    QAction *showWaterAct = new QAction{menu_libelle(d_showWaters, "les cours d'eaux"), viewMenu};
+    viewMenu->addAction(showWaterAct);
+
     QAction *showFrequenceAct = new QAction{menu_libelle(d_showRoads, "les couvertures radio"), viewMenu};
     viewMenu->addAction(showFrequenceAct);
 
@@ -138,6 +141,7 @@ void MainWindow::creerInterface()
     connect(showRoadAct, &QAction::triggered, this, &MainWindow::onShowHideRoads);
     connect(showBuildindAct, &QAction::triggered, this, &MainWindow::onShowHideBuildings);
     connect(showParcAct, &QAction::triggered, this, &MainWindow::onShowHideParks);
+    connect(showWaterAct, &QAction::triggered, this, &MainWindow::onShowHideWaters);
     connect(showSidebarAct, &QAction::triggered, this, &MainWindow::onShowHideSidebar);
     connect(showFrequenceAct, &QAction::triggered, this, &MainWindow::onShowHideFreq);
     connect(showHexAct, &QAction::triggered, this, &MainWindow::onShowHideMesh);
@@ -188,6 +192,14 @@ void MainWindow::onShowHideParks(bool)
     d_showParks = !d_showParks;
     d_mapWidget->setShowPark(d_showParks);
     action->setText(menu_libelle(d_showParks, "les parcs"));
+}
+
+void MainWindow::onShowHideWaters(bool)
+{
+    QAction* action = qobject_cast<QAction*>(sender());
+    d_showWaters = !d_showWaters;
+    d_mapWidget->setShowWater(d_showWaters);
+    action->setText(menu_libelle(d_showWaters, "les cours d'eaux"));
 }
 
 void MainWindow::onShowHideMesh(bool)

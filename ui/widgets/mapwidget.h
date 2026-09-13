@@ -28,6 +28,7 @@ public:
     ~MapWidget();
 
     void setShowPark(bool);
+    void setShowWater(bool);
     void setShowBuilding(bool);
     void setShowRoad(bool);
     void setShowHex(bool);
@@ -63,6 +64,7 @@ private:
 
     // Permet d'afficher les différentes scenes
     bool d_showPark         = true;
+    bool d_showWater         = true;
     bool d_showBuilding     = true;
     bool d_showWay          = true;
     bool d_showDescription  = true;

@@ -416,6 +416,12 @@ void MapWidget::setShowPark(bool show)
     d_parkLayer->setVisible(d_showPark);
 }
 
+void MapWidget::setShowWater(bool show)
+{
+    d_showWater = show;
+    d_waterLayer->setVisible(d_showWater);
+}
+
 void MapWidget::setShowBuilding(bool show)
 {
     d_showBuilding = show;

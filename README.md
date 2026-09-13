@@ -51,19 +51,3 @@ Le projet se compile avec Qt Creator ou avec `qmake` :
 qmake reseau_v2v.pro
 make
 ```
-
-## Note Sur L'Ancienne Base De Données
-
-Le code lié à `DBManager` et à l'ancien import OSM en base peut encore exister dans le projet, mais il n'est plus utilisé par `MapWidget` pour afficher la carte.
-
-Le flux recommandé est désormais :
-
-```text
-fichier OSM -> parsing mémoire -> rendu Qt + graphe routier
-```
-
-au lieu de :
-
-```text
-fichier OSM -> base de données -> requêtes SQL -> rendu Qt
-```
