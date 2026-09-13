@@ -179,6 +179,7 @@ void MainWindow::onShowHideFreq(bool)
     QAction* action = qobject_cast<QAction*>(sender());
     d_showCarFreq = !d_showCarFreq;
     emit freqVisibilityChanged(d_showCarFreq);
+    d_mapWidget->setShowRadioCoverage(d_showCarFreq);
     action->setText(menu_libelle(d_showCarFreq, "les couvertures radio"));
 }
 

@@ -8,6 +8,8 @@
 #include <QPoint>
 #include <QMap>
 #include <QString>
+#include <QStackedWidget>
+#include <QVector>
 
 #include "utils/osmreader.h"
 
@@ -19,6 +21,7 @@ namespace osm
 
 class Car;
 class Hexagon;
+class Map3DWidget;
 
 class MapWidget : public QWidget
 {
@@ -31,6 +34,7 @@ public:
     void setShowBuilding(bool);
     void setShowRoad(bool);
     void setShowHex(bool);
+    void setShowRadioCoverage(bool);
     void addCar(Car*);
     void addCarEllipse(QGraphicsEllipseItem*);
     void setOsmFilePath(const QString& filePath);
@@ -103,6 +107,9 @@ private:
      * @brief d_meshLayer couche d'affichage des mailles
      */
     QGraphicsItemGroup* d_meshLayer;
+    QStackedWidget* d_viewStack;
+    Map3DWidget* d_3dView;
+    QVector<Car*> d_cars;
 
     void creerInterface();
     /**

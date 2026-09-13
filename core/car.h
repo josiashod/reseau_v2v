@@ -46,6 +46,7 @@ class Car: public QGraphicsObject
      * @return
      */
     double intensity() const;
+    QColor color() const;
     /**
      * @brief accelerate
      * @param nv

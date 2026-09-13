@@ -4,6 +4,8 @@
 #include <QFuture>
 #include <QFutureWatcher>
 #include <QMenu>
+#include <QOpenGLWidget>
+#include <QStackedWidget>
 
 #include "core/graph.h"
 #include "core/way.h"
@@ -12,6 +14,7 @@
 #include "core/car.h"
 #include "core/hexagon.h"
 #include "core/water.h"
+#include "ui/widgets/map3dwidget.h"
 #include "ui/widgets/logwidget.h"
 
 
@@ -37,7 +40,14 @@ void MapWidget::creerInterface()
     // Add d_view to layout so it fills the widget
     auto layout = new QVBoxLayout{this};
 
+    d_viewStack = new QStackedWidget{this};
+
+    d_3dView = new Map3DWidget{this};
+
     d_view = new QGraphicsView{};
+    auto* openGLViewport = new QOpenGLWidget{d_view};
+    openGLViewport->setUpdateBehavior(QOpenGLWidget::PartialUpdate);
+    d_view->setViewport(openGLViewport);
     d_view->setMouseTracking(true);
     d_view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     d_view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -80,7 +90,11 @@ void MapWidget::creerInterface()
     d_carsLayer->setHandlesChildEvents(false);
     d_scene->addItem(d_carsLayer);
 
-    layout->addWidget(d_view);
+    d_viewStack->addWidget(d_3dView);
+    d_viewStack->addWidget(d_view);
+    d_viewStack->setCurrentWidget(d_3dView);
+
+    layout->addWidget(d_viewStack);
     layout->setContentsMargins(0, 0, 0, 0);
     setLayout(layout);
 }
@@ -93,6 +107,7 @@ void MapWidget::resizeEvent(QResizeEvent *event)
         d_view->fitInView(d_scene->sceneRect(), Qt::KeepAspectRatio);
         d_view->setAlignment(Qt::AlignCenter);
         d_default_scene_rect = d_scene->sceneRect();
+        d_3dView->setSceneRect(d_default_scene_rect);
         d_view->scale(2, 2);
         init();
     }
@@ -104,6 +119,7 @@ void MapWidget::init()
     emit isLoaded(false);
 
     d_parsedMap = OsmReader::parseMapFile(d_osmFilePath);
+    d_3dView->setParsedMap(d_parsedMap);
     initBounds();
     initMeshs();
 
@@ -172,6 +188,13 @@ bool MapWidget::eventFilter(QObject* watched, QEvent* event)
 void MapWidget::addCar(Car* car)
 {
     d_carsLayer->addToGroup(car);
+    d_cars.push_back(car);
+    d_3dView->setCars(d_cars);
+
+    connect(car, &QObject::destroyed, this, [this, car]() {
+        d_cars.removeOne(car);
+        d_3dView->setCars(d_cars);
+    });
 }
 
 void MapWidget::setOsmFilePath(const QString& filePath)
@@ -208,6 +231,8 @@ void MapWidget::clearMapItems()
     clearLayer(d_meshLayer);
     clearLayer(d_carsLayer);
     d_hexagons.clear();
+    d_cars.clear();
+    d_3dView->setCars(d_cars);
 }
 
 QPointF MapWidget::pairLatLonToXY(std::pair<double, double>& coord)
@@ -408,28 +433,37 @@ void MapWidget::checkCarsConnections()
     for (auto& hex: d_hexagons) {
         hex->checkCarConnections();
     }
+    d_3dView->update();
 }
 
 void MapWidget::setShowPark(bool show)
 {
     d_showPark = show;
     d_parkLayer->setVisible(d_showPark);
+    d_3dView->setShowPark(show);
 }
 
 void MapWidget::setShowBuilding(bool show)
 {
     d_showBuilding = show;
     d_buildingLayer->setVisible(d_showBuilding);
+    d_3dView->setShowBuilding(show);
 }
 
 void MapWidget::setShowRoad(bool show)
 {
     d_showWay = show;
     d_wayLayer->setVisible(d_showWay);
+    d_3dView->setShowRoad(show);
 }
 
 void MapWidget::setShowHex(bool show)
 {
     d_showMesh = show;
     d_meshLayer->setVisible(d_showMesh);
+}
+
+void MapWidget::setShowRadioCoverage(bool show)
+{
+    d_3dView->setShowRadioCoverage(show);
 }

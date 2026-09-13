@@ -1,4 +1,4 @@
-QT       += core gui concurrent sql
+QT       += core gui concurrent sql openglwidgets
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -21,6 +21,7 @@ SOURCES += \
     main.cpp \
     ui/dialog/addcardialog.cpp \
     ui/widgets/logwidget.cpp \
+    ui/widgets/map3dwidget.cpp \
     ui/widgets/mapwidget.cpp \
     ui/windows/mainwindow.cpp \
     utils/dbmanager.cpp \
@@ -38,6 +39,7 @@ HEADERS += \
     env.h \
     ui/dialog/addcardialog.h \
     ui/widgets/logwidget.h \
+    ui/widgets/map3dwidget.h \
     ui/widgets/mapwidget.h \
     ui/windows/mainwindow.h \
     utils/dbmanager.h \

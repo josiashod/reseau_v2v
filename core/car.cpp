@@ -213,6 +213,11 @@ double Car::intensity() const
     return d_intensity;
 }
 
+QColor Car::color() const
+{
+    return d_color;
+}
+
 void Car::accelerate(double acc)
 {
     d_acceleration = acc;
