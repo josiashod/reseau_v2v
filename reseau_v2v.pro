@@ -17,13 +17,11 @@ SOURCES += \
     core/park.cpp \
     core/water.cpp \
     core/way.cpp \
-    env.cpp \
     main.cpp \
     ui/dialog/addcardialog.cpp \
     ui/widgets/logwidget.cpp \
     ui/widgets/mapwidget.cpp \
     ui/windows/mainwindow.cpp \
-    utils/dbmanager.cpp \
     utils/osmreader.cpp
 
 HEADERS += \
@@ -35,12 +33,10 @@ HEADERS += \
     core/park.h \
     core/water.h \
     core/way.h \
-    env.h \
     ui/dialog/addcardialog.h \
     ui/widgets/logwidget.h \
     ui/widgets/mapwidget.h \
     ui/windows/mainwindow.h \
-    utils/dbmanager.h \
     utils/osmreader.h
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
