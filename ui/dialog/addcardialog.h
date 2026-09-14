@@ -3,7 +3,7 @@
 
 #include <QDialog>
 
-class QLineEdit;
+class QSpinBox;
 class QDial;
 class QLabel;
 
@@ -22,7 +22,7 @@ private slots:
 
 private:
     void create_interface();
-    QLineEdit* d_nm_car_edit;
+    QSpinBox* d_nm_car_edit;
     QDial* d_speed_dial;
     QDial* d_freq_dial;
     QDial* d_intensity_dial;

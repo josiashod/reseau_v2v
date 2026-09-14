@@ -56,10 +56,6 @@ class Car: public QGraphicsObject
      */
     void updateOrientation();
     /**
-     * @brief updateCoverage update the radio coverage of the cars
-     */
-    void updateCoverage();
-    /**
      * @brief receivedPower calculae the power received by the car
      * @param p the observaion point position
      * @return
@@ -124,7 +120,8 @@ public slots:
 private:
     static size_t d_instance_counter;
     static constexpr double d_power_threshold = 5.0;
-    static constexpr int d_coverage_rings = 12;
+    static constexpr double d_min_coverage_radius = 28.0;
+    static constexpr double d_max_coverage_radius = 150.0;
 
     bool d_showFreq;
     // vitesse de la voiture

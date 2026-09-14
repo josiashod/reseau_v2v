@@ -8,6 +8,7 @@
 #include <QColor>
 #include <QMenu>
 #include <QMessageBox>
+#include <QRadialGradient>
 #include <QGraphicsSceneContextMenuEvent>
 
 QString colors[] = {"black", "blue", "red", "green", "yellow"};
@@ -159,31 +160,31 @@ void Car::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidg
     if(d_showFreq)
     {
         const double radius = coverageRadius();
-        for(int i = d_coverage_rings; i >= 1; --i)
-        {
-            const double ringRadius = radius * i / d_coverage_rings;
-            const double power = d_intensity - fspl(std::max(1.0, ringRadius), frequencyHz(d_freq));
-            if(power < d_power_threshold)
-                continue;
+        const double edgePower = receivedPower(pos() + QPointF{radius, 0});
+        const double powerRange = std::max(1.0, d_intensity - edgePower);
+        auto colorForPowerAt = [this, radius, edgePower, powerRange](double radiusRatio) {
+            const double sampleDistance = std::max(1.0, radius * radiusRatio);
+            const double power = d_intensity - fspl(sampleDistance, frequencyHz(d_freq));
+            const double normalizedPower = std::clamp((power - edgePower) / powerRange, 0.0, 1.0);
 
-            const double normalizedPower = std::clamp((power - d_power_threshold) / std::max(1.0, d_intensity - d_power_threshold), 0.0, 1.0);
-            QColor coverageColor = d_color;
-            coverageColor.setAlphaF(std::clamp(0.08 + normalizedPower * 0.42, 0.08, 0.5));
+            QColor color = d_color;
+            color.setAlphaF(0.02 + normalizedPower * 0.33);
+            return color;
+        };
 
-            painter->setPen(Qt::NoPen);
-            painter->setBrush(QBrush{coverageColor});
-            painter->drawEllipse(QPointF{0, 0}, ringRadius, ringRadius);
-        }
+        QRadialGradient gradient(QPointF{0, 0}, radius);
+        gradient.setColorAt(0.0, colorForPowerAt(0.0));
+        gradient.setColorAt(0.5, colorForPowerAt(0.5));
+        gradient.setColorAt(0.8, colorForPowerAt(0.8));
+        gradient.setColorAt(1.0, colorForPowerAt(1.0));
+
+        auto pen{originalPen};
+        pen.setWidth(PEN_WIDTH);
+        pen.setColor(d_color);
+        painter->setPen(pen);
+        painter->setBrush(QBrush{gradient});
+        painter->drawEllipse(QPointF{0, 0}, radius, radius);
     }
-
-    auto pen{originalPen};
-    pen.setWidth(PEN_WIDTH);
-    pen.setColor(d_color);
-    painter->setPen(pen);
-    painter->setBrush(Qt::NoBrush);
-
-    if(d_showFreq)
-        painter->drawEllipse(QPointF{0, 0}, coverageRadius(), coverageRadius());
 
     painter->drawPixmap(-(pixWidth / 2), -(pixHeight / 2), d_pixmap);
 
@@ -260,13 +261,13 @@ double Car::receivedPower(const QPointF& p) const
 double Car::coverageRadius() const
 {
     const double maxDistance = std::pow(10.0, (d_intensity - d_power_threshold - 20.0 * std::log10(frequencyHz(d_freq)) + 147.55) / 20.0);
-    return std::clamp(maxDistance, 35.0, 280.0);
+    const double compressedDistance = std::log1p(std::max(0.0, maxDistance));
+    const double referenceDistance = std::log1p(10'000.0);
+    const double normalizedDistance = std::clamp(compressedDistance / referenceDistance, 0.0, 1.0);
+
+    return d_min_coverage_radius + normalizedDistance * (d_max_coverage_radius - d_min_coverage_radius);
 }
 
-void Car::updateCoverage()
-{
-    update();
-}
 
 void Car::nextMove()
 {
@@ -320,7 +321,6 @@ void Car::move(double interval)
         double progress = std::min(1.0, d_elapsed / time);
 
         auto position = d_path[d_from]->pos() + ((d_path[d_to]->pos() - d_path[d_from]->pos()) * progress);
-        updateCoverage();
         setPos(position);
         update();
     }

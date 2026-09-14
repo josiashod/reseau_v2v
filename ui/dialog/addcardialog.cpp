@@ -1,7 +1,8 @@
 #include "addcardialog.h"
+#include "qlineedit.h"
 #include <QVBoxLayout>
 #include <QLabel>
-#include <QLineEdit>
+#include <QSpinBox>
 #include <QIntValidator>
 #include <QDial>
 #include <QPushButton>
@@ -22,11 +23,8 @@ void AddCarDialog::create_interface()
     auto main_layout = new QVBoxLayout(this);
 
     main_layout->addWidget(new QLabel{"Nombre de voitures à ajouter"});
-    d_nm_car_edit= new QLineEdit();
-
-    d_nm_car_edit->setValidator(new QIntValidator(1, 99, d_nm_car_edit));
-    d_nm_car_edit->setPlaceholderText("Enter the number of car to add");
-    d_nm_car_edit->setText("1");
+    d_nm_car_edit= new QSpinBox();
+    d_nm_car_edit->setMinimum(1);
 
     main_layout->addWidget(d_nm_car_edit);
     main_layout->addSpacing(10);

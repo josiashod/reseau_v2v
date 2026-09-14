@@ -44,6 +44,7 @@ MainWindow::MainWindow(QWidget *parent)
     d_showCarFreq(true),
     d_showBuildings(true),
     d_showParks(true),
+    d_showWaters(true),
     d_showMesh(false),
     d_showSidebar(true),
     d_isPlaying(false),
