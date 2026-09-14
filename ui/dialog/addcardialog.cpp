@@ -24,8 +24,9 @@ void AddCarDialog::create_interface()
     main_layout->addWidget(new QLabel{"Nombre de voitures à ajouter"});
     d_nm_car_edit= new QLineEdit();
 
-    d_nm_car_edit->setValidator(new QIntValidator(0, 99, d_nm_car_edit));
+    d_nm_car_edit->setValidator(new QIntValidator(1, 99, d_nm_car_edit));
     d_nm_car_edit->setPlaceholderText("Enter the number of car to add");
+    d_nm_car_edit->setText("1");
 
     main_layout->addWidget(d_nm_car_edit);
     main_layout->addSpacing(10);
@@ -39,8 +40,8 @@ void AddCarDialog::create_interface()
 
     // ajout des etiquette pour les molletes
     speed_dial_layout->addWidget(new QLabel{"Vitesse"}, 0, Qt::AlignCenter);
-    freq_dial_layout->addWidget(new QLabel{"Fréquence"}, 0, Qt::AlignCenter);
-    intensity_dial_layout->addWidget(new QLabel{"Puissance"}, 0, Qt::AlignCenter);
+    freq_dial_layout->addWidget(new QLabel{"Fréquence (MHz)"}, 0, Qt::AlignCenter);
+    intensity_dial_layout->addWidget(new QLabel{"Puissance (dBm)"}, 0, Qt::AlignCenter);
 
     // créations des molette de frequence et de puissance
     // avec une valeur par defaut à 20
@@ -115,12 +116,7 @@ void AddCarDialog::create_interface()
 
 void AddCarDialog::onAdd()
 {
-    if(d_nm_car_edit->text().length() == 0)
-    {
-        QMessageBox::critical(this, "Erreur", "Veuillez remplir correctement les différentes informations");
-        return;
-    }
-    int nb = d_nm_car_edit->text().toInt();
+    int nb = d_nm_car_edit->text().isEmpty() ? 1 : d_nm_car_edit->text().toInt();
     double speed = d_speed_dial->value();
     double freq = d_freq_dial->value();
     double intensity = d_intensity_dial->value();

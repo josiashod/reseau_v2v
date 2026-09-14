@@ -1,11 +1,7 @@
 <RCC>
     <qresource prefix="/">
-        <file>lib/carte_1.osm</file>
-        <file>lib/carte_2.osm</file>
+        <file>lib/map.osm</file>
         <file>lib/mulhouse.osm</file>
-        <file>lib/carte_3.osm</file>
-        <file>lib/carte_4.osm</file>
-        <file>lib/carte_5.osm</file>
         <file>lib/img/cars/car_black_1.png</file>
         <file>lib/img/cars/car_black_2.png</file>
         <file>lib/img/cars/car_black_3.png</file>

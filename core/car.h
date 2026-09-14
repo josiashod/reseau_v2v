@@ -65,6 +65,7 @@ class Car: public QGraphicsObject
      * @return
      */
     double receivedPower(const QPointF& p) const;
+    double coverageRadius() const;
     /**
      * @brief update the frequence visibility
      */
@@ -123,6 +124,7 @@ public slots:
 private:
     static size_t d_instance_counter;
     static constexpr double d_power_threshold = 5.0;
+    static constexpr int d_coverage_rings = 12;
 
     bool d_showFreq;
     // vitesse de la voiture

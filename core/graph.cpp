@@ -218,6 +218,12 @@ void Graph::addEdge(Node* start, Node* end)
     end->addNeighbor(start, dist);
 }
 
+void Graph::clear()
+{
+    d_edges.clear();
+    d_nodes.clear();
+}
+
 
 std::vector<Node*> Graph::astarPath(long long startId, long long endId)
 {
