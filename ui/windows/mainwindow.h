@@ -28,10 +28,7 @@ signals:
 
 private slots:
     void onShowHideRoads(bool);
-    void onShowHideBuildings(bool);
     void onShowHideFreq(bool);
-    void onShowHideParks(bool);
-    void onShowHideWaters(bool);
     void onShowHideSidebar(bool);
     void onShowHideMesh(bool);
     void onLoadOsmMap();
@@ -70,9 +67,6 @@ private:
 
     bool d_showRoads;
     bool d_showCarFreq;
-    bool d_showBuildings;
-    bool d_showParks;
-    bool d_showWaters;
     bool d_showMesh;
     bool d_showSidebar;
 

@@ -7,11 +7,8 @@
 
 #include "core/graph.h"
 #include "core/way.h"
-#include "core/building.h"
-#include "core/park.h"
 #include "core/car.h"
 #include "core/hexagon.h"
-#include "core/water.h"
 #include "ui/widgets/logwidget.h"
 
 
@@ -51,24 +48,10 @@ void MapWidget::creerInterface()
     d_scene->setBackgroundBrush(QColor("#F2EFE9")); // Gris clair
     d_view->setScene(d_scene);
 
-    d_waterLayer = new QGraphicsItemGroup();
-    d_waterLayer->setVisible(true);
-    d_scene->addItem(d_waterLayer);
-
-    d_parkLayer = new QGraphicsItemGroup();
-    d_parkLayer->setVisible(d_showPark);
-    d_parkLayer->setAcceptedMouseButtons(Qt::NoButton);
-    d_scene->addItem(d_parkLayer);
-
     d_wayLayer = new QGraphicsItemGroup();
     d_wayLayer->setVisible(d_showWay);
     d_wayLayer->setAcceptedMouseButtons(Qt::NoButton);
     d_scene->addItem(d_wayLayer);
-
-    d_buildingLayer = new QGraphicsItemGroup();
-    d_buildingLayer->setVisible(d_showBuilding);
-    d_buildingLayer->setAcceptedMouseButtons(Qt::NoButton);
-    d_scene->addItem(d_buildingLayer);
 
     d_meshLayer = new QGraphicsItemGroup();
     d_meshLayer->setVisible(d_showMesh);
@@ -107,35 +90,14 @@ void MapWidget::init()
     initBounds();
     initMeshs();
 
-    auto cleanWatcher = [](QFutureWatcher<void>* watcher) {
-        watcher->deleteLater();
-    };
-
     auto roadWatcher = new QFutureWatcher<void>(this);
-    auto defaultWatcher = new QFutureWatcher<void>(this);
-    auto buildingWatcher = new QFutureWatcher<void>(this);
-
-    connect(roadWatcher, &QFutureWatcher<void>::finished, this, [this, cleanWatcher, roadWatcher](){
+    connect(roadWatcher, &QFutureWatcher<void>::finished, this, [this, roadWatcher](){
         emit isLoaded(true);
-        cleanWatcher(roadWatcher);
-    });
-    connect(defaultWatcher, &QFutureWatcher<void>::finished, this, [ cleanWatcher, defaultWatcher](){
-        cleanWatcher(defaultWatcher);
-    });
-    connect(buildingWatcher, &QFutureWatcher<void>::finished, this, [cleanWatcher, buildingWatcher](){
-       cleanWatcher(buildingWatcher);
+        roadWatcher->deleteLater();
     });
 
-    // Associe le watcher au future
-    defaultWatcher->setFuture(QtConcurrent::run([this]() {
-        initParks();
-        initWaters();
-    }));
     roadWatcher->setFuture(QtConcurrent::run([this]() {
         initRoads();
-    }));
-    buildingWatcher->setFuture(QtConcurrent::run([this]() {
-       initBuildings();
     }));
 }
 
@@ -201,10 +163,7 @@ void MapWidget::clearLayer(QGraphicsItemGroup* layer)
 
 void MapWidget::clearMapItems()
 {
-    clearLayer(d_waterLayer);
-    clearLayer(d_parkLayer);
     clearLayer(d_wayLayer);
-    clearLayer(d_buildingLayer);
     clearLayer(d_meshLayer);
     clearLayer(d_carsLayer);
     d_hexagons.clear();
@@ -272,48 +231,6 @@ std::vector<QPointF> MapWidget::pointsFromFeature(const OsmFeature& feature)
     }
 
     return points;
-}
-
-void MapWidget::initBuildings()
-{
-    for(const auto& building: d_parsedMap.buildings) {
-        auto points = pointsFromFeature(building);
-        if(points.empty())
-            continue;
-
-        auto b = new Building{building.id, points};
-        QMetaObject::invokeMethod(this, [layer = d_buildingLayer, b]() {
-            layer->addToGroup(b);
-        }, Qt::QueuedConnection);
-    }
-}
-
-void MapWidget::initParks()
-{
-    for(const auto& parkFeature: d_parsedMap.parks) {
-        auto points = pointsFromFeature(parkFeature);
-        if(points.empty())
-            continue;
-
-        auto park = new Park{parkFeature.id, points};
-        QMetaObject::invokeMethod(this, [layer = d_parkLayer, park]() {
-            layer->addToGroup(park);
-        }, Qt::QueuedConnection);
-    }
-}
-
-void MapWidget::initWaters()
-{
-    for(const auto& waterFeature: d_parsedMap.waters) {
-        auto points = pointsFromFeature(waterFeature);
-        if(points.empty())
-            continue;
-
-        auto water = new Water{waterFeature.id, points};
-        QMetaObject::invokeMethod(this, [layer = d_waterLayer, water]() {
-            layer->addToGroup(water);
-        }, Qt::QueuedConnection);
-    }
 }
 
 void MapWidget::initRoads()
@@ -408,24 +325,6 @@ void MapWidget::checkCarsConnections()
     for (auto& hex: d_hexagons) {
         hex->checkCarConnections();
     }
-}
-
-void MapWidget::setShowPark(bool show)
-{
-    d_showPark = show;
-    d_parkLayer->setVisible(d_showPark);
-}
-
-void MapWidget::setShowWater(bool show)
-{
-    d_showWater = show;
-    d_waterLayer->setVisible(d_showWater);
-}
-
-void MapWidget::setShowBuilding(bool show)
-{
-    d_showBuilding = show;
-    d_buildingLayer->setVisible(d_showBuilding);
 }
 
 void MapWidget::setShowRoad(bool show)

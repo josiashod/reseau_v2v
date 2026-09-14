@@ -42,9 +42,6 @@ MainWindow::MainWindow(QWidget *parent)
     d_graph{},
     d_showRoads(true),
     d_showCarFreq(true),
-    d_showBuildings(true),
-    d_showParks(true),
-    d_showWaters(true),
     d_showMesh(false),
     d_showSidebar(true),
     d_isPlaying(false),
@@ -75,16 +72,7 @@ void MainWindow::creerInterface()
     QAction *showRoadAct = new QAction{menu_libelle(d_showRoads, "les routes"), viewMenu};
     viewMenu->addAction(showRoadAct);
 
-    QAction *showBuildindAct = new QAction{menu_libelle(d_showBuildings, "les immeubles"), viewMenu};
-    viewMenu->addAction(showBuildindAct);
-
-    QAction *showParcAct = new QAction{menu_libelle(d_showParks, "les parcs"), viewMenu};
-    viewMenu->addAction(showParcAct);
-
-    QAction *showWaterAct = new QAction{menu_libelle(d_showWaters, "les cours d'eau"), viewMenu};
-    viewMenu->addAction(showWaterAct);
-
-    QAction *showFrequenceAct = new QAction{menu_libelle(d_showRoads, "les couvertures radio"), viewMenu};
+    QAction *showFrequenceAct = new QAction{menu_libelle(d_showCarFreq, "les couvertures radio"), viewMenu};
     viewMenu->addAction(showFrequenceAct);
 
     QAction *showHexAct = new QAction{menu_libelle(d_showMesh, "le decoupage territorial"), viewMenu};
@@ -140,9 +128,6 @@ void MainWindow::creerInterface()
     // actions connects
     connect(loadMapAct, &QAction::triggered, this, &MainWindow::onLoadOsmMap);
     connect(showRoadAct, &QAction::triggered, this, &MainWindow::onShowHideRoads);
-    connect(showBuildindAct, &QAction::triggered, this, &MainWindow::onShowHideBuildings);
-    connect(showParcAct, &QAction::triggered, this, &MainWindow::onShowHideParks);
-    connect(showWaterAct, &QAction::triggered, this, &MainWindow::onShowHideWaters);
     connect(showSidebarAct, &QAction::triggered, this, &MainWindow::onShowHideSidebar);
     connect(showFrequenceAct, &QAction::triggered, this, &MainWindow::onShowHideFreq);
     connect(showHexAct, &QAction::triggered, this, &MainWindow::onShowHideMesh);
@@ -163,14 +148,6 @@ void MainWindow::creerInterface()
     updatePlayButton();
 }
 
-void MainWindow::onShowHideBuildings(bool)
-{
-    QAction* action = qobject_cast<QAction*>(sender());
-    d_showBuildings = !d_showBuildings;
-    action->setText(menu_libelle(d_showBuildings, "les immeubles"));
-    d_mapWidget->setShowBuilding(d_showBuildings);
-}
-
 void MainWindow::onShowHideRoads(bool)
 {
     QAction* action = qobject_cast<QAction*>(sender());
@@ -185,22 +162,6 @@ void MainWindow::onShowHideFreq(bool)
     d_showCarFreq = !d_showCarFreq;
     emit freqVisibilityChanged(d_showCarFreq);
     action->setText(menu_libelle(d_showCarFreq, "les couvertures radio"));
-}
-
-void MainWindow::onShowHideParks(bool)
-{
-    QAction* action = qobject_cast<QAction*>(sender());
-    d_showParks = !d_showParks;
-    d_mapWidget->setShowPark(d_showParks);
-    action->setText(menu_libelle(d_showParks, "les parcs"));
-}
-
-void MainWindow::onShowHideWaters(bool)
-{
-    QAction* action = qobject_cast<QAction*>(sender());
-    d_showWaters = !d_showWaters;
-    d_mapWidget->setShowWater(d_showWaters);
-    action->setText(menu_libelle(d_showWaters, "les cours d'eau"));
 }
 
 void MainWindow::onShowHideMesh(bool)

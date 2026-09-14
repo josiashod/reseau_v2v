@@ -173,8 +173,8 @@ void Car::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidg
         };
 
         QRadialGradient gradient(QPointF{0, 0}, radius);
-        gradient.setColorAt(0.0, colorForPowerAt(0.0));
-        gradient.setColorAt(0.5, colorForPowerAt(0.5));
+        gradient.setColorAt(0.3, colorForPowerAt(0.3));
+        gradient.setColorAt(0.6, colorForPowerAt(0.6));
         gradient.setColorAt(0.8, colorForPowerAt(0.8));
         gradient.setColorAt(1.0, colorForPowerAt(1.0));
 

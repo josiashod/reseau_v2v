@@ -27,9 +27,6 @@ public:
     explicit MapWidget(QWidget *parent = nullptr, osm::Graph* graph = nullptr);
     ~MapWidget();
 
-    void setShowPark(bool);
-    void setShowWater(bool);
-    void setShowBuilding(bool);
     void setShowRoad(bool);
     void setShowHex(bool);
     void addCar(Car*);
@@ -63,9 +60,6 @@ private:
     qreal d_perspective_offset = 0.6;
 
     // Permet d'afficher les différentes scenes
-    bool d_showPark         = true;
-    bool d_showWater         = true;
-    bool d_showBuilding     = true;
     bool d_showWay          = true;
     bool d_showDescription  = true;
     bool d_showCar          = true;
@@ -81,18 +75,6 @@ private:
      * @brief d_scene scene de la map
      */
     QGraphicsScene*     d_scene;
-    /**
-    * @brief d_waterLayer couche d'affichage de l'eau
-    */
-    QGraphicsItemGroup* d_waterLayer;
-    /**
-     * @brief d_parcLayer couche d'affichage des espaces verts
-     */
-    QGraphicsItemGroup* d_parkLayer;
-    /**
-     * @brief d_buildingLayer couche d'affichage des batiments
-     */
-    QGraphicsItemGroup* d_buildingLayer;
     /**
      * @brief d_wayLayer couche d'affichage des routes
      */
@@ -132,9 +114,6 @@ private:
     QPointF latLonToXY(double lon, double lat);
 
     void initBounds();
-    void initBuildings();
-    void initParks();
-    void initWaters();
     void initRoads();
     void initMeshs();
     std::vector<QPointF> pointsFromFeature(const OsmFeature& feature);

@@ -9,13 +9,10 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    core/building.cpp \
     core/car.cpp \
     core/graph.cpp \
     core/hexagon.cpp \
     core/mapitem.cpp \
-    core/park.cpp \
-    core/water.cpp \
     core/way.cpp \
     main.cpp \
     ui/dialog/addcardialog.cpp \
@@ -25,13 +22,10 @@ SOURCES += \
     utils/osmreader.cpp
 
 HEADERS += \
-    core/building.h \
     core/car.h \
     core/graph.h \
     core/hexagon.h \
     core/mapitem.h \
-    core/park.h \
-    core/water.h \
     core/way.h \
     ui/dialog/addcardialog.h \
     ui/widgets/logwidget.h \
