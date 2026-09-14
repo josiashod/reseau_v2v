@@ -66,7 +66,7 @@ void Way::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidg
     {
         pen.setWidth(3);
         if(isCarWay())
-            pen.setColor(QColor{"#FED7A1"}); // Couleur par défaut pour les routes
+            pen.setColor(QColor{"#CF7A02"}); // Couleur par défaut pour les routes
         else if (type == "pedestrian") {
             pen.setColor(QColor{"#DDDDE9"});
             pen.setWidth(1);
