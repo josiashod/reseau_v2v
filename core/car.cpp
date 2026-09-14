@@ -161,20 +161,21 @@ void Car::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidg
     {
         const double radius = coverageRadius();
         const double edgePower = receivedPower(pos() + QPointF{radius, 0});
-        const double powerRange = std::max(1.0, d_intensity - edgePower);
+        const double centerPower = receivedPower(pos() + QPointF{1.0, 0});
+        const double powerRange = std::max(1.0, centerPower - edgePower);
         auto colorForPowerAt = [this, radius, edgePower, powerRange](double radiusRatio) {
             const double sampleDistance = std::max(1.0, radius * radiusRatio);
-            const double power = d_intensity - fspl(sampleDistance, frequencyHz(d_freq));
+            const double power = receivedPower(pos() + QPointF{sampleDistance, 0});
             const double normalizedPower = std::clamp((power - edgePower) / powerRange, 0.0, 1.0);
 
             QColor color = d_color;
-            color.setAlphaF(0.02 + normalizedPower * 0.33);
+            color.setAlphaF(0.20 + normalizedPower * 0.45);
             return color;
         };
 
         QRadialGradient gradient(QPointF{0, 0}, radius);
-        gradient.setColorAt(0.3, colorForPowerAt(0.3));
-        gradient.setColorAt(0.6, colorForPowerAt(0.6));
+        gradient.setColorAt(0.0, colorForPowerAt(0.0));
+        gradient.setColorAt(0.5, colorForPowerAt(0.5));
         gradient.setColorAt(0.8, colorForPowerAt(0.8));
         gradient.setColorAt(1.0, colorForPowerAt(1.0));
 
